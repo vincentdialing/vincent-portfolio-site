@@ -1,6 +1,6 @@
 # Vincent's Interactive Portfolio
 
-A next-generation personal portfolio website featuring a Voice UI assistant, interactive 3D elements, and a modern "Apple-style" aesthetic.
+A next-generation personal portfolio website featuring a Voice UI assistant, interactive 3D elements, and a modern aesthetic.
 
 ## 🚀 Features
 
@@ -30,7 +30,7 @@ A next-generation personal portfolio website featuring a Voice UI assistant, int
 
 1.  **Clone the repository**:
     ```bash
-    git clone https://github.com/YOUR_USERNAME/vincents-portfolio.git
+    git clone https://github.com/vincentdialing/vincents-portfolio.git
     cd vincents-portfolio
     ```
 

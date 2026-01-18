@@ -49,6 +49,7 @@ A next-generation personal portfolio website featuring a Voice UI assistant, int
     npm run build
     ```
 
-## 📝 License
+## � License
 
-This project is open source and available under the [MIT License](LICENSE).
+**Copyright © 2026 Vincent.** All Rights Reserved.
+This project and its contents are exclusive to the owner. Unauthorized copying, modification, or distribution is strictly prohibited.

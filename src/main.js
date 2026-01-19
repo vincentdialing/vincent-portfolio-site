@@ -1,4 +1,39 @@
+import { supabase } from './supabaseClient.js'
 import './style.css'
+
+// Dynamic Content: Fetch Brands
+async function fetchBrands() {
+  const tickerContent = document.getElementById('ticker-content');
+  if (!tickerContent) return;
+
+  const { data: brands, error } = await supabase
+    .from('brands')
+    .select('name, logo_url')
+    .order('id', { ascending: true });
+
+  if (error) {
+    console.error('Error fetching brands:', error);
+    tickerContent.innerHTML = '<div class="ticker-item">Error loading brands</div>';
+    return;
+  }
+
+  if (brands && brands.length > 0) {
+    // Generate HTML for one set
+    const brandsHtml = brands.map(brand => `
+      <div class="ticker-item">
+        <img src="${brand.logo_url}" alt="${brand.name}" class="brand-logo" title="${brand.name}">
+      </div>
+    `).join('');
+
+    // Duplicate 4 times for infinite loop (same as we did manually)
+    tickerContent.innerHTML = brandsHtml.repeat(4);
+  } else {
+    tickerContent.innerHTML = '<div class="ticker-item">No brands found</div>';
+  }
+}
+
+// Call on load
+fetchBrands();
 
 // Glow Effect for Bento Cards
 // We update CSS variables --x and --y based on mouse position relative to the card
@@ -400,31 +435,73 @@ if (heroSpeakBtn && chatWindow && voiceBtn) {
   // Start the loop
   animateGradient();
 
-  // 3. Avatar Blinking Logic (Image Swap)
+  // 4. Advanced Blinking Logic
   const avatarImg = document.querySelector('.orb-avatar');
   const openEyeSrc = '/vincent-avatar-open.png';
   const closedEyeSrc = '/vincent-avatar-closed.png';
 
-  // Preload closed eye image for instant swap
+  // Preload
   const preloadClosed = new Image();
   preloadClosed.src = closedEyeSrc;
+
+  // Helper: Perform a single blink
+  const blinkOnce = (callback) => {
+    if (!avatarImg) return;
+    avatarImg.src = closedEyeSrc;
+    setTimeout(() => {
+      avatarImg.src = openEyeSrc;
+      if (callback) callback();
+    }, 150); // Speed of one blink
+  };
 
   const triggerBlink = () => {
     if (!avatarImg) return;
 
-    // Close eyes
-    avatarImg.src = closedEyeSrc;
+    // Weighted Random Selection
+    const roll = Math.random();
 
-    // Open after short delay (blink duration)
-    setTimeout(() => {
-      if (avatarImg) avatarImg.src = openEyeSrc;
-    }, 150); // 150ms blink
+    if (roll < 0.20) {
+      // 20% chance: Double Blink (Interest/Alive)
+      blinkOnce(() => {
+        setTimeout(() => blinkOnce(), 150); // Gap between blinks
+      });
+    } else {
+      // 80% chance: Single Blink (Normal)
+      blinkOnce();
+    }
 
-    // Schedule next blink (random between 3s and 7s)
-    const nextBlinkDelay = Math.random() * 4000 + 3000;
+    // Schedule next blink (Random interval 2s - 6s)
+    const nextBlinkDelay = Math.random() * 4000 + 2000;
     setTimeout(triggerBlink, nextBlinkDelay);
   };
 
-  // Start blinking loop
+  // Start blink loop after initial delay
   if (avatarImg) setTimeout(triggerBlink, 3000);
+
+  // 5. Hero Fade Effect (Sticky Scroll)
+  const heroSection = document.querySelector('.hero');
+  window.addEventListener('scroll', () => {
+    const scrollY = window.scrollY;
+    if (heroSection) {
+      // Fade out hero as we scroll down the first window height
+      const opacity = Math.max(0, 1 - (scrollY / (window.innerHeight * 0.8)));
+      heroSection.style.opacity = opacity;
+
+      // Optional: slight scale down for depth
+      // const scale = 1 - (scrollY / (window.innerHeight * 2));
+      // heroSection.style.transform = `scale(${scale})`;
+    }
+  });
+}
+
+// Navbar Scroll Effect
+const navPill = document.querySelector('.nav-pill');
+if (navPill) {
+  window.addEventListener('scroll', () => {
+    if (window.scrollY > 50) {
+      navPill.classList.add('scrolled');
+    } else {
+      navPill.classList.remove('scrolled');
+    }
+  });
 }

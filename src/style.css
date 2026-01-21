@@ -310,13 +310,19 @@ nav.floating-nav {
 /* Hero Section - Deep Blue Voice UI */
 .hero {
   min-height: 100vh;
+  width: 100%;
   display: flex;
   align-items: center;
   justify-content: center;
   text-align: center;
   padding-top: 80px;
   /* Space for nav */
-  position: relative;
+  position: fixed;
+  /* Fixed for parallax/slide-over effect */
+  top: 0;
+  left: 0;
+  z-index: 1;
+  /* Behind main content */
   overflow: hidden;
   background: radial-gradient(circle at center, #0f172a 0%, #050510 100%);
 }
@@ -765,8 +771,11 @@ nav.floating-nav {
 .services-grid {
   display: grid;
   grid-template-columns: 1fr;
-  gap: 1.5rem;
-  /* Reduced gap */
+  gap: 1rem;
+  /* Compacted gap from 1.5rem */
+  max-width: 1000px;
+  /* Align with Skills Grid */
+  margin: 0 auto;
 }
 
 /* Tablet: 2x2 */
@@ -781,19 +790,26 @@ nav.floating-nav {
   .services-grid {
     grid-template-columns: repeat(3, 1fr);
   }
+}
 
-  .service-card:nth-child(4) {
-    grid-column: 1 / -1;
-    /* Span full width, keep default left align */
+/* Wide service card - spans 2 columns */
+.service-card-wide {
+  grid-column: span 2;
+}
+
+@media (max-width: 768px) {
+  .service-card-wide {
+    grid-column: span 1;
   }
 }
+
 
 .service-card {
   background: linear-gradient(180deg, rgba(16, 24, 64, 0.4) 0%, rgba(5, 5, 20, 0.6) 100%);
   border: 1px solid rgba(59, 130, 246, 0.1);
   border-radius: var(--radius-md);
-  padding: 1.5rem 1.5rem 1rem 1.5rem;
-  /* Tighter bottom padding */
+  padding: 1.25rem;
+  /* Compacted padding from 1.5rem */
   height: fit-content;
   /* Force card to wrap content strictly */
   transition: all 0.3s ease;
@@ -835,29 +851,200 @@ nav.floating-nav {
 }
 
 .service-icon {
-  width: 50px;
-  height: 50px;
+  width: 36px;
+  height: 36px;
   background: rgba(59, 130, 246, 0.15);
-  border-radius: 12px;
+  border-radius: 8px;
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-bottom: 1rem;
-  /* Reduced from 1.5rem */
+  margin-bottom: 0.5rem;
+  /* Reduced from 1rem */
   color: var(--color-accent);
 }
 
 .service-card h3 {
-  font-size: 1.5rem;
-  margin-bottom: 0.75rem;
+  font-size: 1.1rem;
+  margin-bottom: 0.25rem;
   /* Reduced from 1rem */
 }
 
 .service-card p {
+  font-size: 0.9rem;
   color: var(--color-text-muted);
-  line-height: 1.6;
+  line-height: 1.4;
   margin-bottom: 0;
   /* Remove default margin to cut the blank space */
+}
+
+/* Clickable Service Cards */
+.service-link {
+  text-decoration: none;
+  cursor: pointer;
+  will-change: transform;
+  transition: transform 0.5s cubic-bezier(0.22, 1, 0.36, 1) 0.05s,
+    box-shadow 0.5s cubic-bezier(0.22, 1, 0.36, 1) 0.05s,
+    border-color 0.4s ease;
+}
+
+.service-link:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.4);
+}
+
+/* GitHub accent - Purple */
+.service-icon-github {
+  background: rgba(168, 85, 247, 0.15);
+  color: #c9b1ff;
+}
+
+.service-link:has(.service-icon-github):hover {
+  border-color: rgba(168, 85, 247, 0.4);
+}
+
+/* LinkedIn accent - Blue */
+.service-icon-linkedin {
+  background: rgba(14, 165, 233, 0.15);
+  color: #7dd3fc;
+}
+
+.service-link:has(.service-icon-linkedin):hover {
+  border-color: rgba(14, 165, 233, 0.4);
+}
+
+/* CV/Resume accent - Green */
+.service-icon-cv {
+  background: rgba(16, 185, 129, 0.15);
+  color: #6ee7b7;
+}
+
+.service-link:has(.service-icon-cv):hover {
+  border-color: rgba(16, 185, 129, 0.4);
+}
+
+/* ==========================================
+   Service Icon Animations
+   ========================================== */
+
+/* Bounce Animation */
+@keyframes iconBounce {
+
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(-4px);
+  }
+}
+
+/* Float Animation */
+@keyframes iconFloat {
+
+  0%,
+  100% {
+    transform: translateY(0) rotate(0deg);
+  }
+
+  25% {
+    transform: translateY(-3px) rotate(2deg);
+  }
+
+  75% {
+    transform: translateY(2px) rotate(-2deg);
+  }
+}
+
+/* Pulse Animation */
+@keyframes iconPulse {
+
+  0%,
+  100% {
+    transform: scale(1);
+  }
+
+  50% {
+    transform: scale(1.08);
+  }
+}
+
+/* Wiggle Animation */
+@keyframes iconWiggle {
+
+  0%,
+  100% {
+    transform: rotate(0deg);
+  }
+
+  25% {
+    transform: rotate(5deg);
+  }
+
+  75% {
+    transform: rotate(-5deg);
+  }
+}
+
+/* Apply animations to service icons */
+/* Default state: Paused and ready to play once */
+.icon-bounce,
+.icon-float,
+.icon-pulse,
+.icon-wiggle,
+.icon-spin-slow,
+.icon-bounce-subtle {
+  animation-duration: 2s;
+  /* Standard duration */
+  animation-timing-function: ease-in-out;
+  animation-fill-mode: forwards;
+  /* Keep final state if needed, though mostly they return to 0 */
+  animation-play-state: paused;
+  /* Wait for scroll trigger */
+  animation-iteration-count: 1;
+  /* Play ONLY once */
+}
+
+.icon-bounce {
+  animation-name: iconBounce;
+  animation-duration: 2.5s;
+}
+
+.icon-float {
+  animation-name: iconFloat;
+  animation-duration: 3s;
+}
+
+.icon-pulse {
+  animation-name: iconPulse;
+  animation-duration: 2s;
+}
+
+.icon-wiggle {
+  animation-name: iconWiggle;
+  animation-duration: 2s;
+}
+
+.icon-spin-slow {
+  animation-name: iconSpinSlow;
+  animation-duration: 2s;
+}
+
+/* Speed up spin for single run */
+.icon-bounce-subtle {
+  animation-name: iconBounceSub;
+  animation-duration: 2.5s;
+}
+
+/* Trigger Class added by JS */
+.play-animation {
+  animation-play-state: running !important;
+}
+
+/* Hover re-trigger: Allow playing again on hover if desired, or keep static */
+.service-card:hover .service-icon {
+  animation-play-state: running !important;
+  animation-iteration-count: 1;
 }
 
 /* Projects Section */
@@ -1464,7 +1651,7 @@ body {
   box-shadow: 0 -20px 50px rgba(0, 0, 0, 0.9);
   box-shadow: 0 -20px 50px rgba(0, 0, 0, 0.9);
   overflow: hidden;
-  padding: 3rem;
+  padding: 2.5rem 2rem;
   /* Equal padding on all sides for symmetry */
 
   /* Reset for flow */

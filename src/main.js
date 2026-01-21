@@ -1,6 +1,27 @@
 import { supabase } from './supabaseClient.js'
 import './style.css'
 
+// ==========================================
+// Page Loader Logic
+// ==========================================
+window.addEventListener('load', () => {
+  const loader = document.getElementById('page-loader');
+  if (loader) {
+    // Small delay to ensure smooth transition
+    setTimeout(() => {
+      loader.classList.add('hidden');
+    }, 100);
+  }
+});
+
+// Fallback: Force remove loader after 3s if something hangs
+setTimeout(() => {
+  const loader = document.getElementById('page-loader');
+  if (loader && !loader.classList.contains('hidden')) {
+    loader.classList.add('hidden');
+  }
+}, 3000);
+
 // Dynamic Content: Fetch Brands
 async function fetchBrands() {
   const tickerContent = document.getElementById('ticker-content');
@@ -504,4 +525,31 @@ if (navPill) {
       navPill.classList.remove('scrolled');
     }
   });
+}
+
+// ==========================================
+// Icon Scroll Trigger Logic
+// ==========================================
+// Select all icons wanting scroll trigger
+const scrollIcons = document.querySelectorAll('.icon-animate-scroll');
+
+if (scrollIcons.length > 0) {
+  const iconObserver = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      // If visible in viewport
+      if (entry.isIntersecting) {
+        // Find the specific animated element (could be the target itself or child)
+        // Here our target IS the element with the animation class
+        entry.target.classList.add('play-animation');
+
+        // Stop observing once played (Play Once Logic)
+        iconObserver.unobserve(entry.target);
+      }
+    });
+  }, {
+    threshold: 0.5, // Trigger when 50% visible
+    rootMargin: "0px"
+  });
+
+  scrollIcons.forEach(icon => iconObserver.observe(icon));
 }

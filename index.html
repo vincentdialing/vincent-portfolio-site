@@ -16,9 +16,63 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 
+  <!-- Critical CSS for page loader (must load before content) -->
+  <style>
+    /* Critical: Set background immediately to prevent white flash */
+    html,
+    body {
+      background-color: #020212;
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      min-height: 100%;
+    }
+
+    .page-loader {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: #020212;
+      /* Match body bg */
+      z-index: 9999;
+      opacity: 1;
+      transition: opacity 0.5s ease-out, visibility 0.5s;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .page-loader.hidden {
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+    }
+
+    .loader-spinner {
+      width: 40px;
+      height: 40px;
+      border: 3px solid rgba(255, 255, 255, 0.1);
+      border-top-color: #4285f4;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+  </style>
+
 </head>
 
 <body>
+  <!-- Page Loader Overlay -->
+  <div id="page-loader" class="page-loader">
+    <div class="loader-spinner"></div>
+  </div>
   <!-- Navbar -->
   <nav class="floating-nav">
     <div class="nav-pill">
@@ -79,61 +133,32 @@
       <!-- Glass Horizon (Top Edge) -->
       <div class="glass-horizon"></div>
 
-      <!-- Services Section (What I Do) -->
+      <!-- Personal Bento Section (Get to Know Me) -->
       <section class="services-section">
         <div class="container">
-          <div class="text-center" style="margin-bottom: 2rem;">
-            <h2 class="animate-up">What I Do</h2>
-            <p class="lead animate-up" style="margin: 0 auto; animation-delay: 0.1s;">Combining technical expertise with
-              creative vision to deliver exceptional digital solutions.</p>
+          <div class="text-center" style="margin-bottom: 1.5rem;">
+            <h2 class="animate-up">Get to Know Me</h2>
+            <p class="lead animate-up" style="margin: 0 auto; animation-delay: 0.1s;">A peek into who I am beyond the
+              code</p>
           </div>
 
           <div class="services-grid">
-            <!-- Service 1 -->
+            <!-- Location -->
             <div class="service-card">
-              <div class="service-icon">
+              <div class="service-icon icon-animate-scroll icon-bounce">
                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
                   stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <polyline points="16 18 22 12 16 6"></polyline>
-                  <polyline points="8 6 2 12 8 18"></polyline>
+                  <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                  <circle cx="12" cy="10" r="3"></circle>
                 </svg>
               </div>
-              <h3>Front-End Development</h3>
-              <p>Building responsive, performant web applications with React, TypeScript, and modern CSS.</p>
+              <h3>Based In</h3>
+              <p>Davao City, PH 🇵🇭</p>
             </div>
 
-            <!-- Service 2 -->
-            <div class="service-card">
-              <div class="service-icon">
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
-                  stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
-                  <polyline points="2 17 12 22 22 17"></polyline>
-                  <polyline points="2 12 12 17 22 12"></polyline>
-                </svg>
-              </div>
-              <h3>UI/UX Design</h3>
-              <p>Designing intuitive, user-centric interfaces and seamless user experiences for web and mobile.</p>
-            </div>
-
-            <!-- Service 3 -->
-            <div class="service-card">
-              <div class="service-icon">
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
-                  stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <line x1="18" y1="20" x2="18" y2="10"></line>
-                  <line x1="12" y1="20" x2="12" y2="4"></line>
-                  <line x1="6" y1="20" x2="6" y2="14"></line>
-                </svg>
-              </div>
-              <h3>Digital Marketing</h3>
-              <p>Social media marketing, publication materials, content scheduling, analytics, and branding campaigns.
-              </p>
-            </div>
-
-            <!-- Service 4 -->
-            <div class="service-card">
-              <div class="service-icon">
+            <!-- Creative Soul (Wide) -->
+            <div class="service-card service-card-wide">
+              <div class="service-icon icon-animate-scroll icon-pulse">
                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
                   stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                   <path d="M12 19l7-7 3 3-7 7-3-3z"></path>
@@ -142,16 +167,88 @@
                   <circle cx="11" cy="11" r="2"></circle>
                 </svg>
               </div>
-              <h3>Graphic Design</h3>
-              <p>Creating visually stunning branding assets, marketing materials, and digital illustrations.</p>
+              <h3>Creative Mindset</h3>
+              <p>Blending strategy with design—Digital Marketing, SEO & Visuals.</p>
+            </div>
+
+            <!-- GitHub (Clickable) -->
+            <a href="https://github.com/vincentdialing/" target="_blank" rel="noopener"
+              class="service-card service-link">
+              <div class="service-icon service-icon-github icon-animate-scroll icon-float">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                  <path
+                    d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z" />
+                </svg>
+              </div>
+              <h3>Code Lab</h3>
+              <p>Explore my latest builds &rarr;</p>
+            </a>
+
+            <!-- LinkedIn (Clickable) -->
+            <a href="https://www.linkedin.com/in/vincentdialing/" target="_blank" rel="noopener"
+              class="service-card service-link">
+              <div class="service-icon service-icon-linkedin icon-animate-scroll icon-wiggle">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                  <path
+                    d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z" />
+                </svg>
+              </div>
+              <h3>Professional Network</h3>
+              <p>Let's build something together &rarr;</p>
+            </a>
+
+            <!-- Resume/CV (Clickable) -->
+            <a href="#cv" class="service-card service-link" title="Download my resume">
+              <div class="service-icon service-icon-cv icon-animate-scroll icon-pulse">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                  stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                  <polyline points="14 2 14 8 20 8"></polyline>
+                  <line x1="12" y1="18" x2="12" y2="12"></line>
+                  <polyline points="9 15 12 18 15 15"></polyline>
+                </svg>
+              </div>
+              <h3>My Story</h3>
+              <p>Grab my Resume &darr;</p>
+            </a>
+
+            <!-- After Hours -->
+            <div class="service-card">
+              <div class="service-icon icon-animate-scroll icon-spin-slow">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                  stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M9 18V5l12-2v13"></path>
+                  <circle cx="6" cy="18" r="3"></circle>
+                  <circle cx="18" cy="16" r="3"></circle>
+                </svg>
+              </div>
+              <h3>Unplugged</h3>
+              <p>Fueled by Music & Poetry ✨</p>
+            </div>
+
+            <!-- Adventures (Wide) -->
+            <div class="service-card service-card-wide">
+              <div class="service-icon icon-animate-scroll icon-bounce-subtle">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                  stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"></path>
+                  <path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"></path>
+                  <path d="M4 22h16"></path>
+                  <path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"></path>
+                  <path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"></path>
+                  <path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"></path>
+                </svg>
+              </div>
+              <h3>Community & Growth</h3>
+              <p>Active in Hackathons & Tech Volunteering 🤝</p>
             </div>
           </div>
         </div>
       </section>
     </div> <!-- End Content Sheet -->
 
-    <!-- Company Logos Ticker (Outside Sheet, on Main Background) -->
-    <div class="company-ticker-section">
+    <!-- Company Logos Ticker (Inside Sheet) -->
+    <div class="company-ticker-section" style="padding-bottom: 1.5rem;">
       <p class="ticker-label animate-up">Trusted by Leading Brands</p>
       <div class="ticker-wrap animate-up" style="animation-delay: 0.2s;">
         <!-- Content will be injected by main.js -->

@@ -1,4 +1,5 @@
 import { supabase } from './supabaseClient.js'
+import { speakWithElevenLabs } from './elevenLabsTTS.js'
 import './style.css'
 
 // ==========================================
@@ -206,9 +207,10 @@ if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
     // Hide Indicator
     if (typingIndicator) typingIndicator.classList.add('hidden');
 
-    // Speak and Show Answer
-    speak(response);
-    addMessage(response, 'bot');
+    // Speak and Show Answer (text shows when audio starts)
+    speak(response, () => {
+      addMessage(response, 'bot');
+    });
 
     // }, 800);
   };
@@ -260,9 +262,10 @@ const handleSendMessage = async () => {
 
   if (typingIndicator) typingIndicator.classList.add('hidden');
 
-  // Speak and Show Answer
-  speak(response);
-  addMessage(response, 'bot');
+  // Speak and Show Answer (text shows when audio starts)
+  speak(response, () => {
+    addMessage(response, 'bot');
+  });
 };
 
 if (sendBtn && chatInput) {
@@ -271,45 +274,60 @@ if (sendBtn && chatInput) {
     if (e.key === 'Enter') handleSendMessage();
   });
 }
+// ==========================================
+// ElevenLabs Text-to-Speech
+// ==========================================
 
-// Redefining speak to include input toggling
+// Show thinking message
+const showThinking = () => {
+  const thinkingDiv = document.createElement('div');
+  thinkingDiv.classList.add('message', 'bot', 'thinking-message');
+  thinkingDiv.innerHTML = '<span class="thinking-dots">Thinking<span>.</span><span>.</span><span>.</span></span>';
+  thinkingDiv.id = 'thinking-msg';
+  chatMessages.appendChild(thinkingDiv);
+  chatMessages.scrollTop = chatMessages.scrollHeight;
+};
 
-const speak = (text) => {
-  if ('speechSynthesis' in window) {
-    window.speechSynthesis.cancel();
-    const utterance = new SpeechSynthesisUtterance(text);
+// Remove thinking message
+const hideThinking = () => {
+  const thinkingMsg = document.getElementById('thinking-msg');
+  if (thinkingMsg) thinkingMsg.remove();
+};
 
-    // Voice Selection 
-    const voices = window.speechSynthesis.getVoices();
-    const targetVoice = voices.find(v => (v.lang === 'en-PH' || v.lang === 'fil-PH' || v.name.includes('Filipino'))) ||
-      voices.find(v => v.name.includes('Daniel') || v.name.includes('Google US English'));
+// Speak with synced text display
+const speak = (text, onShowText) => {
+  // Start visual feedback immediately - wave animation during loading
+  if (siriWave) {
+    waveContainer.classList.add('active');
+    siriWave.setAmplitude(0.8); // Medium amplitude while thinking
+  }
+  if (inputArea) inputArea.classList.add('input-hidden');
 
-    if (targetVoice) utterance.voice = targetVoice;
-    utterance.pitch = 1.2;
-    utterance.rate = 1.1;
-
-    utterance.onstart = () => {
+  // Use ElevenLabs for natural voice
+  speakWithElevenLabs(
+    text,
+    // onStart - when audio starts playing, show the text
+    () => {
+      hideThinking();
+      if (siriWave) siriWave.setAmplitude(1.5); // Full amplitude when speaking
       if (threeOrb) threeOrb.setTalking(true);
-      if (siriWave) {
-        waveContainer.classList.add('active');
-        siriWave.setAmplitude(1.5);
-      }
-      // HIDE INPUT
-      if (inputArea) inputArea.classList.add('input-hidden');
-    };
-
-    utterance.onend = () => {
+      // Show the text answer NOW when audio starts
+      if (onShowText) onShowText();
+    },
+    // onEnd - reset visuals
+    () => {
+      hideThinking();
       if (threeOrb) threeOrb.setTalking(false);
       if (siriWave) {
-        siriWave.setAmplitude(0.1); // Back to idle
-        // waveContainer.classList.remove('active'); // Keep visible
+        siriWave.setAmplitude(0.1);
       }
-      // SHOW INPUT
       if (inputArea) inputArea.classList.remove('input-hidden');
-    };
-
-    window.speechSynthesis.speak(utterance);
-  }
+    },
+    // onThinking - show thinking message
+    () => {
+      showThinking();
+    }
+  );
 };
 
 // ------------------------------------------
@@ -530,26 +548,47 @@ if (navPill) {
 // ==========================================
 // Icon Scroll Trigger Logic
 // ==========================================
-// Select all icons wanting scroll trigger
-const scrollIcons = document.querySelectorAll('.icon-animate-scroll');
+// ==========================================
+// Icon Scroll Trigger Logic
+// ==========================================
 
-if (scrollIcons.length > 0) {
-  const iconObserver = new IntersectionObserver((entries) => {
+// 1. Group Animation for Services Grid (Succession Effect)
+const servicesGrid = document.querySelector('.services-grid');
+if (servicesGrid) {
+  const gridObserver = new IntersectionObserver((entries) => {
     entries.forEach(entry => {
-      // If visible in viewport
+      const icons = entry.target.querySelectorAll('.service-icon');
       if (entry.isIntersecting) {
-        // Find the specific animated element (could be the target itself or child)
-        // Here our target IS the element with the animation class
-        entry.target.classList.add('play-animation');
-
-        // Stop observing once played (Play Once Logic)
-        iconObserver.unobserve(entry.target);
+        // Trigger all icons in the grid at once (CSS delays handle the sequence)
+        icons.forEach(icon => icon.classList.add('play-animation'));
+      } else {
+        // Reset when the whole grid is out of view
+        icons.forEach(icon => icon.classList.remove('play-animation'));
       }
     });
   }, {
-    threshold: 0.5, // Trigger when 50% visible
+    threshold: 0.2, // Trigger when 20% of the grid is visible
     rootMargin: "0px"
   });
 
-  scrollIcons.forEach(icon => iconObserver.observe(icon));
+  gridObserver.observe(servicesGrid);
+}
+
+// 2. Individual Animation for other icons (excluding those in the grid)
+const otherIcons = document.querySelectorAll('.icon-animate-scroll:not(.services-grid .service-icon)');
+if (otherIcons.length > 0) {
+  const iconObserver = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.classList.add('play-animation');
+      } else {
+        entry.target.classList.remove('play-animation');
+      }
+    });
+  }, {
+    threshold: 0.5,
+    rootMargin: "0px"
+  });
+
+  otherIcons.forEach(icon => iconObserver.observe(icon));
 }

@@ -592,3 +592,146 @@ if (otherIcons.length > 0) {
 
   otherIcons.forEach(icon => iconObserver.observe(icon));
 }
+
+// ==========================================
+// Floating Hover Cards - Follow Cursor
+// ==========================================
+const hoverTriggers = document.querySelectorAll('.hover-card-trigger');
+const dimOverlay = document.getElementById('hover-dim-overlay');
+let activeRotationInterval = null;
+
+hoverTriggers.forEach(trigger => {
+  const cardId = trigger.dataset.hoverCard;
+  const hoverCard = document.getElementById(cardId);
+
+  if (!hoverCard) return;
+
+  // Mouse enter - show card and dim background
+  trigger.addEventListener('mouseenter', () => {
+    hoverCard.classList.add('visible');
+    if (dimOverlay) dimOverlay.classList.add('visible');
+
+    // Start rotation for community card
+    if (hoverCard.classList.contains('rotating-card')) {
+      startContentRotation(hoverCard);
+    }
+  });
+
+  // Mouse leave - hide card and remove dim
+  trigger.addEventListener('mouseleave', () => {
+    hoverCard.classList.remove('visible');
+    if (dimOverlay) dimOverlay.classList.remove('visible');
+
+    // Stop rotation
+    if (activeRotationInterval) {
+      clearInterval(activeRotationInterval);
+      activeRotationInterval = null;
+    }
+  });
+
+});
+
+// Smooth Cursor Following Logic (LERP)
+let mouseX = 0;
+let mouseY = 0;
+let cursorX = 0;
+let cursorY = 0;
+// LERP Factor: Lower = more delay/smoother (0.1 is smooth, 0.2 is snappy)
+const lerpFactor = 0.1;
+
+document.addEventListener('mousemove', (e) => {
+  mouseX = e.clientX;
+  mouseY = e.clientY;
+});
+
+function animateCards() {
+  // Linear Interpolation for smoothness
+  cursorX += (mouseX - cursorX) * lerpFactor;
+  cursorY += (mouseY - cursorY) * lerpFactor;
+
+  const visibleCard = document.querySelector('.floating-hover-card.visible');
+  if (visibleCard) {
+    const offsetX = 20;
+    const offsetY = 20;
+
+    // Use smoothed coordinates
+    let targetX = cursorX + offsetX;
+    let targetY = cursorY + offsetY;
+
+    // Viewport bound check (using window dimensions)
+    const cardRect = visibleCard.getBoundingClientRect();
+    const viewportWidth = window.innerWidth;
+    const viewportHeight = window.innerHeight;
+
+    if (targetX + cardRect.width > viewportWidth) {
+      targetX = cursorX - cardRect.width - offsetX;
+    }
+    if (targetY + cardRect.height > viewportHeight) {
+      targetY = cursorY - cardRect.height - offsetY;
+    }
+
+    visibleCard.style.left = `${targetX}px`;
+    visibleCard.style.top = `${targetY}px`;
+  }
+
+  requestAnimationFrame(animateCards);
+}
+
+// Start animation loop
+animateCards();
+
+
+// Rotate content for Community card every 3 seconds
+function startContentRotation(card) {
+  const contents = card.querySelectorAll('.rotating-content');
+  const image = card.querySelector('.floating-image');
+  if (contents.length === 0) return;
+
+  let currentIndex = 0;
+
+  // Show first content and set initial gradient/image
+  contents.forEach((content, i) => {
+    content.classList.toggle('active', i === 0);
+  });
+
+  // Set initial gradient
+  const firstContent = contents[0];
+  if (firstContent.dataset.gradient) {
+    card.className = card.className.replace(/gradient-\w+/g, '').trim();
+    card.classList.add(firstContent.dataset.gradient);
+  }
+
+  // Rotate every 3 seconds
+  activeRotationInterval = setInterval(() => {
+    // Fade out current
+    contents[currentIndex].classList.remove('active');
+
+    // Fade out image
+    if (image) {
+      image.classList.add('fade-out');
+    }
+
+    // Wait for fade out, then switch
+    setTimeout(() => {
+      currentIndex = (currentIndex + 1) % contents.length;
+      const nextContent = contents[currentIndex];
+
+      // Change image
+      if (image && nextContent.dataset.image) {
+        image.src = nextContent.dataset.image;
+        image.classList.remove('fade-out');
+      }
+
+      // Change gradient
+      if (nextContent.dataset.gradient) {
+        card.className = card.className.replace(/gradient-\w+/g, '').trim();
+        card.classList.add(nextContent.dataset.gradient);
+      }
+
+      // Show next content
+      nextContent.classList.add('active');
+    }, 300);
+
+  }, 3000);
+}
+

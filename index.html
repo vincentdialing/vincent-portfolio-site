@@ -14,8 +14,7 @@
   <!-- Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap"
-    rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 
   <!-- Critical CSS for page loader (must load before content) -->
   <style>
@@ -74,13 +73,16 @@
   <div id="page-loader" class="page-loader">
     <div class="loader-spinner"></div>
   </div>
+
+  <!-- Hover Dim Overlay (for floating cards) -->
+  <div id="hover-dim-overlay" class="hover-dim-overlay"></div>
+
   <!-- Navbar -->
   <nav class="floating-nav">
     <div class="nav-pill">
       <a href="#" class="logo" style="text-decoration: none; color: white;">Vincent</a>
       <div class="nav-links">
-        <a href="#services">About</a>
-        <a href="#skills">Skills</a>
+        <a href="#about">About</a>
         <a href="#works">Works</a>
         <a href="#contact" class="btn btn-sm btn-primary">Contact</a>
       </div>
@@ -130,22 +132,16 @@
   <main class="main-content">
 
     <!-- Floating Sheet Container -->
-    <div id="services" class="content-sheet">
+    <div id="about" class="content-sheet">
       <!-- Glass Horizon (Top Edge) -->
       <div class="glass-horizon"></div>
 
       <!-- Personal Bento Section (Get to Know Me) -->
-      <section class="services-section">
+      <section class="about-section">
         <div class="container">
-          <div class="text-center" style="margin-bottom: 2rem;">
-            <h2 class="animate-up" style="margin-bottom: 0.5rem;">Get to Know Me</h2>
-            <p class="lead animate-up" style="margin: 0; animation-delay: 0.1s;">A peek into who I am beyond the
-              code</p>
-          </div>
-
           <div class="services-grid">
             <!-- Location -->
-            <div class="service-card">
+            <div class="service-card hover-card-trigger" data-hover-card="location-card">
               <div class="service-icon icon-animate-scroll icon-bounce">
                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
                   stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -153,13 +149,17 @@
                   <circle cx="12" cy="10" r="3"></circle>
                 </svg>
               </div>
-              <h3>Based In</h3>
-              <p>Davao City, Philippines</p>
+              <div class="service-card-text">
+                <h3>Based In</h3>
+                <p>Davao City, Philippines</p>
+              </div>
             </div>
+
+            <!-- Floating Hover Card Removed (Moved to body) -->
 
             <!-- Creative Soul (Wide) -->
             <div class="service-card service-card-wide">
-              <div class="service-icon icon-animate-scroll icon-bounce">
+              <div class="service-icon icon-animate-scroll icon-pulse">
                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
                   stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                   <path d="M12 19l7-7 3 3-7 7-3-3z"></path>
@@ -168,39 +168,45 @@
                   <circle cx="11" cy="11" r="2"></circle>
                 </svg>
               </div>
-              <h3>Creative Mindset</h3>
-              <p>I blend design with strategy—specializing in SEO, Digital Marketing, and Visuals.</p>
+              <div class="service-card-text">
+                <h3>Creative Mindset</h3>
+                <p>I blend design with strategy—specializing in SEO, Digital Marketing, and Visuals.</p>
+              </div>
             </div>
 
             <!-- GitHub (Clickable) -->
             <a href="https://github.com/vincentdialing/" target="_blank" rel="noopener"
               class="service-card service-link">
-              <div class="service-icon service-icon-github icon-animate-scroll icon-bounce">
+              <div class="service-icon service-icon-github icon-animate-scroll icon-float">
                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
                   <path
                     d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z" />
                 </svg>
               </div>
-              <h3>GitHub</h3>
-              <p>Check out my latest projects &rarr;</p>
+              <div class="service-card-text">
+                <h3>GitHub</h3>
+                <p>Check out my latest projects &rarr;</p>
+              </div>
             </a>
 
             <!-- LinkedIn (Clickable) -->
             <a href="https://www.linkedin.com/in/vincentdialing/" target="_blank" rel="noopener"
               class="service-card service-link">
-              <div class="service-icon service-icon-linkedin icon-animate-scroll icon-bounce">
+              <div class="service-icon service-icon-linkedin icon-animate-scroll icon-wiggle">
                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
                   <path
                     d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z" />
                 </svg>
               </div>
-              <h3>LinkedIn</h3>
-              <p>Connect with me &rarr;</p>
+              <div class="service-card-text">
+                <h3>LinkedIn</h3>
+                <p>Connect with me &rarr;</p>
+              </div>
             </a>
 
             <!-- Resume/CV (Clickable) -->
             <a href="#cv" class="service-card service-link" title="Download my resume">
-              <div class="service-icon service-icon-cv icon-animate-scroll icon-bounce">
+              <div class="service-icon service-icon-cv icon-animate-scroll icon-pulse">
                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
                   stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                   <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
@@ -209,27 +215,32 @@
                   <polyline points="9 15 12 18 15 15"></polyline>
                 </svg>
               </div>
-              <h3>CV/Resume</h3>
-              <p>Download my Resume &darr;</p>
+              <div class="service-card-text">
+                <h3>CV/Resume</h3>
+                <p>Download my Resume &darr;</p>
+              </div>
             </a>
 
-            <!-- After Hours -->
+            <!-- UI/UX Design -->
             <div class="service-card">
-              <div class="service-icon icon-animate-scroll icon-bounce">
+              <div class="service-icon icon-animate-scroll icon-pulse">
                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
                   stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M9 18V5l12-2v13"></path>
-                  <circle cx="6" cy="18" r="3"></circle>
-                  <circle cx="18" cy="16" r="3"></circle>
+                  <path d="M12 19l7-7 3 3-7 7-3-3z"></path>
+                  <path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"></path>
+                  <path d="M2 2l7.586 7.586"></path>
+                  <circle cx="11" cy="11" r="2"></circle>
                 </svg>
               </div>
-              <h3>Unplugged</h3>
-              <p>Fueled by coffee and music.</p>
+              <div class="service-card-text">
+                <h3>UI/UX Design</h3>
+                <p>Figma, Adobe Creative Suite</p>
+              </div>
             </div>
 
             <!-- Adventures (Wide) -->
-            <div class="service-card service-card-wide">
-              <div class="service-icon icon-animate-scroll icon-bounce">
+            <div class="service-card service-card-wide hover-card-trigger" data-hover-card="community-card">
+              <div class="service-icon icon-animate-scroll icon-bounce-subtle">
                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
                   stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                   <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"></path>
@@ -240,9 +251,14 @@
                   <path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"></path>
                 </svg>
               </div>
-              <h3>Community & Growth</h3>
-              <p>I enjoy hackathons and volunteering.</p>
+              <div class="service-card-text">
+                <h3>Community & Growth</h3>
+                <p>I enjoy hackathons and volunteering.</p>
+              </div>
             </div>
+
+            <!-- Floating Hover Card for Community (Rotating Content) -->
+            <!-- Floating Hover Card Removed (Moved to body) -->
           </div>
         </div>
       </section>
@@ -256,150 +272,6 @@
         <div id="ticker-content" class="ticker"></div>
       </div>
     </div>
-
-    <!-- Skills & Expertise Section -->
-    <section id="skills" class="bento-section">
-      <div class="container">
-
-        <div class="text-center" style="margin-bottom: 4rem;">
-          <h2 class="animate-up">Skills & Expertise</h2>
-          <p class="lead animate-up" style="margin: 0 auto; animation-delay: 0.1s;">A comprehensive toolkit for modern
-            digital creation</p>
-        </div>
-
-        <div class="bento-grid skills-grid">
-
-          <!-- Card 1: React & TypeScript (Wide) -->
-          <div class="bento-card skill-card span-2">
-            <div class="skill-icon-box">
-              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
-                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"></path>
-              </svg>
-            </div>
-            <div class="bento-card-content">
-              <h3 class="card-title">React & TypeScript</h3>
-              <p class="card-subtitle">Building scalable, type-safe applications</p>
-            </div>
-          </div>
-
-          <!-- Card 2: UI/UX Design -->
-          <div class="bento-card skill-card">
-            <div class="skill-icon-box">
-              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
-                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M12 19l7-7 3 3-7 7-3-3z"></path>
-                <path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"></path>
-                <path d="M2 2l7.586 7.586"></path>
-                <circle cx="11" cy="11" r="2"></circle>
-              </svg>
-            </div>
-            <div class="bento-card-content">
-              <h3 class="card-title">UI/UX Design</h3>
-              <p class="card-subtitle">Figma, Adobe Creative Suite</p>
-            </div>
-          </div>
-
-          <!-- Card 3: Responsive Design -->
-          <div class="bento-card skill-card">
-            <div class="skill-icon-box">
-              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
-                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <circle cx="12" cy="12" r="10"></circle>
-                <line x1="2" y1="12" x2="22" y2="12"></line>
-                <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z">
-                </path>
-              </svg>
-            </div>
-            <div class="bento-card-content">
-              <h3 class="card-title">Responsive Design</h3>
-              <p class="card-subtitle">Mobile-first approach</p>
-            </div>
-          </div>
-
-          <!-- Card 4: Social Media Marketing (Wide) -->
-          <div class="bento-card skill-card span-2">
-            <div class="skill-icon-box">
-              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
-                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
-                <line x1="16" y1="2" x2="16" y2="6"></line>
-                <line x1="8" y1="2" x2="8" y2="6"></line>
-                <line x1="3" y1="10" x2="21" y2="10"></line>
-              </svg>
-            </div>
-            <div class="bento-card-content">
-              <h3 class="card-title">Social Media Marketing</h3>
-              <p class="card-subtitle">Content strategy & scheduling</p>
-            </div>
-          </div>
-
-          <!-- Card 5: Modern Frameworks (Wide) -->
-          <div class="bento-card skill-card span-2">
-            <div class="skill-icon-box">
-              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
-                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
-                <polyline points="2 17 12 22 22 17"></polyline>
-                <polyline points="2 12 12 17 22 12"></polyline>
-              </svg>
-            </div>
-            <div class="bento-card-content">
-              <h3 class="card-title">Modern Frameworks</h3>
-              <p class="card-subtitle">Tailwind, Motion, Next.js</p>
-            </div>
-          </div>
-
-          <!-- Card 6: Video Editing -->
-          <div class="bento-card skill-card">
-            <div class="skill-icon-box">
-              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
-                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <polygon points="23 7 16 12 23 17 23 7"></polygon>
-                <rect x="1" y="5" width="15" height="14" rx="2" ry="2"></rect>
-              </svg>
-            </div>
-            <div class="bento-card-content">
-              <h3 class="card-title">Video Editing</h3>
-              <p class="card-subtitle">Campaign content creation</p>
-            </div>
-          </div>
-
-          <!-- Card 7: Analytics -->
-          <div class="bento-card skill-card">
-            <div class="skill-icon-box">
-              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
-                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <rect x="18" y="10" width="4" height="10"></rect>
-                <rect x="14" y="6" width="4" height="14"></rect>
-                <rect x="10" y="14" width="4" height="6"></rect>
-                <rect x="6" y="10" width="4" height="10"></rect>
-              </svg>
-            </div>
-            <div class="bento-card-content">
-              <h3 class="card-title">Analytics</h3>
-              <p class="card-subtitle">Data-driven insights</p>
-            </div>
-          </div>
-
-          <!-- Card 8: Performance (Wide) -->
-          <div class="bento-card skill-card span-2">
-            <div class="skill-icon-box">
-              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
-                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z">
-                </path>
-              </svg>
-            </div>
-            <div class="bento-card-content">
-              <h3 class="card-title">Performance</h3>
-              <p class="card-subtitle">Optimized & lightning fast</p>
-            </div>
-          </div>
-
-        </div>
-      </div>
-    </section>
 
     <!-- Featured Work Section -->
     <section id="works" class="projects-section">
@@ -543,6 +415,87 @@
             <line x1="8" y1="23" x2="16" y2="23"></line>
           </svg>
         </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Floating Hover Cards (Moved to Root for Z-Index) -->
+  <div id="location-card" class="floating-hover-card">
+    <div class="hover-card-image-wrapper">
+      <img src="https://placehold.co/600x400/222222/ffffff?text=Placeholder" alt="Davao City" class="floating-image"
+        style="filter: grayscale(100%) contrast(1.2);">
+    </div>
+
+    <!-- Top Pill: "Based In" -->
+    <div class="hover-card-top">
+      <div class="card-top-pill">
+        <div class="pulsing-dot"></div>
+        <span>Based In</span>
+      </div>
+    </div>
+
+    <!-- Bottom Content: Standard Title -->
+    <div class="hover-card-content-stack">
+      <div class="rotating-text-wrapper">
+        <div class="rotating-content active">
+          <div class="small-label">Location</div>
+          <div class="big-title">Davao City</div>
+          <div class="bottom-detail">Philippines' safest city & innovation hub.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="community-card" class="floating-hover-card rotating-card gradient-cyan">
+    <div class="hover-card-image-wrapper">
+      <img src="https://placehold.co/600x400/222222/ffffff?text=Placeholder" alt="Community" class="floating-image"
+        id="community-image" style="filter: grayscale(100%) contrast(1.2);">
+    </div>
+
+    <!-- Top Pill: "Community" -->
+    <div class="hover-card-top">
+      <div class="card-top-pill">
+        <div class="pulsing-dot"></div>
+        <span>Community</span>
+      </div>
+    </div>
+
+    <div class="hover-card-content-stack">
+      <!-- Rotating Content Wrapper -->
+      <div class="rotating-text-wrapper">
+        <div class="rotating-content active" data-index="0"
+          data-image="https://placehold.co/600x400/222222/ffffff?text=Placeholder" data-gradient="gradient-cyan">
+          <div class="small-label">Achievement</div>
+          <div class="big-title">Hackathon Champion</div>
+          <div class="bottom-detail">DevFest & Startup Weekend winner.</div>
+        </div>
+        <div class="rotating-content" data-index="1"
+          data-image="https://placehold.co/600x400/222222/ffffff?text=Placeholder" data-gradient="gradient-purple">
+          <div class="small-label">Role</div>
+          <div class="big-title">Community Leader</div>
+          <div class="bottom-detail">Google Developer Groups volunteer.</div>
+        </div>
+        <div class="rotating-content" data-index="2"
+          data-image="https://placehold.co/600x400/222222/ffffff?text=Placeholder" data-gradient="gradient-green">
+          <div class="small-label">Activity</div>
+          <div class="big-title">Tech Speaker</div>
+          <div class="bottom-detail">Speaker & workshop facilitator.</div>
+        </div>
+      </div>
+
+      <!-- User Info -->
+      <div class="card-user-info">
+        <div class="user-profile">
+          <img src="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?q=80&w=100&auto=format&fit=crop"
+            class="user-avatar" alt="Vincent">
+          <div class="user-name">Vincent</div>
+        </div>
+        <div class="action-btn-icon">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2"
+            stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
+          </svg>
+        </div>
       </div>
     </div>
   </div>

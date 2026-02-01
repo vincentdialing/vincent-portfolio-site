@@ -57,6 +57,97 @@ async function fetchBrands() {
 // Call on load
 fetchBrands();
 
+// ==========================================
+// Dynamic Content: Fetch Location Card
+// ==========================================
+async function fetchLocationCard() {
+  const locationCard = document.getElementById('location-card');
+  if (!locationCard) return;
+
+  const { data, error } = await supabase
+    .from('location_card')
+    .select('label, title, description, image_url')
+    .limit(1)
+    .single();
+
+  if (error) {
+    console.error('Error fetching location card:', error);
+    return; // Keep default HTML content
+  }
+
+  if (data) {
+    // Update image
+    const image = locationCard.querySelector('.floating-image');
+    if (image && data.image_url) {
+      image.src = data.image_url;
+      image.alt = data.title;
+    }
+
+    // Update text content
+    const labelEl = locationCard.querySelector('.small-label');
+    const titleEl = locationCard.querySelector('.big-title');
+    const descEl = locationCard.querySelector('.bottom-detail');
+
+    if (labelEl) labelEl.textContent = data.label;
+    if (titleEl) titleEl.textContent = data.title;
+    if (descEl) descEl.textContent = data.description;
+  }
+}
+
+// ==========================================
+// Dynamic Content: Fetch Community Cards
+// ==========================================
+let communityCardsData = []; // Store fetched data for rotation
+
+async function fetchCommunityCards() {
+  const communityCard = document.getElementById('community-card');
+  if (!communityCard) return;
+
+  const { data, error } = await supabase
+    .from('community_cards')
+    .select('label, title, description, image_url, gradient_class')
+    .order('display_order', { ascending: true });
+
+  if (error) {
+    console.error('Error fetching community cards:', error);
+    return; // Keep default HTML content
+  }
+
+  if (data && data.length > 0) {
+    communityCardsData = data;
+
+    // Get the rotating text wrapper
+    const rotatingWrapper = communityCard.querySelector('.rotating-text-wrapper');
+    if (!rotatingWrapper) return;
+
+    // Clear existing content and build new rotating items
+    rotatingWrapper.innerHTML = data.map((item, index) => `
+      <div class="rotating-content ${index === 0 ? 'active' : ''}" 
+           data-index="${index}"
+           data-image="${item.image_url || 'https://placehold.co/600x400/222222/ffffff?text=Community'}"
+           data-gradient="${item.gradient_class || 'gradient-cyan'}">
+        <div class="small-label">${item.label}</div>
+        <div class="big-title">${item.title}</div>
+        <div class="bottom-detail">${item.description}</div>
+      </div>
+    `).join('');
+
+    // Set initial image and gradient
+    const image = communityCard.querySelector('.floating-image');
+    if (image && data[0].image_url) {
+      image.src = data[0].image_url;
+    }
+
+    // Set initial gradient
+    communityCard.className = communityCard.className.replace(/gradient-\w+/g, '').trim();
+    communityCard.classList.add(data[0].gradient_class || 'gradient-cyan');
+  }
+}
+
+// Call on load
+fetchLocationCard();
+fetchCommunityCards();
+
 // Glow Effect for Bento Cards
 // We update CSS variables --x and --y based on mouse position relative to the card
 const cards = document.querySelectorAll('.bento-card, .service-card');
@@ -681,27 +772,41 @@ function animateCards() {
 animateCards();
 
 
-// Rotate content for Community card every 3 seconds
+// Store last viewed index per card (persists between hovers)
+const cardContentIndices = {};
+
+// Rotate content for Community card every 8 seconds
 function startContentRotation(card) {
   const contents = card.querySelectorAll('.rotating-content');
   const image = card.querySelector('.floating-image');
   if (contents.length === 0) return;
 
-  let currentIndex = 0;
+  // Get or initialize the current index for this card
+  const cardId = card.id;
+  if (cardContentIndices[cardId] === undefined) {
+    cardContentIndices[cardId] = 0;
+  }
+  let currentIndex = cardContentIndices[cardId];
 
-  // Show first content and set initial gradient/image
+  // Show the remembered content (not always first)
   contents.forEach((content, i) => {
-    content.classList.toggle('active', i === 0);
+    content.classList.toggle('active', i === currentIndex);
   });
 
-  // Set initial gradient
-  const firstContent = contents[0];
-  if (firstContent.dataset.gradient) {
+  // Set gradient for current content
+  const currentContent = contents[currentIndex];
+  if (currentContent && currentContent.dataset.gradient) {
     card.className = card.className.replace(/gradient-\w+/g, '').trim();
-    card.classList.add(firstContent.dataset.gradient);
+    card.classList.add(currentContent.dataset.gradient);
   }
 
-  // Rotate every 3 seconds
+  // Set image to match current content
+  if (image && currentContent && currentContent.dataset.image) {
+    image.src = currentContent.dataset.image;
+    image.classList.remove('fade-out');
+  }
+
+  // Rotate every 8 seconds
   activeRotationInterval = setInterval(() => {
     // Fade out current
     contents[currentIndex].classList.remove('active');
@@ -714,6 +819,9 @@ function startContentRotation(card) {
     // Wait for fade out, then switch
     setTimeout(() => {
       currentIndex = (currentIndex + 1) % contents.length;
+      // Save the new index for next hover
+      cardContentIndices[cardId] = currentIndex;
+
       const nextContent = contents[currentIndex];
 
       // Change image
@@ -732,6 +840,6 @@ function startContentRotation(card) {
       nextContent.classList.add('active');
     }, 300);
 
-  }, 3000);
+  }, 8000);
 }
 

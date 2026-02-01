@@ -1764,9 +1764,23 @@ body {
 }
 
 /* Specific adjustment for the About section scroll position */
+/* This ensures the bento grid fills the viewport when clicking "About" */
 #about {
-  scroll-margin-top: 134px;
-  /* Proper offset for fixed navbar */
+  scroll-margin-top: calc(100vh - 100%);
+  /* Dynamic offset to center content in viewport */
+}
+
+/* Desktop/Tablet: Perfect viewport fill for About section */
+@media (min-width: 768px) {
+  #about {
+    scroll-margin-top: 130px;
+    /* Increased gap between navbar and content-sheet for equal spacing */
+  }
+
+  #works {
+    scroll-margin-top: 10px;
+    /* Same spacing as About section for consistency */
+  }
 }
 
 /* Adjusted Glass Horizon - Attached to content-sheet */
@@ -2014,34 +2028,33 @@ body {
 }
 
 .bottom-detail {
-  font-size: 0.6rem;
-  letter-spacing: 3px;
-  color: rgba(255, 255, 255, 0.7);
-  font-weight: 600;
-  text-transform: uppercase;
+  font-family: 'Inter', sans-serif;
+  font-size: 0.95rem;
+  line-height: 1.5;
+  color: rgba(255, 255, 255, 0.85);
+  font-weight: 400;
+  text-transform: none;
+  letter-spacing: normal;
   margin-top: 0.5rem;
 }
 
-/* Rotating content transition */
+/* Rotating content transition - Buttery Smooth */
 .rotating-content {
-  display: none;
-  animation: slideUpFade 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  opacity: 0;
+  transform: translateY(15px);
+  transition: opacity 0.5s cubic-bezier(0.22, 1, 0.36, 1),
+    transform 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+  pointer-events: none;
 }
 
 .rotating-content.active {
-  display: block;
-}
-
-@keyframes slideUpFade {
-  from {
-    opacity: 0;
-    transform: translateY(10px);
-  }
-
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
 }
 
 /* ==========================================
@@ -2093,12 +2106,14 @@ body {
   height: 100%;
   object-fit: cover;
   object-position: center top;
-  /* NO transform effects - just smooth opacity */
-  transition: opacity 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+  /* Buttery smooth transitions */
+  transition: opacity 0.6s cubic-bezier(0.22, 1, 0.36, 1),
+    transform 0.8s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .floating-image.fade-out {
   opacity: 0;
+  transform: scale(1.02);
 }
 
 /* ==========================================================================

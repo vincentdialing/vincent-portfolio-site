@@ -1866,6 +1866,9 @@ body {
 .ticker-item {
   display: inline-block;
   color: var(--color-accent);
+  padding: 0 1.5rem;
+  /* Small gap between logos */
+  margin: 0 0.5rem;
 }
 
 @keyframes marquee {

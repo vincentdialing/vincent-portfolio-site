@@ -848,6 +848,203 @@ nav.floating-nav {
   opacity: 1;
 }
 
+/* ==========================================
+   Bento Hover Transform - In-place Design Change
+   ========================================== */
+.bento-hover-transform {
+  position: relative;
+  overflow: hidden;
+}
+
+/* Normal State - Visible by default */
+.bento-normal-state {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  height: 100%;
+  transition: opacity 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+  z-index: 2;
+}
+
+/* Hover State - Hidden by default */
+.bento-hover-state {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  transition: opacity 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+  z-index: 3;
+  border-radius: inherit;
+  overflow: hidden;
+}
+
+/* Show hover state, hide normal state on hover */
+.bento-hover-transform:hover .bento-normal-state {
+  opacity: 0;
+}
+
+.bento-hover-transform:hover .bento-hover-state {
+  opacity: 1;
+}
+
+/* Background Image */
+.bento-hover-image {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  filter: grayscale(100%) contrast(1.2);
+  transition: opacity 0.5s ease-in-out, transform 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.bento-hover-image.fade-out {
+  opacity: 0;
+}
+
+.bento-hover-transform:hover .bento-hover-image {
+  transform: scale(1.05);
+}
+
+/* Gradient Overlay */
+.bento-hover-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg,
+      rgba(0, 10, 30, 0.2) 0%,
+      rgba(0, 50, 120, 0.5) 50%,
+      rgba(0, 100, 200, 0.9) 100%);
+  z-index: 1;
+  pointer-events: none;
+}
+
+/* Pill Badge - Top Left */
+.bento-hover-pill {
+  position: absolute;
+  top: 0.75rem;
+  left: 0.75rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  background: rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 50px;
+  padding: 0.35rem 0.75rem;
+  font-size: 0.7rem;
+  font-weight: 500;
+  color: white;
+  z-index: 10;
+}
+
+.bento-hover-pill .pulsing-dot {
+  width: 8px;
+  height: 8px;
+  background: #4ade80;
+  border-radius: 50%;
+  animation: pulse-dot 2s infinite;
+}
+
+@keyframes pulse-dot {
+
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0.5;
+  }
+}
+
+/* Content - Bottom */
+.bento-hover-content {
+  position: absolute;
+  bottom: 0.75rem;
+  left: 0.75rem;
+  right: 0.75rem;
+  z-index: 10;
+}
+
+.bento-hover-label {
+  font-size: 0.65rem;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.7);
+  margin-bottom: 0.3rem;
+}
+
+.bento-hover-title {
+  font-size: 1rem;
+  font-weight: 700;
+  color: white;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 0.2rem;
+  line-height: 1.2;
+}
+
+.bento-hover-desc {
+  font-size: 0.8rem;
+  font-weight: 400;
+  color: rgba(255, 255, 255, 0.85);
+  line-height: 1.4;
+}
+
+/* Rotating Content for Bento Cards */
+.bento-rotating-content {
+  position: absolute !important;
+  bottom: 0.75rem !important;
+  left: 0.75rem !important;
+  right: 0.75rem !important;
+  top: auto !important;
+}
+
+#community-bento-content .bento-rotating-item {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.5s ease-in-out, visibility 0.5s ease-in-out;
+  pointer-events: none;
+}
+
+#community-bento-content .bento-rotating-item.active {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+}
+
+/* Content Indicator Dots */
+.bento-content-indicator {
+  position: absolute;
+  bottom: 0.75rem;
+  right: 0.75rem;
+  display: flex;
+  gap: 6px;
+  z-index: 15;
+}
+
+.bento-indicator-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.35);
+  transition: all 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+  cursor: pointer;
+}
+
+.bento-indicator-dot.active {
+  background: rgba(255, 255, 255, 0.95);
+  transform: scale(1.3);
+}
+
+.bento-indicator-dot:hover {
+  background: rgba(255, 255, 255, 0.7);
+}
+
 .service-icon,
 .service-card h3,
 .service-card p {

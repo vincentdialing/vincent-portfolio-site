@@ -140,18 +140,42 @@
       <section class="about-section">
         <div class="container">
           <div class="services-grid">
-            <!-- Location -->
-            <div class="service-card hover-card-trigger" data-hover-card="location-card">
-              <div class="service-icon icon-animate-scroll icon-bounce">
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
-                  stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
-                  <circle cx="12" cy="10" r="3"></circle>
-                </svg>
+            <!-- Location - Hover Transform Card -->
+            <div class="service-card bento-hover-transform" id="location-bento">
+              <!-- Normal State (visible by default) -->
+              <div class="bento-normal-state">
+                <div class="service-icon icon-animate-scroll icon-bounce">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                    <circle cx="12" cy="10" r="3"></circle>
+                  </svg>
+                </div>
+                <div class="service-card-text">
+                  <h3>Based In</h3>
+                  <p>Davao City, Philippines</p>
+                </div>
               </div>
-              <div class="service-card-text">
-                <h3>Based In</h3>
-                <p>Davao City, Philippines</p>
+
+              <!-- Hover State (hidden by default, shown on hover) -->
+              <div class="bento-hover-state">
+                <!-- Background Image -->
+                <img src="https://placehold.co/600x400/222222/ffffff?text=Davao+City" alt="Davao City"
+                  class="bento-hover-image" id="location-bento-image">
+                <!-- Gradient Overlay -->
+                <div class="bento-hover-overlay"></div>
+                <!-- Pill Badge -->
+                <div class="bento-hover-pill">
+                  <div class="pulsing-dot"></div>
+                  <span>Based In</span>
+                </div>
+                <!-- Content -->
+                <div class="bento-hover-content">
+                  <div class="bento-hover-label" id="location-bento-label">Location</div>
+                  <div class="bento-hover-title" id="location-bento-title">Davao City</div>
+                  <div class="bento-hover-desc" id="location-bento-desc">Philippines' safest city & innovation hub.
+                  </div>
+                </div>
               </div>
             </div>
 
@@ -238,27 +262,61 @@
               </div>
             </div>
 
-            <!-- Adventures (Wide) -->
-            <div class="service-card service-card-wide hover-card-trigger" data-hover-card="community-card">
-              <div class="service-icon icon-animate-scroll icon-bounce-subtle">
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
-                  stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"></path>
-                  <path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"></path>
-                  <path d="M4 22h16"></path>
-                  <path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"></path>
-                  <path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"></path>
-                  <path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"></path>
-                </svg>
+            <!-- Community & Growth - Hover Transform Card with Rotating Content -->
+            <div class="service-card service-card-wide bento-hover-transform bento-rotating" id="community-bento">
+              <!-- Normal State (visible by default) -->
+              <div class="bento-normal-state">
+                <div class="service-icon icon-animate-scroll icon-bounce-subtle">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"></path>
+                    <path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"></path>
+                    <path d="M4 22h16"></path>
+                    <path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"></path>
+                    <path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"></path>
+                    <path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"></path>
+                  </svg>
+                </div>
+                <div class="service-card-text">
+                  <h3>Community & Growth</h3>
+                  <p>I enjoy hackathons and volunteering.</p>
+                </div>
               </div>
-              <div class="service-card-text">
-                <h3>Community & Growth</h3>
-                <p>I enjoy hackathons and volunteering.</p>
+
+              <!-- Hover State with Rotating Content -->
+              <div class="bento-hover-state">
+                <!-- Background Image -->
+                <img src="https://placehold.co/600x400/222222/ffffff?text=Community" alt="Community"
+                  class="bento-hover-image" id="community-bento-image">
+                <!-- Gradient Overlay -->
+                <div class="bento-hover-overlay"></div>
+                <!-- Pill Badge -->
+                <div class="bento-hover-pill">
+                  <div class="pulsing-dot"></div>
+                  <span>Community</span>
+                </div>
+                <!-- Content Indicator Dots -->
+                <div class="bento-content-indicator" id="community-indicator">
+                  <!-- Dots will be generated by JS -->
+                </div>
+                <!-- Rotating Content Container -->
+                <div class="bento-hover-content bento-rotating-content" id="community-bento-content">
+                  <!-- Content will be populated by JS -->
+                  <div class="bento-rotating-item active" data-index="0">
+                    <div class="bento-hover-label">Achievement</div>
+                    <div class="bento-hover-title">Hackathon Champion</div>
+                    <div class="bento-hover-desc">DevFest & Startup Weekend winner.</div>
+                  </div>
+                  <div class="bento-rotating-item" data-index="1">
+                    <div class="bento-hover-label">Role</div>
+                    <div class="bento-hover-title">Community Leader</div>
+                    <div class="bento-hover-desc">Google Developer Groups volunteer.</div>
+                  </div>
+                </div>
               </div>
             </div>
 
-            <!-- Floating Hover Card for Community (Rotating Content) -->
-            <!-- Floating Hover Card Removed (Moved to body) -->
+            <!-- Floating Hover Card Removed (Using in-place transformation now) -->
           </div>
         </div>
       </section>

@@ -58,11 +58,12 @@ async function fetchBrands() {
 fetchBrands();
 
 // ==========================================
-// Dynamic Content: Fetch Location Card
+// Dynamic Content: Fetch Location Card (Bento Hover Transform)
 // ==========================================
 async function fetchLocationCard() {
-  const locationCard = document.getElementById('location-card');
-  if (!locationCard) return;
+  // Target the new bento hover transform card
+  const locationBento = document.getElementById('location-bento');
+  if (!locationBento) return;
 
   const { data, error } = await supabase
     .from('location_card')
@@ -76,18 +77,16 @@ async function fetchLocationCard() {
   }
 
   if (data) {
-    // Update image
-    const image = locationCard.querySelector('.floating-image');
+    // Update bento hover state elements
+    const image = document.getElementById('location-bento-image');
+    const labelEl = document.getElementById('location-bento-label');
+    const titleEl = document.getElementById('location-bento-title');
+    const descEl = document.getElementById('location-bento-desc');
+
     if (image && data.image_url) {
       image.src = data.image_url;
       image.alt = data.title;
     }
-
-    // Update text content
-    const labelEl = locationCard.querySelector('.small-label');
-    const titleEl = locationCard.querySelector('.big-title');
-    const descEl = locationCard.querySelector('.bottom-detail');
-
     if (labelEl) labelEl.textContent = data.label;
     if (titleEl) titleEl.textContent = data.title;
     if (descEl) descEl.textContent = data.description;
@@ -95,13 +94,15 @@ async function fetchLocationCard() {
 }
 
 // ==========================================
-// Dynamic Content: Fetch Community Cards
+// Dynamic Content: Fetch Community Cards (Bento Hover Transform)
 // ==========================================
 let communityCardsData = []; // Store fetched data for rotation
+let communityRotationInterval = null;
+let communityCurrentIndex = 0;
 
 async function fetchCommunityCards() {
-  const communityCard = document.getElementById('community-card');
-  if (!communityCard) return;
+  const communityBento = document.getElementById('community-bento');
+  if (!communityBento) return;
 
   const { data, error } = await supabase
     .from('community_cards')
@@ -116,37 +117,176 @@ async function fetchCommunityCards() {
   if (data && data.length > 0) {
     communityCardsData = data;
 
-    // Get the rotating text wrapper
-    const rotatingWrapper = communityCard.querySelector('.rotating-text-wrapper');
-    if (!rotatingWrapper) return;
+    // Get the rotating content container
+    const rotatingContainer = document.getElementById('community-bento-content');
+    if (!rotatingContainer) return;
 
     // Clear existing content and build new rotating items
-    rotatingWrapper.innerHTML = data.map((item, index) => `
-      <div class="rotating-content ${index === 0 ? 'active' : ''}" 
+    rotatingContainer.innerHTML = data.map((item, index) => `
+      <div class="bento-rotating-item ${index === 0 ? 'active' : ''}" 
            data-index="${index}"
-           data-image="${item.image_url || 'https://placehold.co/600x400/222222/ffffff?text=Community'}"
-           data-gradient="${item.gradient_class || 'gradient-cyan'}">
-        <div class="small-label">${item.label}</div>
-        <div class="big-title">${item.title}</div>
-        <div class="bottom-detail">${item.description}</div>
+           data-image="${item.image_url || 'https://placehold.co/600x400/222222/ffffff?text=Community'}">
+        <div class="bento-hover-label">${item.label}</div>
+        <div class="bento-hover-title">${item.title}</div>
+        <div class="bento-hover-desc">${item.description}</div>
       </div>
     `).join('');
 
-    // Set initial image and gradient
-    const image = communityCard.querySelector('.floating-image');
+    // Set initial image
+    const image = document.getElementById('community-bento-image');
     if (image && data[0].image_url) {
       image.src = data[0].image_url;
     }
+  }
+}
 
-    // Set initial gradient
-    communityCard.className = communityCard.className.replace(/gradient-\w+/g, '').trim();
-    communityCard.classList.add(data[0].gradient_class || 'gradient-cyan');
+// Start rotation when hovering on community bento card
+function initCommunityBentoRotation() {
+  const communityBento = document.getElementById('community-bento');
+  if (!communityBento) return;
+
+  communityBento.addEventListener('mouseenter', () => {
+    startBentoRotation();
+  });
+
+  communityBento.addEventListener('mouseleave', () => {
+    stopBentoRotation();
+  });
+}
+
+function generateIndicatorDots() {
+  const items = document.querySelectorAll('#community-bento-content .bento-rotating-item');
+  const indicator = document.getElementById('community-indicator');
+  if (!indicator || items.length <= 1) return;
+
+  // Generate dots based on number of items
+  indicator.innerHTML = Array.from(items).map((_, i) =>
+    `<div class="bento-indicator-dot ${i === communityCurrentIndex ? 'active' : ''}" data-index="${i}"></div>`
+  ).join('');
+
+  // Add click handlers to dots
+  indicator.querySelectorAll('.bento-indicator-dot').forEach(dot => {
+    dot.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const newIndex = parseInt(dot.dataset.index);
+      if (newIndex !== communityCurrentIndex) {
+        switchToContent(newIndex);
+      }
+    });
+  });
+}
+
+function updateIndicatorDots() {
+  const dots = document.querySelectorAll('#community-indicator .bento-indicator-dot');
+  dots.forEach((dot, i) => {
+    dot.classList.toggle('active', i === communityCurrentIndex);
+  });
+}
+
+function switchToContent(newIndex) {
+  const items = document.querySelectorAll('#community-bento-content .bento-rotating-item');
+  const image = document.getElementById('community-bento-image');
+
+  // Stop current rotation
+  stopBentoRotation();
+
+  // Remove active from ALL items first to ensure clean state
+  items.forEach(item => item.classList.remove('active'));
+
+  if (image) image.classList.add('fade-out');
+
+  setTimeout(() => {
+    communityCurrentIndex = newIndex;
+    const nextItem = items[communityCurrentIndex];
+
+    // Change image
+    if (image && nextItem.dataset.image) {
+      image.src = nextItem.dataset.image;
+      image.classList.remove('fade-out');
+    }
+
+    // Add active only to the new item
+    nextItem.classList.add('active');
+    updateIndicatorDots();
+
+    // Restart rotation after switch completes
+    restartRotationTimer();
+  }, 350);
+}
+
+function restartRotationTimer() {
+  const items = document.querySelectorAll('#community-bento-content .bento-rotating-item');
+  const image = document.getElementById('community-bento-image');
+  if (items.length === 0) return;
+
+  // Start rotation every 8 seconds
+  communityRotationInterval = setInterval(() => {
+    // Remove active from ALL items
+    items.forEach(item => item.classList.remove('active'));
+
+    // Fade out image
+    if (image) image.classList.add('fade-out');
+
+    setTimeout(() => {
+      communityCurrentIndex = (communityCurrentIndex + 1) % items.length;
+      const nextItem = items[communityCurrentIndex];
+
+      // Change image
+      if (image && nextItem.dataset.image) {
+        image.src = nextItem.dataset.image;
+        image.classList.remove('fade-out');
+      }
+
+      nextItem.classList.add('active');
+      updateIndicatorDots();
+    }, 350);
+  }, 8000);
+}
+
+let indicatorDotsGenerated = false;
+
+function startBentoRotation() {
+  const items = document.querySelectorAll('#community-bento-content .bento-rotating-item');
+  const image = document.getElementById('community-bento-image');
+  if (items.length === 0) return;
+
+  // Generate indicator dots only once
+  if (!indicatorDotsGenerated) {
+    generateIndicatorDots();
+    indicatorDotsGenerated = true;
+  }
+
+  // Ensure only ONE item has active class
+  items.forEach((item, i) => {
+    if (i === communityCurrentIndex) {
+      item.classList.add('active');
+    } else {
+      item.classList.remove('active');
+    }
+  });
+  updateIndicatorDots();
+
+  // Set current image
+  const currentItem = items[communityCurrentIndex];
+  if (image && currentItem && currentItem.dataset.image) {
+    image.src = currentItem.dataset.image;
+  }
+
+  // Start rotation timer
+  restartRotationTimer();
+}
+
+function stopBentoRotation() {
+  if (communityRotationInterval) {
+    clearInterval(communityRotationInterval);
+    communityRotationInterval = null;
   }
 }
 
 // Call on load
 fetchLocationCard();
 fetchCommunityCards();
+initCommunityBentoRotation();
 
 // Glow Effect for Bento Cards
 // We update CSS variables --x and --y based on mouse position relative to the card

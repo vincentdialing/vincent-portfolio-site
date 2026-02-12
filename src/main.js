@@ -991,3 +991,31 @@ function startContentRotation(card) {
   }, 8000);
 }
 
+// ==========================================
+// CTA Book a Call Button — Cursor-Following Gradient
+// (Same effect as hero Speak with Vincent button)
+// ==========================================
+const ctaBtn = document.querySelector('.cta-spotlight-btn');
+if (ctaBtn) {
+  let ctaTargetX = 0, ctaTargetY = 0;
+  let ctaCurrentX = 0, ctaCurrentY = 0;
+  const ctaEase = 0.08;
+
+  document.addEventListener('mousemove', (e) => {
+    const rect = ctaBtn.getBoundingClientRect();
+    ctaTargetX = e.clientX - rect.left;
+    ctaTargetY = e.clientY - rect.top;
+  });
+
+  const animateCtaGradient = () => {
+    ctaCurrentX += (ctaTargetX - ctaCurrentX) * ctaEase;
+    ctaCurrentY += (ctaTargetY - ctaCurrentY) * ctaEase;
+
+    ctaBtn.style.setProperty('--x', `${ctaCurrentX}px`);
+    ctaBtn.style.setProperty('--y', `${ctaCurrentY}px`);
+
+    requestAnimationFrame(animateCtaGradient);
+  };
+
+  animateCtaGradient();
+}

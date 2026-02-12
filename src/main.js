@@ -1,6 +1,14 @@
 import { supabase } from './supabaseClient.js'
 import { speakWithElevenLabs } from './elevenLabsTTS.js'
+import { initPortfolioDrilldown } from './portfolioDrilldown.js'
 import './style.css'
+
+// Initialize Portfolio Drill-down after DOM is ready
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initPortfolioDrilldown);
+} else {
+  initPortfolioDrilldown();
+}
 
 // ==========================================
 // Page Loader Logic

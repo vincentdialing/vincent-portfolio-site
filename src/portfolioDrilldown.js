@@ -512,8 +512,8 @@ function goBackToLevel2() {
             tile.classList.add('drilldown-tile-enter');
         });
 
-        // Scroll back to the tile that was clicked
-        scrollToTile(lastClickedTileIndex);
+        // Scroll back to the top of the section (default position)
+        scrollToSectionTop();
 
         setTimeout(() => {
             isAnimating = false;
@@ -560,10 +560,9 @@ function goBackToLevel1() {
             }, i * 60);
         });
 
-        // Scroll back to the card that was clicked
-        scrollToCard(lastClickedCardIndex);
-
+        // Scroll to the clicked card AFTER animations complete
         setTimeout(() => {
+            scrollToCard(lastClickedCardIndex);
             // Clean up inline styles
             cards.forEach(card => {
                 card.style.transition = '';
@@ -571,7 +570,7 @@ function goBackToLevel1() {
                 card.style.transform = '';
             });
             isAnimating = false;
-        }, 600 + (cards.length * 60));
+        }, 200 + (cards.length * 60));
     }, 350);
 }
 

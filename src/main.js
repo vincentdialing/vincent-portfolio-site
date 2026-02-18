@@ -1145,30 +1145,38 @@ function startContentRotation(card) {
 }
 
 // ==========================================
-// CTA Book a Call Button — Cursor-Following Gradient
-// (Same effect as hero Speak with Vincent button)
+// Cursor-following gradient buttons
+// (CTA + navbar Contact pill share the same effect)
 // ==========================================
 const ctaBtn = document.querySelector('.cta-spotlight-btn');
-if (ctaBtn) {
-  let ctaTargetX = 0, ctaTargetY = 0;
-  let ctaCurrentX = 0, ctaCurrentY = 0;
-  const ctaEase = 0.08;
+const navContactBtn = document.querySelector('.nav-contact-pill');
+
+const attachCursorGradient = (element, ease = 0.08) => {
+  if (!element) return;
+
+  let targetX = 0;
+  let targetY = 0;
+  let currentX = 0;
+  let currentY = 0;
 
   document.addEventListener('mousemove', (e) => {
-    const rect = ctaBtn.getBoundingClientRect();
-    ctaTargetX = e.clientX - rect.left;
-    ctaTargetY = e.clientY - rect.top;
+    const rect = element.getBoundingClientRect();
+    targetX = e.clientX - rect.left;
+    targetY = e.clientY - rect.top;
   });
 
-  const animateCtaGradient = () => {
-    ctaCurrentX += (ctaTargetX - ctaCurrentX) * ctaEase;
-    ctaCurrentY += (ctaTargetY - ctaCurrentY) * ctaEase;
+  const animate = () => {
+    currentX += (targetX - currentX) * ease;
+    currentY += (targetY - currentY) * ease;
 
-    ctaBtn.style.setProperty('--x', `${ctaCurrentX}px`);
-    ctaBtn.style.setProperty('--y', `${ctaCurrentY}px`);
+    element.style.setProperty('--x', `${currentX}px`);
+    element.style.setProperty('--y', `${currentY}px`);
 
-    requestAnimationFrame(animateCtaGradient);
+    requestAnimationFrame(animate);
   };
 
-  animateCtaGradient();
-}
+  animate();
+};
+
+attachCursorGradient(ctaBtn, 0.08);
+attachCursorGradient(navContactBtn, 0.12);

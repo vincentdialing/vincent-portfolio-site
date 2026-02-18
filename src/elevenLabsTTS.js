@@ -1,7 +1,9 @@
 // ElevenLabs Text-to-Speech Service with Streaming
 const ELEVENLABS_API_KEY = '5710f39af47a45a7a9e7558acb34d2be3ef5613538c949cef23e4f30580bb0cd';
 
-// User's selected voice
+// User's selected ElevenLabs voice.
+// Tip: replace this ID in your own project with a
+// Filipino / Taglish, young-male style voice from your ElevenLabs account.
 const VOICE_ID = 'wNl2YBRc8v5uIcq6gOxd';
 
 /**
@@ -80,6 +82,26 @@ function fallbackSpeak(text, onEnd) {
     console.log('🎤 Using fallback browser speech...');
     if ('speechSynthesis' in window) {
         const utterance = new SpeechSynthesisUtterance(text);
+        // Prefer a Filipino / Taglish, young-male style voice if available
+        const voices = window.speechSynthesis.getVoices();
+        const preferred = voices.find(v =>
+            /fil|ph|tagalog/i.test(v.lang || '') &&
+            /male|guy|boy/i.test(v.name || '')
+        ) || voices.find(v =>
+            /en-PH/i.test(v.lang || '') &&
+            /male|guy|boy/i.test(v.name || '')
+        ) || voices.find(v =>
+            /en/i.test(v.lang || '') &&
+            /male|guy|boy|young/i.test(v.name || '')
+        );
+
+        if (preferred) {
+            utterance.voice = preferred;
+        }
+
+        // Slightly higher pitch + a bit faster rate to feel like early 20s
+        utterance.pitch = 1.15;
+        utterance.rate = 1.05;
         utterance.onend = () => {
             if (onEnd) onEnd();
         };

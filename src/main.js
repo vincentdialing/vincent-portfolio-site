@@ -329,6 +329,84 @@ const observer = new IntersectionObserver((entries) => {
 // Add initial styles for animation to targeted elements if needed
 // For now, we rely on CSS transitions defined in style.css or added classes
 
+// ==========================================
+// Certificates: tile click -> modal preview
+// ==========================================
+const certificateTiles = document.querySelectorAll('.certificate-tile');
+const certificateModal = document.getElementById('certificate-modal');
+const certificateModalImage = document.getElementById('certificate-modal-image');
+const certificateModalTitle = document.getElementById('certificate-modal-title');
+const certificateModalIssuer = document.getElementById('certificate-modal-issuer');
+const certificateModalDate = document.getElementById('certificate-modal-date');
+const certificateModalLink = document.getElementById('certificate-modal-link');
+const certificateModalClose = certificateModal ? certificateModal.querySelector('.certificate-modal-close') : null;
+
+let lastFocusedTile = null;
+
+function openCertificateModal(tile) {
+  if (!certificateModal || !certificateModalImage || !certificateModalTitle) return;
+
+  lastFocusedTile = tile;
+
+  const fullImage = tile.dataset.image;
+  const title = tile.dataset.title || '';
+  const issuer = tile.dataset.issuer || '';
+  const date = tile.dataset.date || '';
+  const link = tile.dataset.link || '#';
+
+  certificateModalImage.src = fullImage || tile.querySelector('img')?.src || '';
+  certificateModalImage.alt = title;
+  certificateModalTitle.textContent = title;
+  if (certificateModalIssuer) certificateModalIssuer.textContent = issuer;
+  if (certificateModalDate) certificateModalDate.textContent = date;
+  if (certificateModalLink) {
+    certificateModalLink.href = link || '#';
+    certificateModalLink.style.display = link && link !== '#' ? 'inline-flex' : 'none';
+  }
+
+  certificateModal.classList.add('is-open');
+  certificateModal.setAttribute('aria-hidden', 'false');
+}
+
+function closeCertificateModal() {
+  if (!certificateModal) return;
+  certificateModal.classList.remove('is-open');
+  certificateModal.setAttribute('aria-hidden', 'true');
+
+  if (lastFocusedTile) {
+    lastFocusedTile.focus();
+    lastFocusedTile = null;
+  }
+}
+
+if (certificateTiles.length && certificateModal) {
+  certificateTiles.forEach(tile => {
+    tile.addEventListener('click', () => openCertificateModal(tile));
+    tile.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        openCertificateModal(tile);
+      }
+    });
+  });
+
+  if (certificateModalClose) {
+    certificateModalClose.addEventListener('click', closeCertificateModal);
+  }
+
+  certificateModal.addEventListener('click', (e) => {
+    if (e.target === certificateModal || e.target.classList.contains('certificate-modal-backdrop')) {
+      closeCertificateModal();
+    }
+  });
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && certificateModal.classList.contains('is-open')) {
+      closeCertificateModal();
+    }
+  });
+}
+
 // Hero Cursor Follower & WebGL Orb
 // import { ThreeOrb } from './components/ThreeOrb.js';
 import { SiriWave } from './components/SiriWave.js';
@@ -570,7 +648,7 @@ const speak = (text, onShowText) => {
 };
 
 // ------------------------------------------
-// Knowledge Base (Scoped to Website Content)
+// Knowledge Base + Live Site Content Index
 // ------------------------------------------
 const knowledgeBase = {
   greetings: ["hello", "hi", "hey", "greetings"],
@@ -581,26 +659,101 @@ const knowledgeBase = {
   about: ["about", "who", "vincent", "background", "experience"]
 };
 
-// Responses strictly based on website content (First-Person Persona)
+// Base responses (used when no good match from scraped content)
 const responses = {
   default: "I can answer questions about my work, skills, or how we can collaborate. What would you like to know?",
   greetings: "Hi there! I'm Vincent. I can tell you about my skills, show you my focused projects, or we can discuss working together.",
-  skills: "I specialize in React, TypeScript, and Modern CSS for development. For design, I use Figma and Adobe Creative Suite.",
-  projects: "My featured work includes a React E-Commerce Platform, Brand Identity Designs, and Social Media Campaigns.",
-  contact: "You can reach me via the contact form below, or connect with me on LinkedIn and GitHub found in the footer.",
-  services: "I offer Front-End Development, Graphic Design, and Digital Marketing services to bridge the gap between code and strategy.",
-  about: "I'm a multi-disciplinary creative: Frontend Developer, Graphic Designer, and Digital Marketer focused on building premium digital experiences."
+  skills: "I specialize in React, TypeScript, and modern CSS for development. For design, I use tools like Figma and Adobe Creative Suite.",
+  projects: "My featured work includes content design, video editing, UI/UX design, web development, and more — all showcased on this page.",
+  contact: "You can reach me via the “Let’s get in touch” section or connect with me on LinkedIn and GitHub in the footer.",
+  services: "I offer a mix of front-end development, UI/UX, graphic design, and digital marketing so I can help from strategy to execution.",
+  about: "I'm a multi-disciplinary creative based in Davao City who blends design, development, and marketing to build premium digital experiences."
+};
+
+// Lightweight index of text scraped from the live page
+let contentIndex = [];
+
+const buildContentIndex = () => {
+  const sectionConfigs = [
+    { id: 'about', label: 'About', selector: '.about-section' },
+    { id: 'works', label: 'Works', selector: '#works' },
+    { id: 'certificates', label: 'Certificates', selector: '#certificates' },
+    { id: 'testimonials', label: 'Testimonials', selector: '#testimonials' },
+    { id: 'contact', label: 'Contact', selector: '#contact' }
+  ];
+
+  contentIndex = [];
+
+  sectionConfigs.forEach(cfg => {
+    const root = document.querySelector(cfg.selector);
+    if (!root) return;
+
+    const paragraphs = Array.from(root.querySelectorAll('p, h2, h3'))
+      .map(node => node.innerText || node.textContent || '')
+      .map(text => text.trim())
+      .filter(text => text.length > 40);
+
+    paragraphs.forEach(text => {
+      contentIndex.push({
+        sectionId: cfg.id,
+        sectionLabel: cfg.label,
+        text
+      });
+    });
+  });
+};
+
+// Build index once DOM is ready so AI reflects current on-page content
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', buildContentIndex);
+} else {
+  buildContentIndex();
+}
+
+const findFromContentIndex = (query) => {
+  if (!contentIndex.length) return null;
+
+  const q = query.toLowerCase();
+  const tokens = q.split(/\s+/).filter(Boolean);
+  let best = null;
+  let bestScore = 0;
+
+  contentIndex.forEach(entry => {
+    const textLower = entry.text.toLowerCase();
+    let score = 0;
+
+    tokens.forEach(t => {
+      if (t.length < 3) return;
+      if (textLower.includes(t)) score += 1;
+    });
+
+    if (score > bestScore) {
+      bestScore = score;
+      best = entry;
+    }
+  });
+
+  if (!best || bestScore === 0) return null;
+  return best.text;
 };
 
 const findAnswer = (query) => {
-  query = query.toLowerCase();
+  const lowered = query.toLowerCase();
 
-  // Simple keyword matching against knowledge base
+  // 1) Try simple intent-based shortcuts (greetings, contact, etc.)
   for (const [category, keywords] of Object.entries(knowledgeBase)) {
-    if (keywords.some(k => query.includes(k))) {
+    if (keywords.some(k => lowered.includes(k))) {
       return responses[category];
     }
   }
+
+  // 2) If no intent match, try to answer directly from scraped site content
+  const scraped = findFromContentIndex(query);
+  if (scraped) {
+    return scraped;
+  }
+
+  // 3) Fallback generic answer
   return responses.default;
 };
 

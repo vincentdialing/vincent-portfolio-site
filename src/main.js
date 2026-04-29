@@ -31,6 +31,76 @@ setTimeout(() => {
   }
 }, 3000);
 
+// ==========================================
+// Hero Role & Description Text Rotation (Simple Fade)
+// ==========================================
+const rolesData = [
+  {
+    role: "Creative Developer",
+    desc: "I build interactive, high-performance web experiences that blend modern code with stunning aesthetics."
+  },
+  {
+    role: "UI/UX Designer",
+    desc: "I craft intuitive, user-centric interfaces focused on engaging user journeys and seamless interactions."
+  },
+  {
+    role: "Graphic Designer",
+    desc: "I create compelling visuals and brand identities that communicate your message with impact and style."
+  },
+  {
+    role: "Video Editor",
+    desc: "I produce dynamic, engaging video content tailored for modern platforms, from cutting to post-production."
+  },
+  {
+    role: "Social Media Manager",
+    desc: "I strategize, manage, and grow digital communities with data-driven content and engaging campaigns."
+  },
+  {
+    role: "Digital Marketer",
+    desc: "I drive growth through targeted campaigns, SEO optimization, and strategic online marketing initiatives."
+  }
+];
+
+let roleIndex = 0;
+const heroRoleEl = document.getElementById('hero-role');
+const heroDescEl = document.getElementById('hero-desc');
+
+if (heroRoleEl && heroDescEl) {
+  heroRoleEl.style.transition = 'opacity 0.8s ease-in-out';
+  heroDescEl.style.transition = 'opacity 0.8s ease-in-out';
+  
+  // Set the initial description on load
+  heroDescEl.textContent = rolesData[0].desc;
+  
+  // Fix for Vite HMR stacking intervals
+  if (window.heroRotationInterval) {
+    clearInterval(window.heroRotationInterval);
+  }
+  
+  window.heroRotationInterval = setInterval(() => {
+    // Fade out both
+    heroRoleEl.style.opacity = '0';
+    heroDescEl.style.opacity = '0';
+    
+    setTimeout(() => {
+      roleIndex = (roleIndex + 1) % rolesData.length;
+      
+      // Update both text contents at the same time so layout adjusts while invisible
+      heroRoleEl.textContent = rolesData[roleIndex].role;
+      heroDescEl.textContent = rolesData[roleIndex].desc;
+      
+      // Fade in the Role immediately
+      heroRoleEl.style.opacity = '1';
+      
+      // Delay the Description fade-in by 600ms
+      setTimeout(() => {
+        heroDescEl.style.opacity = '1';
+      }, 600);
+      
+    }, 800); // Wait for fade out to finish
+  }, 8000); // 8 seconds pacing
+}
+
 // Dynamic Content: Fetch Brands
 async function fetchBrands() {
   const tickerContent = document.getElementById('ticker-content');

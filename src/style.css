@@ -81,6 +81,10 @@ a:hover {
   color: var(--color-accent);
 }
 
+#hero-role {
+  white-space: nowrap;
+}
+
 .text-center {
   text-align: center;
 }
@@ -416,10 +420,9 @@ nav.floating-nav {
 }
 
 .hero-heading {
-  max-width: 13ch;
+  max-width: 100%;
   margin-left: auto;
   margin-right: auto;
-  text-wrap: balance;
 }
 
 .hero-lead {
@@ -676,6 +679,15 @@ nav.floating-nav {
     padding-right: 0.875rem;
   }
 
+  .projects-section .container,
+  .certificates-section .container,
+  .testimonials-section .container,
+  .cta-spotlight-section .container,
+  .contact-section .container,
+  .footer-bar .container {
+    max-width: 1080px;
+  }
+
   nav.floating-nav {
     top: 1.45rem;
   }
@@ -862,7 +874,7 @@ nav.floating-nav {
   }
 
   .project-image {
-    height: 205px;
+    height: 190px;
   }
 
   .project-category,
@@ -886,14 +898,15 @@ nav.floating-nav {
 
   .project-card h3,
   .portfolio-tile-title {
-    font-size: 1.35rem;
+    font-size: 1.25rem;
     margin-bottom: 0.6rem;
   }
 
   .project-card p,
   .portfolio-tile-desc {
-    font-size: 0.85rem;
-    margin-bottom: 1rem;
+    font-size: 0.82rem;
+    line-height: 1.45;
+    margin-bottom: 0.9rem;
   }
 
   .case-study-result {
@@ -904,6 +917,14 @@ nav.floating-nav {
   .certificates-grid,
   .testimonials-grid {
     margin-top: 2.2rem;
+  }
+
+  .certificates-grid {
+    gap: 0.9rem;
+  }
+
+  .certificate-tile {
+    border-radius: 14px;
   }
 
   .testimonial-card {
@@ -1043,6 +1064,125 @@ nav.floating-nav {
   .footer-bar-col ul li a,
   .footer-bar-col-title {
     font-size: 0.82rem;
+  }
+}
+
+@media (min-width: 1024px) and (max-width: 1512px) {
+
+  .content-sheet,
+  .projects-section .container,
+  .certificates-section .container,
+  .testimonials-section .container,
+  .cta-spotlight-section .container,
+  .contact-section .container,
+  .footer-bar .container {
+    max-width: 780px;
+    /* Big padding */
+  }
+
+  .content-sheet {
+    padding: 1.2rem;
+    border-radius: 28px;
+  }
+
+  .services-grid,
+  .projects-grid,
+  .certificates-grid,
+  .testimonials-grid,
+  .drilldown-level2,
+  .contact-grid {
+    gap: 0.6rem;
+  }
+
+  .service-card {
+    min-height: 110px;
+    padding: 0.75rem;
+  }
+
+  .service-card h3 {
+    font-size: 0.85rem;
+    margin-bottom: 0.15rem;
+  }
+
+  .service-card p {
+    font-size: 0.65rem;
+    line-height: 1.25;
+  }
+
+  .service-icon {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    margin-bottom: 0.4rem;
+  }
+
+  .service-icon svg {
+    width: 16px;
+    height: 16px;
+  }
+
+  .project-image,
+  .portfolio-tile-image {
+    height: 130px;
+  }
+
+  .project-details,
+  .portfolio-tile-content,
+  .testimonial-card,
+  .contact-form,
+  .contact-info,
+  .detail-body {
+    padding: 0.85rem;
+  }
+
+  .project-card h3,
+  .portfolio-tile-title {
+    font-size: 0.95rem;
+    margin-bottom: 0.4rem;
+  }
+
+  .project-card p,
+  .portfolio-tile-desc,
+  .testimonial-text,
+  .contact-form p,
+  .contact-info p,
+  .contact-method-text,
+  .contact-method-label,
+  .detail-text {
+    font-size: 0.68rem;
+    line-height: 1.35;
+    margin-bottom: 0.6rem;
+  }
+
+  .chip {
+    font-size: 0.6rem;
+    padding: 0.15rem 0.45rem;
+  }
+
+  .case-study-result {
+    font-size: 0.65rem;
+    padding: 0.35rem 0.55rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .cta-spotlight-section {
+    min-height: 40vh;
+    padding: 3.5rem 0;
+  }
+
+  .cta-spotlight-heading {
+    font-size: 2.8rem;
+    margin-bottom: 1.2rem;
+  }
+
+  .cta-spotlight-btn {
+    font-size: 0.85rem;
+    padding: 10px 24px;
+  }
+
+  .footer-bar {
+    padding-top: 3rem;
+    padding-bottom: 2.2rem;
   }
 }
 
@@ -4194,4 +4334,211 @@ body {
   transform: translateY(0);
   pointer-events: auto;
   z-index: 5;
+}
+
+/* --- EXAGGERATED 13-14 INCH LAPTOP SCALING --- */
+@media (min-width: 1024px) and (max-width: 1536px) {
+
+  .content-sheet,
+  .projects-section .container,
+  .certificates-section .container,
+  .testimonials-section .container,
+  .cta-spotlight-section .container,
+  .contact-section .container,
+  .footer-bar .container {
+    max-width: 800px !important;
+  }
+
+  .content-sheet {
+    padding: 1.2rem !important;
+    border-radius: 20px !important;
+  }
+
+  .services-grid,
+  .projects-grid,
+  .certificates-grid,
+  .testimonials-grid,
+  .drilldown-level2,
+  .contact-grid {
+    gap: 1.2rem !important;
+  }
+
+  .service-card {
+    min-height: 110px !important;
+    padding: 0.75rem !important;
+  }
+
+  .service-card h3 {
+    font-size: 0.85rem !important;
+    margin-bottom: 0.2rem !important;
+  }
+
+  .service-card p {
+    font-size: 0.65rem !important;
+    line-height: 1.25 !important;
+  }
+
+  .service-icon {
+    width: 32px !important;
+    height: 32px !important;
+    border-radius: 8px !important;
+    margin-bottom: 0.4rem !important;
+  }
+
+  .service-icon svg {
+    width: 16px !important;
+    height: 16px !important;
+  }
+
+  .project-image,
+  .portfolio-tile-image {
+    height: 130px !important;
+  }
+
+  .project-details,
+  .portfolio-tile-content,
+  .testimonial-card,
+  .contact-form,
+  .contact-info,
+  .detail-body {
+    padding: 0.85rem !important;
+  }
+
+  .project-card h3,
+  .portfolio-tile-title {
+    font-size: 0.95rem !important;
+    margin-bottom: 0.3rem !important;
+  }
+
+  .project-card p,
+  .portfolio-tile-desc,
+  .testimonial-text,
+  .contact-form p,
+  .contact-info p,
+  .contact-method-text,
+  .contact-method-label,
+  .detail-text {
+    font-size: 0.68rem !important;
+    line-height: 1.35 !important;
+    margin-bottom: 0.5rem !important;
+  }
+
+  .chip {
+    font-size: 0.6rem !important;
+    padding: 0.15rem 0.45rem !important;
+  }
+
+  .case-study-result {
+    font-size: 0.65rem !important;
+    padding: 0.35rem 0.55rem !important;
+    margin-bottom: 0.5rem !important;
+  }
+
+  .cta-spotlight-section {
+    min-height: 40vh !important;
+    padding: 3rem 0 !important;
+  }
+
+  .cta-spotlight-heading {
+    font-size: 2.8rem !important;
+    margin-bottom: 1rem !important;
+  }
+
+  .cta-spotlight-btn {
+    font-size: 0.85rem !important;
+    padding: 10px 24px !important;
+  }
+
+  .footer-bar {
+    padding-top: 3rem !important;
+    padding-bottom: 2rem !important;
+  }
+
+  h2 {
+    font-size: 1.8rem !important;
+    margin-bottom: 0.8rem !important;
+  }
+
+  p.lead {
+    font-size: 0.85rem !important;
+  }
+
+  .ticker-label {
+    font-size: 0.65rem !important;
+    margin-bottom: 1rem !important;
+  }
+
+  .brand-logo {
+    height: 45px !important;
+  }
+
+  nav.floating-nav {
+    top: 2.5rem !important;
+  }
+
+  .bento-hover-title {
+    font-size: 0.8rem !important;
+    margin-bottom: 0.15rem !important;
+  }
+
+  .bento-hover-desc {
+    font-size: 0.6rem !important;
+    line-height: 1.25 !important;
+  }
+
+  .bento-hover-label {
+    font-size: 0.5rem !important;
+    letter-spacing: 1px !important;
+    margin-bottom: 0.2rem !important;
+  }
+
+  .bento-hover-pill {
+    padding: 0.2rem 0.5rem !important;
+    font-size: 0.55rem !important;
+    top: 0.75rem !important;
+    left: 0.75rem !important;
+  }
+
+  .bento-hover-content {
+    bottom: 0.75rem !important;
+    left: 0.75rem !important;
+    right: 0.75rem !important;
+  }
+
+  .pulsing-dot {
+    width: 4px !important;
+    height: 4px !important;
+  }
+
+  .bento-indicator-dot {
+    width: 4px !important;
+    height: 4px !important;
+  }
+
+  .bento-content-indicator {
+    bottom: 0.75rem !important;
+    right: 0.75rem !important;
+    gap: 4px !important;
+  }
+
+  #about {
+    scroll-margin-top: 125px !important;
+  }
+
+  .nav-pill {
+    padding: 0.55rem 1.1rem !important;
+    gap: 1.8rem !important;
+  }
+
+  .nav-pill.scrolled {
+    padding: 0.45rem 1rem !important;
+  }
+
+  .nav-links {
+    gap: 0.9rem !important;
+  }
+
+  .nav-contact-pill {
+    padding: 0.5rem 1.1rem !important;
+  }
 }

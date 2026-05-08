@@ -1595,6 +1595,24 @@ nav.floating-nav {
   }
 }
 
+/* Tablet: keep Based In + Creative Developer side-by-side,
+   but allow Community & Growth to stay wide */
+@media (min-width: 640px) and (max-width: 1023px) {
+  .content-sheet {
+    width: calc(100% - 1.5rem);
+    margin-left: 0.75rem;
+    margin-right: 0.75rem;
+  }
+
+  .services-grid > .service-card-wide {
+    grid-column: span 1;
+  }
+
+  .services-grid > #community-bento.service-card-wide {
+    grid-column: span 2;
+  }
+}
+
 /* Wide service card - spans 2 columns */
 .service-card-wide {
   grid-column: span 2;
@@ -1603,6 +1621,127 @@ nav.floating-nav {
 @media (max-width: 768px) {
   .service-card-wide {
     grid-column: span 1;
+  }
+}
+
+@media (max-width: 639px) {
+  :root {
+    --mobile-shell-inset: 1.5rem;
+    --mobile-service-card-height: 138px;
+    --mobile-service-icon-size: 44px;
+    --mobile-service-icon-glyph-size: 20px;
+    --mobile-service-title-size: 1.1rem;
+    --mobile-service-title-line-height: 1.02;
+    --mobile-service-body-size: 0.72rem;
+    --mobile-service-body-line-height: 1.25;
+  }
+
+  .content-sheet {
+    width: auto;
+    margin-left: var(--mobile-shell-inset);
+    margin-right: var(--mobile-shell-inset);
+    padding: var(--mobile-shell-inset);
+  }
+
+  .services-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.75rem;
+  }
+
+  .services-grid > .service-card-wide {
+    grid-column: span 1;
+  }
+
+  .services-grid > #community-bento.service-card-wide {
+    grid-column: span 2;
+  }
+
+  .service-card {
+    min-height: var(--mobile-service-card-height);
+    padding: 0.95rem;
+    border-radius: 14px;
+  }
+
+  .service-icon {
+    width: var(--mobile-service-icon-size);
+    height: var(--mobile-service-icon-size);
+    border-radius: 11px;
+  }
+
+  .service-icon svg {
+    width: var(--mobile-service-icon-glyph-size);
+    height: var(--mobile-service-icon-glyph-size);
+  }
+
+  .service-card h3 {
+    font-size: var(--mobile-service-title-size);
+    line-height: var(--mobile-service-title-line-height);
+    letter-spacing: -0.03em;
+  }
+
+  .service-card p {
+    font-size: var(--mobile-service-body-size);
+    line-height: var(--mobile-service-body-line-height);
+    color: rgba(255, 255, 255, 0.62);
+  }
+
+  .service-card-text {
+    display: flex;
+    flex-direction: column;
+    gap: 0.28rem;
+  }
+
+  .services-grid > .service-card:not(#location-bento):not(#community-bento) .service-card-text p {
+    display: none;
+  }
+
+  .services-grid > .service-card:not(#community-bento) .service-card-text h3 {
+    max-width: 9ch;
+  }
+
+  .services-grid > .service-card:nth-child(5) .service-card-text h3 {
+    max-width: 4ch;
+  }
+
+  .services-grid > .service-card:nth-child(5) .service-card-text .cv-prefix {
+    display: none;
+  }
+
+  .services-grid > #location-bento .service-card-text p {
+    font-size: var(--mobile-service-body-size);
+    line-height: var(--mobile-service-body-line-height);
+    color: rgba(255, 255, 255, 0.62);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .services-grid > #community-bento {
+    min-height: 168px;
+  }
+
+  .services-grid > #community-bento .service-card-text {
+    display: flex;
+    flex-direction: column;
+    gap: 0.28rem;
+    width: 100%;
+    max-width: none;
+  }
+
+  .services-grid > #community-bento .service-card-text h3 {
+    max-width: none;
+    white-space: nowrap;
+  }
+
+  .services-grid > #community-bento .service-card-text p {
+    display: block;
+    font-size: var(--mobile-service-body-size);
+    line-height: var(--mobile-service-body-line-height);
+    color: rgba(255, 255, 255, 0.62);
+    max-width: none;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 }
 
@@ -3911,6 +4050,13 @@ nav.floating-nav {
     padding: 0 0.75rem !important;
   }
 
+  .content-sheet {
+    width: calc(100vw - 1.5rem) !important;
+    max-width: calc(100vw - 1.5rem) !important;
+    margin-left: 0.75rem !important;
+    margin-right: 0.75rem !important;
+  }
+
   .nav-pill {
     width: 100%;
     max-width: none;
@@ -4026,6 +4172,45 @@ nav.floating-nav {
   .chat-window {
     width: 90%;
     height: 60vh;
+  }
+
+  #community-bento .bento-hover-pill {
+    top: 0.9rem !important;
+    left: 0.9rem !important;
+    padding: 0.28rem 0.6rem !important;
+    font-size: 0.62rem !important;
+  }
+
+  #community-bento .bento-hover-content,
+  #community-bento .bento-rotating-content {
+    left: 0.9rem !important;
+    right: 2.2rem !important;
+    bottom: 1rem !important;
+  }
+
+  #community-bento .bento-hover-label {
+    font-size: 0.52rem !important;
+    letter-spacing: 1.2px !important;
+    margin-bottom: 0.28rem !important;
+  }
+
+  #community-bento .bento-hover-title {
+    font-size: 0.68rem !important;
+    line-height: 1.12 !important;
+    margin-bottom: 0.35rem !important;
+    letter-spacing: 0.24px !important;
+  }
+
+  #community-bento .bento-hover-desc {
+    font-size: 0.5rem !important;
+    line-height: 1.32 !important;
+    max-width: 100% !important;
+  }
+
+  #community-bento .bento-content-indicator {
+    right: 0.9rem !important;
+    bottom: 0.95rem !important;
+    gap: 5px !important;
   }
 }
 
@@ -4166,6 +4351,31 @@ body {
   margin-top: 0;
   background-color: var(--color-bg);
   /* Match main bg */
+}
+
+/* iPad / tablet portrait-landscape tuning:
+   pull the brand label + logos slightly upward */
+@media (min-width: 768px) and (max-width: 1023px) {
+  .content-sheet {
+    width: calc(100% - 1.5rem) !important;
+    max-width: calc(100% - 1.5rem) !important;
+    margin-left: 0.75rem !important;
+    margin-right: 0.75rem !important;
+  }
+
+  .company-ticker-section {
+    padding-top: 0.75rem;
+    padding-bottom: 4rem;
+    margin-top: -0.75rem;
+  }
+
+  .ticker-label {
+    margin-bottom: 1rem;
+  }
+
+  .brand-logo {
+    height: 58px;
+  }
 }
 
 /* Cleanup */

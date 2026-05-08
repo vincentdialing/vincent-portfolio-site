@@ -1716,6 +1716,14 @@ nav.floating-nav {
     text-overflow: ellipsis;
   }
 
+  .services-grid > #location-bento .location-full {
+    display: none;
+  }
+
+  .services-grid > #location-bento .location-mobile {
+    display: inline;
+  }
+
   .services-grid > #community-bento {
     min-height: 168px;
   }
@@ -2021,6 +2029,18 @@ nav.floating-nav {
   background: rgba(255, 255, 255, 0.7);
 }
 
+.bento-swipe-hint {
+  display: none;
+  position: absolute;
+  right: 0.75rem;
+  top: 0.85rem;
+  z-index: 15;
+  font-size: 0.6rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.64);
+}
+
 .service-icon,
 .service-card h3,
 .service-card p {
@@ -2064,6 +2084,10 @@ nav.floating-nav {
   color: var(--color-text-muted);
   line-height: 1.4;
   margin-bottom: 0;
+}
+
+.location-mobile {
+  display: none;
 }
 
 /* Clickable Service Cards */
@@ -4050,6 +4074,15 @@ nav.floating-nav {
     padding: 0 0.75rem !important;
   }
 
+  .projects-section {
+    padding-top: 3rem !important;
+  }
+
+  .company-ticker-section {
+    padding-top: 1.25rem !important;
+    padding-bottom: 2rem !important;
+  }
+
   .content-sheet {
     width: calc(100vw - 1.5rem) !important;
     max-width: calc(100vw - 1.5rem) !important;
@@ -4212,6 +4245,77 @@ nav.floating-nav {
     bottom: 0.95rem !important;
     gap: 5px !important;
   }
+
+  #location-bento .bento-hover-pill {
+    top: 0.9rem !important;
+    left: 0.9rem !important;
+    padding: 0.26rem 0.58rem !important;
+    font-size: 0.6rem !important;
+  }
+
+  #location-bento .bento-hover-content {
+    left: 0.9rem !important;
+    right: 0.9rem !important;
+    bottom: 0.95rem !important;
+  }
+
+  #location-bento .bento-hover-label {
+    font-size: 0.5rem !important;
+    letter-spacing: 1.1px !important;
+    margin-bottom: 0.22rem !important;
+  }
+
+  #location-bento .bento-hover-title {
+    font-size: 0.64rem !important;
+    line-height: 1.08 !important;
+    margin-bottom: 0.28rem !important;
+    letter-spacing: 0.2px !important;
+  }
+
+  #location-bento .bento-hover-desc {
+    font-size: 0.46rem !important;
+    line-height: 1.34 !important;
+    max-width: 100% !important;
+  }
+}
+
+@media (max-width: 1023px) {
+  .projects-section {
+    padding-top: 3.5rem;
+  }
+
+  .company-ticker-section {
+    padding-bottom: 2.5rem;
+  }
+
+  #community-bento.community-touch-mode {
+    touch-action: pan-y;
+  }
+
+  #community-bento.community-touch-mode .bento-normal-state {
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transform: translateY(-8px) scale(0.98);
+  }
+
+  #community-bento.community-touch-mode .bento-hover-state {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0) scale(1);
+    transition-delay: 0s;
+  }
+
+  #community-bento.community-touch-mode .bento-hover-pill,
+  #community-bento.community-touch-mode .bento-hover-content {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  #community-bento.community-touch-mode .bento-swipe-hint {
+    display: inline-flex;
+    align-items: center;
+  }
 }
 
 /* Glass Horizon Effect (RedSun Style) */
@@ -4365,8 +4469,12 @@ body {
 
   .company-ticker-section {
     padding-top: 0.75rem;
-    padding-bottom: 4rem;
+    padding-bottom: 2.75rem;
     margin-top: -0.75rem;
+  }
+
+  .projects-section {
+    padding-top: 4rem;
   }
 
   .ticker-label {

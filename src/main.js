@@ -315,6 +315,26 @@ async function fetchLocationCard() {
 let communityCardsData = []; // Store fetched data for rotation
 let communityRotationInterval = null;
 let communityCurrentIndex = 0;
+let communitySwipeStartX = 0;
+let communitySwipeStartY = 0;
+let communitySwipeActive = false;
+
+function isCommunitySwipeLayout() {
+  return window.matchMedia('(max-width: 1023px)').matches;
+}
+
+function syncCommunityBentoMode() {
+  const communityBento = document.getElementById('community-bento');
+  if (!communityBento) return;
+
+  communityBento.classList.toggle('community-touch-mode', isCommunitySwipeLayout());
+
+  if (isCommunitySwipeLayout()) {
+    startBentoRotation();
+  } else {
+    stopBentoRotation();
+  }
+}
 
 async function fetchCommunityCards() {
   const communityBento = document.getElementById('community-bento');
@@ -355,6 +375,10 @@ async function fetchCommunityCards() {
       image.src = loadedSrc;
       image.dataset.currentSrc = loadedSrc;
     }
+
+    indicatorDotsGenerated = false;
+    generateIndicatorDots();
+    syncCommunityBentoMode();
   }
 }
 
@@ -364,12 +388,58 @@ function initCommunityBentoRotation() {
   if (!communityBento) return;
 
   communityBento.addEventListener('mouseenter', () => {
+    if (isCommunitySwipeLayout()) return;
     startBentoRotation();
   });
 
   communityBento.addEventListener('mouseleave', () => {
+    if (isCommunitySwipeLayout()) return;
     stopBentoRotation();
   });
+
+  communityBento.addEventListener('touchstart', (event) => {
+    if (!isCommunitySwipeLayout()) return;
+
+    const touch = event.touches[0];
+    if (!touch) return;
+
+    communitySwipeStartX = touch.clientX;
+    communitySwipeStartY = touch.clientY;
+    communitySwipeActive = true;
+    startBentoRotation();
+  }, { passive: true });
+
+  communityBento.addEventListener('touchend', (event) => {
+    if (!isCommunitySwipeLayout() || !communitySwipeActive) return;
+
+    const touch = event.changedTouches[0];
+    communitySwipeActive = false;
+    if (!touch) return;
+
+    const deltaX = touch.clientX - communitySwipeStartX;
+    const deltaY = touch.clientY - communitySwipeStartY;
+    const items = document.querySelectorAll('#community-bento-content .bento-rotating-item');
+    if (items.length <= 1) return;
+
+    if (Math.abs(deltaX) < 40 || Math.abs(deltaX) <= Math.abs(deltaY) * 1.15) return;
+
+    const direction = deltaX < 0 ? 1 : -1;
+    const nextIndex = (communityCurrentIndex + direction + items.length) % items.length;
+    switchToContent(nextIndex);
+  }, { passive: true });
+
+  const compactMediaQuery = window.matchMedia('(max-width: 1023px)');
+  const handleCompactModeChange = () => {
+    syncCommunityBentoMode();
+  };
+
+  if (typeof compactMediaQuery.addEventListener === 'function') {
+    compactMediaQuery.addEventListener('change', handleCompactModeChange);
+  } else if (typeof compactMediaQuery.addListener === 'function') {
+    compactMediaQuery.addListener(handleCompactModeChange);
+  }
+
+  syncCommunityBentoMode();
 }
 
 function generateIndicatorDots() {

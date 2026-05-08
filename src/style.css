@@ -3774,6 +3774,15 @@ nav.floating-nav {
   display: none;
 }
 
+.chat-brand-avatar {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.2);
+}
+
 #chat-close {
   background: rgba(255, 255, 255, 0.1);
   border: none;

@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://vincentdialing.github.io/vincent-portfolio-site/sitemap.xml

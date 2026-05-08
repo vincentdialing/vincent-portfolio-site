@@ -1,0 +1,20 @@
+{
+  "name": "Vincent Dialing Portfolio",
+  "short_name": "Vincent",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#020212",
+  "theme_color": "#020212",
+  "icons": [
+    {
+      "src": "/vincent-avatar-open.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/vincent-avatar-open.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

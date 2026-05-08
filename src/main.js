@@ -654,12 +654,16 @@ const observer = new IntersectionObserver((entries) => {
     if (entry.isIntersecting) {
       entry.target.style.opacity = "1";
       entry.target.style.transform = "translateY(0)";
+      observer.unobserve(entry.target);
     }
   });
 }, observerOptions);
 
 // Add initial styles for animation to targeted elements if needed
 // For now, we rely on CSS transitions defined in style.css or added classes
+document.querySelectorAll('.animate-up').forEach((element) => {
+  observer.observe(element);
+});
 
 // ==========================================
 // Certificates: tile click -> modal preview

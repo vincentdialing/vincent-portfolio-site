@@ -318,20 +318,52 @@ let communityCurrentIndex = 0;
 let communitySwipeStartX = 0;
 let communitySwipeStartY = 0;
 let communitySwipeActive = false;
+let communitySwipeTriggered = false;
 
 function isCommunitySwipeLayout() {
   return window.matchMedia('(max-width: 1023px)').matches;
 }
 
+function setCompactBentoActive(card, isActive) {
+  if (!card) return;
+
+  card.classList.toggle('compact-bento-active', isActive);
+
+  if (card.id === 'community-bento') {
+    card.classList.toggle('community-touch-active', isActive);
+
+    if (isActive) {
+      startBentoRotation();
+    } else {
+      stopBentoRotation();
+    }
+  }
+}
+
+function closeCompactBentoCards(exceptCard = null) {
+  if (!isCommunitySwipeLayout()) return;
+
+  ['location-bento', 'community-bento'].forEach((id) => {
+    const card = document.getElementById(id);
+    if (!card || card === exceptCard) return;
+    setCompactBentoActive(card, false);
+  });
+}
+
 function syncCommunityBentoMode() {
+  const locationBento = document.getElementById('location-bento');
   const communityBento = document.getElementById('community-bento');
-  if (!communityBento) return;
+  if (!communityBento || !locationBento) return;
 
   communityBento.classList.toggle('community-touch-mode', isCommunitySwipeLayout());
+  locationBento.classList.toggle('compact-bento-touch-mode', isCommunitySwipeLayout());
 
   if (isCommunitySwipeLayout()) {
-    startBentoRotation();
+    setCompactBentoActive(locationBento, false);
+    setCompactBentoActive(communityBento, false);
   } else {
+    locationBento.classList.remove('compact-bento-active', 'compact-bento-touch-mode');
+    communityBento.classList.remove('compact-bento-active', 'community-touch-active', 'community-touch-mode');
     stopBentoRotation();
   }
 }
@@ -406,7 +438,7 @@ function initCommunityBentoRotation() {
     communitySwipeStartX = touch.clientX;
     communitySwipeStartY = touch.clientY;
     communitySwipeActive = true;
-    startBentoRotation();
+    communitySwipeTriggered = false;
   }, { passive: true });
 
   communityBento.addEventListener('touchend', (event) => {
@@ -421,12 +453,48 @@ function initCommunityBentoRotation() {
     const items = document.querySelectorAll('#community-bento-content .bento-rotating-item');
     if (items.length <= 1) return;
 
+    if (!communityBento.classList.contains('community-touch-active')) return;
+
     if (Math.abs(deltaX) < 40 || Math.abs(deltaX) <= Math.abs(deltaY) * 1.15) return;
 
+    communitySwipeTriggered = true;
     const direction = deltaX < 0 ? 1 : -1;
     const nextIndex = (communityCurrentIndex + direction + items.length) % items.length;
     switchToContent(nextIndex);
   }, { passive: true });
+
+  communityBento.addEventListener('click', (event) => {
+    if (!isCommunitySwipeLayout()) return;
+    if (communitySwipeTriggered) {
+      communitySwipeTriggered = false;
+      return;
+    }
+
+    const shouldActivate = !communityBento.classList.contains('community-touch-active');
+    closeCompactBentoCards(shouldActivate ? communityBento : null);
+    setCompactBentoActive(communityBento, shouldActivate);
+  });
+
+  const locationBento = document.getElementById('location-bento');
+  if (locationBento) {
+    locationBento.addEventListener('click', () => {
+      if (!isCommunitySwipeLayout()) return;
+
+      const shouldActivate = !locationBento.classList.contains('compact-bento-active');
+      closeCompactBentoCards(shouldActivate ? locationBento : null);
+      setCompactBentoActive(locationBento, shouldActivate);
+    });
+  }
+
+  document.addEventListener('click', (event) => {
+    if (!isCommunitySwipeLayout()) return;
+
+    const target = event.target;
+    if (!(target instanceof Element)) return;
+    if (target.closest('#location-bento, #community-bento')) return;
+
+    closeCompactBentoCards();
+  });
 
   const compactMediaQuery = window.matchMedia('(max-width: 1023px)');
   const handleCompactModeChange = () => {

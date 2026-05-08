@@ -62,15 +62,77 @@ const rolesData = [
 ];
 
 let roleIndex = 0;
+const heroHeadingGroupEl = document.querySelector('.hero-heading-group');
+const heroHeadingEl = document.querySelector('.hero-heading');
+const heroRoleWrapEl = document.querySelector('.hero-role-wrap');
+const heroLeadEl = document.querySelector('.hero-lead');
 const heroRoleEl = document.getElementById('hero-role');
 const heroDescEl = document.getElementById('hero-desc');
 
-if (heroRoleEl && heroDescEl) {
+if (heroHeadingGroupEl && heroHeadingEl && heroRoleWrapEl && heroLeadEl && heroRoleEl && heroDescEl) {
+  const lockHeroTextHeights = () => {
+    const roleProbeWrap = heroRoleWrapEl.cloneNode(true);
+    const descProbe = heroLeadEl.cloneNode(true);
+
+    [roleProbeWrap, descProbe].forEach((probe) => {
+      probe.style.position = 'absolute';
+      probe.style.visibility = 'hidden';
+      probe.style.pointerEvents = 'none';
+      probe.style.left = '-9999px';
+      probe.style.top = '0';
+      probe.style.opacity = '1';
+      probe.style.transform = 'none';
+      probe.classList.remove('animate-up');
+    });
+
+    roleProbeWrap.style.width = `${heroRoleWrapEl.getBoundingClientRect().width}px`;
+    roleProbeWrap.style.maxWidth = `${heroRoleWrapEl.getBoundingClientRect().width}px`;
+    roleProbeWrap.style.minHeight = '0';
+
+    descProbe.style.width = `${heroLeadEl.getBoundingClientRect().width}px`;
+    descProbe.style.maxWidth = `${heroLeadEl.getBoundingClientRect().width}px`;
+    descProbe.style.minHeight = '0';
+
+    document.body.append(roleProbeWrap, descProbe);
+
+    let maxRoleHeight = 0;
+    let maxDescHeight = 0;
+
+    rolesData.forEach(({ role, desc }) => {
+      const roleNode = roleProbeWrap.querySelector('#hero-role');
+      const descNode = descProbe.querySelector('#hero-desc');
+
+      if (roleNode) roleNode.textContent = role;
+      if (descNode) descNode.textContent = desc;
+
+      maxRoleHeight = Math.max(maxRoleHeight, roleProbeWrap.getBoundingClientRect().height);
+      maxDescHeight = Math.max(maxDescHeight, descProbe.getBoundingClientRect().height);
+    });
+
+    roleProbeWrap.remove();
+    descProbe.remove();
+
+    heroRoleWrapEl.style.minHeight = `${Math.ceil(maxRoleHeight)}px`;
+    heroDescEl.style.minHeight = `${Math.ceil(maxDescHeight)}px`;
+    heroHeadingEl.style.minHeight = '0';
+    heroRoleEl.style.minHeight = '0';
+    heroDescEl.style.display = 'block';
+  };
+
   heroRoleEl.style.transition = 'opacity 0.8s ease-in-out';
   heroDescEl.style.transition = 'opacity 0.8s ease-in-out';
-  
+
   // Set the initial description on load
   heroDescEl.textContent = rolesData[0].desc;
+  lockHeroTextHeights();
+
+  let heroResizeFrame = null;
+  window.addEventListener('resize', () => {
+    if (heroResizeFrame) cancelAnimationFrame(heroResizeFrame);
+    heroResizeFrame = requestAnimationFrame(() => {
+      lockHeroTextHeights();
+    });
+  });
 
   const VISIBLE_DURATION = 8000;
   const ROLE_EXIT_DELAY = 300;
@@ -147,6 +209,47 @@ fetchBrands();
 // ==========================================
 // Dynamic Content: Fetch Location Card (Bento Hover Transform)
 // ==========================================
+function preloadImage(src) {
+  if (!src) return Promise.resolve('');
+
+  const image = new Image();
+  image.decoding = 'async';
+  image.src = src;
+
+  if (image.decode) {
+    return image.decode()
+      .catch(() => null)
+      .then(() => src);
+  }
+
+  return new Promise((resolve) => {
+    if (image.complete) {
+      resolve(src);
+      return;
+    }
+
+    image.onload = () => resolve(src);
+    image.onerror = () => resolve(src);
+  });
+}
+
+async function transitionCardImage(imageEl, nextSrc, delay = 300) {
+  if (!imageEl || !nextSrc) return;
+
+  if (imageEl.dataset.currentSrc === nextSrc) {
+    imageEl.classList.remove('fade-out');
+    return;
+  }
+
+  imageEl.classList.add('fade-out');
+  await new Promise(resolve => setTimeout(resolve, delay));
+
+  const loadedSrc = await preloadImage(nextSrc);
+  imageEl.src = loadedSrc;
+  imageEl.dataset.currentSrc = loadedSrc;
+  imageEl.classList.remove('fade-out');
+}
+
 async function fetchLocationCard() {
   // Target the new bento hover transform card
   const locationBento = document.getElementById('location-bento');
@@ -171,7 +274,9 @@ async function fetchLocationCard() {
     const descEl = document.getElementById('location-bento-desc');
 
     if (image && data.image_url) {
-      image.src = data.image_url;
+      const loadedSrc = await preloadImage(data.image_url);
+      image.src = loadedSrc;
+      image.dataset.currentSrc = loadedSrc;
       image.alt = data.title;
     }
     if (labelEl) labelEl.textContent = data.label;
@@ -222,7 +327,9 @@ async function fetchCommunityCards() {
     // Set initial image
     const image = document.getElementById('community-bento-image');
     if (image && data[0].image_url) {
-      image.src = data[0].image_url;
+      const loadedSrc = await preloadImage(data[0].image_url);
+      image.src = loadedSrc;
+      image.dataset.currentSrc = loadedSrc;
     }
   }
 }
@@ -270,7 +377,7 @@ function updateIndicatorDots() {
   });
 }
 
-function switchToContent(newIndex) {
+async function switchToContent(newIndex) {
   const items = document.querySelectorAll('#community-bento-content .bento-rotating-item');
   const image = document.getElementById('community-bento-image');
 
@@ -280,25 +387,17 @@ function switchToContent(newIndex) {
   // Remove active from ALL items first to ensure clean state
   items.forEach(item => item.classList.remove('active'));
 
-  if (image) image.classList.add('fade-out');
+  communityCurrentIndex = newIndex;
+  const nextItem = items[communityCurrentIndex];
 
-  setTimeout(() => {
-    communityCurrentIndex = newIndex;
-    const nextItem = items[communityCurrentIndex];
+  await transitionCardImage(image, nextItem?.dataset.image, 240);
 
-    // Change image
-    if (image && nextItem.dataset.image) {
-      image.src = nextItem.dataset.image;
-      image.classList.remove('fade-out');
-    }
+  // Add active only to the new item
+  nextItem.classList.add('active');
+  updateIndicatorDots();
 
-    // Add active only to the new item
-    nextItem.classList.add('active');
-    updateIndicatorDots();
-
-    // Restart rotation after switch completes
-    restartRotationTimer();
-  }, 350);
+  // Restart rotation after switch completes
+  restartRotationTimer();
 }
 
 function restartRotationTimer() {
@@ -307,26 +406,17 @@ function restartRotationTimer() {
   if (items.length === 0) return;
 
   // Start rotation every 8 seconds
-  communityRotationInterval = setInterval(() => {
+  communityRotationInterval = setInterval(async () => {
     // Remove active from ALL items
     items.forEach(item => item.classList.remove('active'));
 
-    // Fade out image
-    if (image) image.classList.add('fade-out');
+    communityCurrentIndex = (communityCurrentIndex + 1) % items.length;
+    const nextItem = items[communityCurrentIndex];
 
-    setTimeout(() => {
-      communityCurrentIndex = (communityCurrentIndex + 1) % items.length;
-      const nextItem = items[communityCurrentIndex];
+    await transitionCardImage(image, nextItem?.dataset.image, 240);
 
-      // Change image
-      if (image && nextItem.dataset.image) {
-        image.src = nextItem.dataset.image;
-        image.classList.remove('fade-out');
-      }
-
-      nextItem.classList.add('active');
-      updateIndicatorDots();
-    }, 350);
+    nextItem.classList.add('active');
+    updateIndicatorDots();
   }, 8000);
 }
 
@@ -357,6 +447,7 @@ function startBentoRotation() {
   const currentItem = items[communityCurrentIndex];
   if (image && currentItem && currentItem.dataset.image) {
     image.src = currentItem.dataset.image;
+    image.dataset.currentSrc = currentItem.dataset.image;
   }
 
   // Start rotation timer
@@ -857,23 +948,39 @@ if (heroSpeakBtn && chatWindow && voiceBtn) {
 
   // Elements for Parallax
   const avatarIcon = document.querySelector('.orb-mic-icon');
-  const windowWidth = window.innerWidth;
-  const windowHeight = window.innerHeight;
+  window.mouseX = window.innerWidth / 2;
+  window.mouseY = window.innerHeight / 2;
 
-  document.addEventListener('mousemove', (e) => {
+  const updateHeroPointer = (clientX, clientY) => {
     if (heroSpeakBtn) {
       const rect = heroSpeakBtn.getBoundingClientRect();
-      targetX = e.clientX - rect.left;
-      targetY = e.clientY - rect.top;
+      targetX = clientX - rect.left;
+      targetY = clientY - rect.top;
     }
 
-    // For Global Parallax of Avatar
-    // We reuse the event to update global mouse pos tracking if we needed distinct variables,
-    // but here we can just read e.clientX/Y directly in the loop if we store them?
-    // Actually, let's store global mouse X/Y separately for the parallax
-    window.mouseX = e.clientX;
-    window.mouseY = e.clientY;
+    window.mouseX = clientX;
+    window.mouseY = clientY;
+  };
+
+  document.addEventListener('mousemove', (e) => {
+    updateHeroPointer(e.clientX, e.clientY);
   });
+
+  document.addEventListener('touchstart', (e) => {
+    const touch = e.touches[0];
+    if (!touch) return;
+    updateHeroPointer(touch.clientX, touch.clientY);
+  }, { passive: true });
+
+  document.addEventListener('touchmove', (e) => {
+    const touch = e.touches[0];
+    if (!touch) return;
+    updateHeroPointer(touch.clientX, touch.clientY);
+  }, { passive: true });
+
+  document.addEventListener('touchend', () => {
+    updateHeroPointer(window.innerWidth / 2, window.innerHeight / 2);
+  }, { passive: true });
 
   const animateGradient = () => {
     // 1. Button Gradient Logic
@@ -1244,43 +1351,30 @@ function startContentRotation(card) {
   // Set image to match current content
   if (image && currentContent && currentContent.dataset.image) {
     image.src = currentContent.dataset.image;
+    image.dataset.currentSrc = currentContent.dataset.image;
     image.classList.remove('fade-out');
   }
 
   // Rotate every 8 seconds
-  activeRotationInterval = setInterval(() => {
+  activeRotationInterval = setInterval(async () => {
     // Fade out current
     contents[currentIndex].classList.remove('active');
 
-    // Fade out image
-    if (image) {
-      image.classList.add('fade-out');
+    currentIndex = (currentIndex + 1) % contents.length;
+    cardContentIndices[cardId] = currentIndex;
+
+    const nextContent = contents[currentIndex];
+
+    await transitionCardImage(image, nextContent?.dataset.image, 240);
+
+    // Change gradient
+    if (nextContent.dataset.gradient) {
+      card.className = card.className.replace(/gradient-\w+/g, '').trim();
+      card.classList.add(nextContent.dataset.gradient);
     }
 
-    // Wait for fade out, then switch
-    setTimeout(() => {
-      currentIndex = (currentIndex + 1) % contents.length;
-      // Save the new index for next hover
-      cardContentIndices[cardId] = currentIndex;
-
-      const nextContent = contents[currentIndex];
-
-      // Change image
-      if (image && nextContent.dataset.image) {
-        image.src = nextContent.dataset.image;
-        image.classList.remove('fade-out');
-      }
-
-      // Change gradient
-      if (nextContent.dataset.gradient) {
-        card.className = card.className.replace(/gradient-\w+/g, '').trim();
-        card.classList.add(nextContent.dataset.gradient);
-      }
-
-      // Show next content
-      nextContent.classList.add('active');
-    }, 300);
-
+    // Show next content
+    nextContent.classList.add('active');
   }, 8000);
 }
 

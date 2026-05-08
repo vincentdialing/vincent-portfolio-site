@@ -73,40 +73,65 @@ const heroDescEl = document.getElementById('hero-desc');
 if (heroCopyStackEl && heroHeadingGroupEl && heroHeadingEl && heroRoleWrapEl && heroLeadEl && heroRoleEl && heroDescEl) {
   const lockHeroTextHeights = () => {
     const copyProbe = heroCopyStackEl.cloneNode(true);
+    const roleProbeWrap = heroRoleWrapEl.cloneNode(true);
+    const descProbe = heroLeadEl.cloneNode(true);
+    const isMobileHeroLock = window.matchMedia('(max-width: 480px)').matches;
 
-    copyProbe.style.position = 'absolute';
-    copyProbe.style.visibility = 'hidden';
-    copyProbe.style.pointerEvents = 'none';
-    copyProbe.style.left = '-9999px';
-    copyProbe.style.top = '0';
-    copyProbe.style.opacity = '1';
-    copyProbe.style.transform = 'none';
+    [copyProbe, roleProbeWrap, descProbe].forEach((probe) => {
+      probe.style.position = 'absolute';
+      probe.style.visibility = 'hidden';
+      probe.style.pointerEvents = 'none';
+      probe.style.left = '-9999px';
+      probe.style.top = '0';
+      probe.style.opacity = '1';
+      probe.style.transform = 'none';
+      probe.querySelectorAll?.('.animate-up').forEach((node) => node.classList.remove('animate-up'));
+    });
+
     copyProbe.style.width = `${heroCopyStackEl.getBoundingClientRect().width}px`;
     copyProbe.style.maxWidth = `${heroCopyStackEl.getBoundingClientRect().width}px`;
     copyProbe.style.minHeight = '0';
-    copyProbe.querySelectorAll('.animate-up').forEach((node) => node.classList.remove('animate-up'));
 
-    document.body.append(copyProbe);
+    roleProbeWrap.style.width = `${heroRoleWrapEl.getBoundingClientRect().width}px`;
+    roleProbeWrap.style.maxWidth = `${heroRoleWrapEl.getBoundingClientRect().width}px`;
+    roleProbeWrap.style.minHeight = '0';
+
+    descProbe.style.width = `${heroLeadEl.getBoundingClientRect().width}px`;
+    descProbe.style.maxWidth = `${heroLeadEl.getBoundingClientRect().width}px`;
+    descProbe.style.minHeight = '0';
+
+    document.body.append(copyProbe, roleProbeWrap, descProbe);
 
     let maxCopyHeight = 0;
+    let maxRoleHeight = 0;
+    let maxDescHeight = 0;
 
     rolesData.forEach(({ role, desc }) => {
       const roleNode = copyProbe.querySelector('#hero-role');
       const descNode = copyProbe.querySelector('#hero-desc');
+      const roleOnlyNode = roleProbeWrap.querySelector('#hero-role');
+      const descOnlyNode = descProbe.querySelector('#hero-desc');
 
       if (roleNode) roleNode.textContent = role;
       if (descNode) descNode.textContent = desc;
+      if (roleOnlyNode) roleOnlyNode.textContent = role;
+      if (descOnlyNode) descOnlyNode.textContent = desc;
 
       maxCopyHeight = Math.max(maxCopyHeight, copyProbe.getBoundingClientRect().height);
+      maxRoleHeight = Math.max(maxRoleHeight, roleProbeWrap.getBoundingClientRect().height);
+      maxDescHeight = Math.max(maxDescHeight, descProbe.getBoundingClientRect().height);
     });
 
     copyProbe.remove();
+    roleProbeWrap.remove();
+    descProbe.remove();
 
     heroCopyStackEl.style.minHeight = `${Math.ceil(maxCopyHeight)}px`;
     heroHeadingEl.style.minHeight = '0';
     heroHeadingGroupEl.style.minHeight = '0';
-    heroRoleWrapEl.style.minHeight = '0';
+    heroRoleWrapEl.style.minHeight = isMobileHeroLock ? `${Math.ceil(maxRoleHeight)}px` : '0';
     heroRoleEl.style.minHeight = '0';
+    heroDescEl.style.minHeight = isMobileHeroLock ? `${Math.ceil(maxDescHeight)}px` : '0';
   };
 
   heroRoleEl.style.transition = 'opacity 0.8s ease-in-out';

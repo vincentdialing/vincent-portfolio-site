@@ -4614,9 +4614,11 @@ body {
   margin: 0 0.5rem;
 }
 
-.ticker-wrap:hover .ticker {
-  animation-play-state: paused;
-  -webkit-animation-play-state: paused;
+@media (hover: hover) and (pointer: fine) {
+  .ticker-wrap:hover .ticker {
+    animation-play-state: paused;
+    -webkit-animation-play-state: paused;
+  }
 }
 
 @media (min-width: 1024px) and (max-width: 1512px) and (max-height: 980px) {

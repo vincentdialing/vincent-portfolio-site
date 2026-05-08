@@ -75,7 +75,7 @@ if (heroCopyStackEl && heroHeadingGroupEl && heroHeadingEl && heroRoleWrapEl && 
     const copyProbe = heroCopyStackEl.cloneNode(true);
     const roleProbeWrap = heroRoleWrapEl.cloneNode(true);
     const descProbe = heroLeadEl.cloneNode(true);
-    const isMobileHeroLock = window.matchMedia('(max-width: 480px)').matches;
+    const shouldLockHeroLines = window.matchMedia('(max-width: 1536px)').matches;
 
     [copyProbe, roleProbeWrap, descProbe].forEach((probe) => {
       probe.style.position = 'absolute';
@@ -129,9 +129,9 @@ if (heroCopyStackEl && heroHeadingGroupEl && heroHeadingEl && heroRoleWrapEl && 
     heroCopyStackEl.style.minHeight = `${Math.ceil(maxCopyHeight)}px`;
     heroHeadingEl.style.minHeight = '0';
     heroHeadingGroupEl.style.minHeight = '0';
-    heroRoleWrapEl.style.minHeight = isMobileHeroLock ? `${Math.ceil(maxRoleHeight)}px` : '0';
+    heroRoleWrapEl.style.minHeight = shouldLockHeroLines ? `${Math.ceil(maxRoleHeight)}px` : '0';
     heroRoleEl.style.minHeight = '0';
-    heroDescEl.style.minHeight = isMobileHeroLock ? `${Math.ceil(maxDescHeight)}px` : '0';
+    heroDescEl.style.minHeight = shouldLockHeroLines ? `${Math.ceil(maxDescHeight)}px` : '0';
   };
 
   heroRoleEl.style.transition = 'opacity 0.8s ease-in-out';

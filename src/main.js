@@ -222,6 +222,12 @@ async function fetchBrands() {
 
     // Duplicate enough times so small/mobile screens still have a continuous marquee.
     tickerContent.innerHTML = brandsHtml.repeat(6);
+    tickerContent.classList.remove('is-running');
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        tickerContent.classList.add('is-running');
+      });
+    });
   } else {
     tickerContent.innerHTML = '<div class="ticker-item">No brands found</div>';
   }

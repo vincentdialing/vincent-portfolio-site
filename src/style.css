@@ -4595,13 +4595,16 @@ body {
   align-items: center;
   width: max-content;
   gap: 0;
-  animation: marquee 40s linear infinite;
-  -webkit-animation: marquee 40s linear infinite;
   will-change: transform;
   transform: translate3d(0, 0, 0);
   -webkit-transform: translate3d(0, 0, 0);
   backface-visibility: hidden;
   -webkit-backface-visibility: hidden;
+}
+
+.ticker.is-running {
+  animation: marquee 40s linear infinite;
+  -webkit-animation: marquee 40s linear infinite;
 }
 
 .ticker-item {

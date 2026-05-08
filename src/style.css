@@ -547,16 +547,12 @@ nav.floating-nav {
   align-items: flex-start;
   justify-content: center;
   width: 100%;
-  font-size: inherit;
-  line-height: inherit;
 }
 
 #hero-role {
   display: block;
   max-width: 100%;
   min-height: 0;
-  font-size: inherit;
-  line-height: inherit;
   text-align: center;
   text-wrap: balance;
   font-weight: 800;
@@ -565,8 +561,8 @@ nav.floating-nav {
 
 @media (min-width: 1513px) {
   #hero-role {
-    font-size: 1em;
-    line-height: inherit;
+    font-size: clamp(2.2rem, 6.3vw, 5.8rem);
+    line-height: 0.96;
   }
 }
 
@@ -922,8 +918,8 @@ nav.floating-nav {
   }
 
   #hero-role {
-    font-size: 1em;
-    line-height: inherit;
+    font-size: clamp(2.8rem, 4.2vw, 3.9rem);
+    line-height: 0.94;
   }
 
   .hero-lead {
@@ -3990,7 +3986,8 @@ nav.floating-nav {
   }
 
   #hero-role {
-    font-size: 1em !important;
+    font-size: clamp(2rem, 12vw, 2.8rem) !important;
+    line-height: 0.96 !important;
     letter-spacing: -0.035em !important;
   }
 

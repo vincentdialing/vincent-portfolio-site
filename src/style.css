@@ -4206,6 +4206,8 @@ body {
   overflow: hidden;
   white-space: nowrap;
   position: relative;
+  -webkit-mask-image: linear-gradient(to right, transparent 0, #000 6%, #000 94%, transparent 100%);
+  mask-image: linear-gradient(to right, transparent 0, #000 6%, #000 94%, transparent 100%);
 }
 
 /* Fade mask on sides REMOVED as per user request */
@@ -4215,16 +4217,32 @@ body {
 }
 
 .ticker {
-  display: inline-block;
-  animation: marquee 60s linear infinite;
+  display: flex;
+  align-items: center;
+  width: max-content;
+  gap: 0;
+  animation: marquee 40s linear infinite;
+  -webkit-animation: marquee 40s linear infinite;
+  will-change: transform;
+  transform: translate3d(0, 0, 0);
+  -webkit-transform: translate3d(0, 0, 0);
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
 }
 
 .ticker-item {
-  display: inline-block;
+  display: flex;
+  align-items: center;
+  flex: 0 0 auto;
   color: var(--color-accent);
   padding: 0 1.5rem;
   /* Small gap between logos */
   margin: 0 0.5rem;
+}
+
+.ticker-wrap:hover .ticker {
+  animation-play-state: paused;
+  -webkit-animation-play-state: paused;
 }
 
 @media (min-width: 1024px) and (max-width: 1512px) and (max-height: 980px) {
@@ -4277,11 +4295,11 @@ body {
 
 @keyframes marquee {
   0% {
-    transform: translateX(0);
+    transform: translate3d(0, 0, 0);
   }
 
   100% {
-    transform: translateX(-50%);
+    transform: translate3d(-50%, 0, 0);
     /* Move half way (since we duplicated contents) */
   }
 }

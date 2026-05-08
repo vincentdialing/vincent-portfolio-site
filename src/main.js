@@ -205,14 +205,23 @@ async function fetchBrands() {
 
   if (brands && brands.length > 0) {
     // Generate HTML for one set
-    const brandsHtml = brands.map(brand => `
-      <div class="ticker-item">
-        <img src="${brand.logo_url}" alt="${brand.name}" class="brand-logo" title="${brand.name}">
+    const brandsHtml = brands.map((brand, index) => `
+      <div class="ticker-item" data-brand-index="${index}">
+        <img
+          src="${brand.logo_url}"
+          alt="${brand.name}"
+          class="brand-logo"
+          title="${brand.name}"
+          loading="eager"
+          decoding="async"
+          draggable="false"
+          referrerpolicy="no-referrer"
+        >
       </div>
     `).join('');
 
-    // Duplicate 4 times for infinite loop (same as we did manually)
-    tickerContent.innerHTML = brandsHtml.repeat(4);
+    // Duplicate enough times so small/mobile screens still have a continuous marquee.
+    tickerContent.innerHTML = brandsHtml.repeat(6);
   } else {
     tickerContent.innerHTML = '<div class="ticker-item">No brands found</div>';
   }

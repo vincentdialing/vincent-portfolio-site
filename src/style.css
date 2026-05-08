@@ -1,7 +1,8 @@
 :root {
-  font-family: 'Inter', system-ui, Avenir, Helvetica, Arial, sans-serif;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
   line-height: 1.5;
   font-weight: 400;
+  font-synthesis: none;
 
   color-scheme: dark;
 
@@ -42,6 +43,8 @@
 /* Global Scroll Behavior */
 html {
   scroll-behavior: smooth;
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
 }
 
 /* Offset for Fixed Navbar + Visual Spacing */
@@ -57,6 +60,8 @@ body {
   overflow-x: hidden;
   font-size: 16px;
   -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
 }
 
 a {
@@ -79,6 +84,7 @@ a:hover {
 
 .text-accent {
   color: var(--color-accent);
+  -webkit-text-fill-color: currentColor;
 }
 
 #hero-role,
@@ -87,6 +93,8 @@ a:hover {
 }
 
 #hero-role {
+  color: var(--color-accent);
+  -webkit-text-fill-color: currentColor;
   white-space: nowrap;
   font-size: clamp(2.2rem, 6.3vw, 5.8rem);
   line-height: 0.96;
@@ -125,6 +133,10 @@ a:hover {
 h1,
 h2,
 h3 {
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', Helvetica, Arial, sans-serif;
+  font-style: normal;
+  font-kerning: normal;
+  font-feature-settings: "liga" 1, "kern" 1;
   letter-spacing: -0.02em;
   line-height: 1.1;
 }
@@ -141,7 +153,22 @@ h1 {
 
 h2 {
   font-size: clamp(2rem, 5vw, 3rem);
+  font-weight: 700;
   margin-bottom: var(--spacing-md);
+}
+
+h3 {
+  font-weight: 700;
+}
+
+p,
+li,
+button,
+input,
+textarea,
+label {
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', Helvetica, Arial, sans-serif;
+  font-kerning: normal;
 }
 
 p.lead {
@@ -253,6 +280,16 @@ nav.floating-nav {
     inset 0 0 12px rgba(147, 197, 253, 0.35);
   overflow: hidden;
   z-index: 1;
+  isolation: isolate;
+  contain: paint;
+  clip-path: inset(0 round 999px);
+  -webkit-mask-image: -webkit-radial-gradient(white, black);
+  -webkit-appearance: none;
+  appearance: none;
+  transform: translateZ(0);
+  -webkit-transform: translateZ(0);
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
   transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
 }
 
@@ -263,6 +300,7 @@ nav.floating-nav {
   left: -50%;
   width: 200%;
   height: 200%;
+  border-radius: inherit;
   background: radial-gradient(circle at var(--x, 50%) var(--y, 50%),
       rgb(237, 255, 255) 0%,
       rgb(132, 224, 255) 30%,
@@ -312,6 +350,9 @@ nav.floating-nav {
   transition: all 0.3s ease;
   cursor: pointer;
   border: none;
+  font-family: inherit;
+  -webkit-appearance: none;
+  appearance: none;
 }
 
 .btn-primary {
@@ -347,6 +388,14 @@ nav.floating-nav {
     /* Bright Blue shadow */
     inset 0 0 20px rgba(147, 197, 253, 0.3);
   z-index: 1;
+  isolation: isolate;
+  contain: paint;
+  clip-path: inset(0 round 100px);
+  -webkit-mask-image: -webkit-radial-gradient(white, black);
+  transform: translateZ(0);
+  -webkit-transform: translateZ(0);
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
 }
 
 /* The Moving Aurora Gradient Fill */
@@ -357,6 +406,7 @@ nav.floating-nav {
   left: -50%;
   width: 200%;
   height: 200%;
+  border-radius: inherit;
   background: radial-gradient(circle at var(--x, 50%) var(--y, 50%),
       rgb(237, 255, 255) 0%,
       rgb(132, 224, 255) 30%,
@@ -460,10 +510,49 @@ nav.floating-nav {
   flex-direction: column;
   align-items: center;
   gap: 0.18em;
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', Helvetica, Arial, sans-serif;
+  font-style: normal;
+  font-weight: 700;
+  font-kerning: normal;
+  font-feature-settings: "liga" 1, "kern" 1;
+  background: none;
+  color: var(--color-text);
+  -webkit-background-clip: border-box;
+  background-clip: border-box;
+  -webkit-text-fill-color: currentColor;
+  text-wrap: balance;
+}
+
+.hero-name-line {
+  display: inline-block;
+  background: linear-gradient(to right, #fff, #aebaff);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  -webkit-text-fill-color: transparent;
+}
+
+#hero-role {
+  display: inline-block;
+  max-width: 100%;
+  text-align: center;
+  text-wrap: balance;
+  font-weight: 800;
+  letter-spacing: -0.04em;
+}
+
+@media (min-width: 1513px) {
+  #hero-role {
+    font-size: 1em;
+    line-height: inherit;
+  }
 }
 
 .hero-lead {
   max-width: 48rem;
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', Helvetica, Arial, sans-serif;
+  font-weight: 400;
+  font-kerning: normal;
 }
 
 .hero-cta-wrap {
@@ -2062,12 +2151,16 @@ nav.floating-nav {
   color: var(--color-accent);
   font-size: 0.85rem;
   font-weight: 500;
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', Helvetica, Arial, sans-serif;
   display: block;
   margin-bottom: 0.5rem;
 }
 
 .project-card h3 {
   font-size: 1.75rem;
+  font-weight: 700;
+  line-height: 1.12;
+  letter-spacing: -0.03em;
   margin-bottom: 1rem;
 }
 
@@ -2075,6 +2168,8 @@ nav.floating-nav {
   color: var(--color-text-muted);
   margin-bottom: 1.5rem;
   font-size: 1rem;
+  font-weight: 400;
+  line-height: 1.5;
 }
 
 /* ==========================================
@@ -3169,6 +3264,7 @@ nav.floating-nav {
 .cta-spotlight-btn {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 12px;
   padding: 16px 48px;
   background: radial-gradient(circle at center, #007bff 0%, #0055ff 100%);
@@ -3186,6 +3282,14 @@ nav.floating-nav {
   position: relative;
   overflow: hidden;
   z-index: 1;
+  isolation: isolate;
+  contain: paint;
+  clip-path: inset(0 round 100px);
+  -webkit-mask-image: -webkit-radial-gradient(white, black);
+  transform: translateZ(0);
+  -webkit-transform: translateZ(0);
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
 }
 
 /* Aurora gradient overlay — same as hero speak btn */
@@ -3196,6 +3300,7 @@ nav.floating-nav {
   left: -50%;
   width: 200%;
   height: 200%;
+  border-radius: inherit;
   background: radial-gradient(circle at var(--x, 50%) var(--y, 50%),
       rgb(237, 255, 255) 0%,
       rgb(132, 224, 255) 30%,

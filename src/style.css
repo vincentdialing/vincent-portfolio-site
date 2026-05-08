@@ -517,6 +517,13 @@ nav.floating-nav {
   font-feature-settings: "liga" 1, "kern" 1;
 }
 
+.hero-copy-stack {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
 .hero-heading {
   max-width: 100%;
   min-height: 0;
@@ -542,7 +549,6 @@ nav.floating-nav {
 }
 
 .hero-role-wrap {
-  min-height: 1em;
   display: flex;
   align-items: flex-start;
   justify-content: center;
@@ -568,11 +574,10 @@ nav.floating-nav {
 
 .hero-lead {
   max-width: 48rem;
-  min-height: calc(1.52em * 2);
   font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', Helvetica, Arial, sans-serif;
   font-weight: 400;
   font-kerning: normal;
-  margin: 0 auto;
+  margin: 0.3rem auto 0;
   line-height: 1.52;
 }
 
@@ -909,6 +914,10 @@ nav.floating-nav {
     max-width: none;
   }
 
+  .hero-copy-stack {
+    width: auto;
+  }
+
   .hero-heading {
     max-width: none;
     font-size: clamp(2.8rem, 4.2vw, 3.9rem);
@@ -926,7 +935,7 @@ nav.floating-nav {
     max-width: 46rem;
     font-size: 0.88rem;
     line-height: 1.42;
-    min-height: calc(1.42em * 2);
+    margin-top: 0.28rem;
   }
 
   .hero-cta-wrap {
@@ -3991,15 +4000,11 @@ nav.floating-nav {
     letter-spacing: -0.035em !important;
   }
 
-  .hero-role-wrap {
-    min-height: 2.2em !important;
-  }
-
   .hero-lead {
     max-width: 20rem !important;
     font-size: 0.78rem !important;
     line-height: 1.38 !important;
-    min-height: calc(1.38em * 3) !important;
+    margin-top: 0.18rem !important;
   }
 
   .hero-cta-wrap {

@@ -420,7 +420,7 @@ function goToLevel2(serviceKey, clickedCard) {
                 isAnimating = false;
             }, 400 + (tiles.length * 80));
         });
-    }, 400);
+    }, 450);
 }
 
 // ==========================================
@@ -518,7 +518,7 @@ function goBackToLevel2() {
         setTimeout(() => {
             isAnimating = false;
         }, 400);
-    }, 350);
+    }, 500);
 }
 
 // ==========================================
@@ -571,7 +571,7 @@ function goBackToLevel1() {
             });
             isAnimating = false;
         }, 200 + (cards.length * 60));
-    }, 350);
+    }, 450);
 }
 
 // ==========================================

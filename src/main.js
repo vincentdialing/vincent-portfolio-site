@@ -71,6 +71,12 @@ if (heroRoleEl && heroDescEl) {
   
   // Set the initial description on load
   heroDescEl.textContent = rolesData[0].desc;
+
+  const VISIBLE_DURATION = 8000;
+  const ROLE_EXIT_DELAY = 300;
+  const EXIT_DURATION = 800;
+  const DESC_ENTER_DELAY = 600;
+  const CYCLE_DURATION = VISIBLE_DURATION + EXIT_DURATION + ROLE_EXIT_DELAY + DESC_ENTER_DELAY;
   
   // Fix for Vite HMR stacking intervals
   if (window.heroRotationInterval) {
@@ -78,9 +84,12 @@ if (heroRoleEl && heroDescEl) {
   }
   
   window.heroRotationInterval = setInterval(() => {
-    // Fade out both
-    heroRoleEl.style.opacity = '0';
+    // Reverse the exit timing: description fades first, then the role.
     heroDescEl.style.opacity = '0';
+    
+    setTimeout(() => {
+      heroRoleEl.style.opacity = '0';
+    }, ROLE_EXIT_DELAY);
     
     setTimeout(() => {
       roleIndex = (roleIndex + 1) % rolesData.length;
@@ -95,10 +104,10 @@ if (heroRoleEl && heroDescEl) {
       // Delay the Description fade-in by 600ms
       setTimeout(() => {
         heroDescEl.style.opacity = '1';
-      }, 600);
+      }, DESC_ENTER_DELAY);
       
-    }, 800); // Wait for fade out to finish
-  }, 8000); // 8 seconds pacing
+    }, EXIT_DURATION + ROLE_EXIT_DELAY); // Wait for the staggered fade-out to finish
+  }, CYCLE_DURATION);
 }
 
 // Dynamic Content: Fetch Brands
@@ -1005,6 +1014,67 @@ if (navPill) {
       navPill.classList.remove('scrolled');
     }
   });
+}
+
+// Navbar Active Section Indicator
+const navLinks = Array.from(document.querySelectorAll('.nav-link[data-section]'));
+
+function setActiveNavLink(sectionId) {
+  navLinks.forEach(link => {
+    link.classList.toggle('active', link.dataset.section === sectionId);
+  });
+}
+
+if (navLinks.length > 0) {
+  const navSectionTargets = [
+    { id: 'about', element: document.querySelector('#about') },
+    { id: 'works', element: document.querySelector('#works') },
+    { id: 'contact', element: document.querySelector('#contact') }
+  ].filter(section => section.element);
+
+  const updateActiveNavByScroll = () => {
+    const homeThreshold = Math.max(140, window.innerHeight * 0.55);
+    const currentY = window.scrollY;
+
+    // Home/hero state: no selected pill yet.
+    if (currentY < homeThreshold) {
+      setActiveNavLink(null);
+      return;
+    }
+
+    const probePoints = [0.36, 0.5, 0.64];
+    const votes = new Map();
+
+    probePoints.forEach(ratio => {
+      const probeY = Math.round(window.innerHeight * ratio);
+      const probeX = Math.round(window.innerWidth * 0.5);
+      const hit = document.elementFromPoint(probeX, probeY);
+      const sectionMatch = hit?.closest?.('#about, #works, #contact');
+
+      if (sectionMatch?.id) {
+        votes.set(sectionMatch.id, (votes.get(sectionMatch.id) || 0) + 1);
+      }
+    });
+
+    if (votes.size > 0) {
+      const bestSection = Array.from(votes.entries()).sort((a, b) => b[1] - a[1])[0][0];
+      setActiveNavLink(bestSection);
+      return;
+    }
+
+    const fallbackSection = navSectionTargets.find(section => {
+      const rect = section.element.getBoundingClientRect();
+      return rect.top <= window.innerHeight * 0.5 && rect.bottom >= window.innerHeight * 0.3;
+    });
+
+    setActiveNavLink(fallbackSection?.id || null);
+  };
+
+  window.addEventListener('scroll', updateActiveNavByScroll, { passive: true });
+  window.addEventListener('resize', updateActiveNavByScroll);
+  window.addEventListener('hashchange', updateActiveNavByScroll);
+
+  updateActiveNavByScroll();
 }
 
 // ==========================================

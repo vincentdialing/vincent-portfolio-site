@@ -892,6 +892,8 @@ nav.floating-nav {
 
   .hero .container {
     max-width: 1080px;
+    justify-content: flex-start;
+    min-height: 860px;
   }
 
   .ai-orb-container {
@@ -929,12 +931,30 @@ nav.floating-nav {
   }
 
   #hero-role {
-    font-size: clamp(2.8rem, 4.2vw, 3.9rem);
-    line-height: 0.94;
+    font-size: clamp(2.2rem, 3.35vw, 3.2rem);
+    line-height: 1;
     min-height: 7.6rem;
-    display: flex;
-    align-items: flex-start;
-    justify-content: center;
+    display: block;
+    width: max-content;
+    max-width: none;
+    margin-left: auto;
+    margin-right: auto;
+    padding-bottom: 0.08em;
+    white-space: nowrap;
+    text-wrap: nowrap;
+  }
+
+  #hero-role.hero-role-long {
+    display: block;
+    width: max-content;
+    max-width: none;
+    margin-left: auto;
+    margin-right: auto;
+    font-size: clamp(2rem, 3vw, 2.7rem);
+    line-height: 1.02;
+    white-space: nowrap;
+    text-wrap: nowrap;
+    letter-spacing: -0.05em;
   }
 
   .hero-lead {
@@ -946,9 +966,14 @@ nav.floating-nav {
   }
 
   .hero-cta-wrap {
-    margin-top: 1.1rem !important;
+    position: absolute;
+    left: 50%;
+    bottom: 92px;
+    transform: translateX(-50%);
+    margin-top: 0 !important;
     min-height: 56px;
     align-items: flex-end;
+    width: max-content;
   }
 
   #hero-speak-btn {

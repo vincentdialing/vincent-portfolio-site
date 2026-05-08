@@ -71,6 +71,10 @@ const heroRoleEl = document.getElementById('hero-role');
 const heroDescEl = document.getElementById('hero-desc');
 
 if (heroCopyStackEl && heroHeadingGroupEl && heroHeadingEl && heroRoleWrapEl && heroLeadEl && heroRoleEl && heroDescEl) {
+  const syncHeroRoleClass = (roleText) => {
+    heroRoleEl.classList.toggle('hero-role-long', roleText.length >= 28);
+  };
+
   const lockHeroTextHeights = () => {
     const copyProbe = heroCopyStackEl.cloneNode(true);
     const roleProbeWrap = heroRoleWrapEl.cloneNode(true);
@@ -139,6 +143,7 @@ if (heroCopyStackEl && heroHeadingGroupEl && heroHeadingEl && heroRoleWrapEl && 
 
   // Set the initial description on load
   heroDescEl.textContent = rolesData[0].desc;
+  syncHeroRoleClass(rolesData[0].role);
   lockHeroTextHeights();
 
   let heroResizeFrame = null;
@@ -174,6 +179,7 @@ if (heroCopyStackEl && heroHeadingGroupEl && heroHeadingEl && heroRoleWrapEl && 
       // Update both text contents at the same time so layout adjusts while invisible
       heroRoleEl.textContent = rolesData[roleIndex].role;
       heroDescEl.textContent = rolesData[roleIndex].desc;
+      syncHeroRoleClass(rolesData[roleIndex].role);
       
       // Fade in the Role immediately
       heroRoleEl.style.opacity = '1';

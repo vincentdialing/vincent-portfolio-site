@@ -36,28 +36,28 @@ setTimeout(() => {
 // ==========================================
 const rolesData = [
   {
-    role: "Creative Developer",
-    desc: "I build interactive, high-performance web experiences that blend modern code with stunning aesthetics."
+    role: "Graphic Designer",
+    desc: "I create brand visuals, social media graphics, marketing materials, and design assets that help businesses look professional and memorable online."
   },
   {
     role: "UI/UX Designer",
-    desc: "I craft intuitive, user-centric interfaces focused on engaging user journeys and seamless interactions."
+    desc: "I design user-friendly interfaces and seamless digital experiences with clear layouts, strong visual hierarchy, and thoughtful user flow."
   },
   {
-    role: "Graphic Designer",
-    desc: "I create compelling visuals and brand identities that communicate your message with impact and style."
+    role: "Landing Page Designer",
+    desc: "I design landing pages and sales funnels with strategic section flow, compelling visuals, and conversion-focused structure for better lead generation."
   },
   {
     role: "Video Editor",
-    desc: "I produce dynamic, engaging video content tailored for modern platforms, from cutting to post-production."
+    desc: "I edit engaging short-form and long-form videos with polished cuts, motion, pacing, and visuals tailored for modern digital platforms."
   },
   {
     role: "Social Media Manager",
-    desc: "I strategize, manage, and grow digital communities with data-driven content and engaging campaigns."
+    desc: "I create social media marketing content and campaign visuals that help brands grow their presence, reach the right audience, and stay consistent online."
   },
   {
-    role: "Digital Marketer",
-    desc: "I drive growth through targeted campaigns, SEO optimization, and strategic online marketing initiatives."
+    role: "Frontend Developer",
+    desc: "I build responsive frontend websites and landing pages with clean code, polished design, and smooth interactions that bring ideas to life."
   }
 ];
 
@@ -149,7 +149,7 @@ if (heroCopyStackEl && heroHeadingGroupEl && heroHeadingEl && heroRoleWrapEl && 
     });
   });
 
-  const VISIBLE_DURATION = 8000;
+  const VISIBLE_DURATION = 10000;
   const ROLE_EXIT_DELAY = 300;
   const EXIT_DURATION = 800;
   const DESC_ENTER_DELAY = 600;

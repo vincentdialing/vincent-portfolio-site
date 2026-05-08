@@ -948,8 +948,14 @@ if (heroSpeakBtn && chatWindow && voiceBtn) {
 
   // Elements for Parallax
   const avatarIcon = document.querySelector('.orb-mic-icon');
+  const glowElement = document.querySelector('.magical-glow');
   window.mouseX = window.innerWidth / 2;
   window.mouseY = window.innerHeight / 2;
+  let orientationActive = false;
+  let orientationOffsetX = 0;
+  let orientationOffsetY = 0;
+
+  const clamp = (value, min, max) => Math.min(max, Math.max(min, value));
 
   const updateHeroPointer = (clientX, clientY) => {
     if (heroSpeakBtn) {
@@ -962,6 +968,33 @@ if (heroSpeakBtn && chatWindow && voiceBtn) {
     window.mouseY = clientY;
   };
 
+  const updateOrientationOffsets = (event) => {
+    if (typeof event.beta !== 'number' || typeof event.gamma !== 'number') return;
+
+    // Portrait-friendly ranges: gamma = left/right, beta = front/back tilt.
+    const normalizedGamma = clamp(event.gamma / 30, -1, 1);
+    const normalizedBeta = clamp((event.beta - 45) / 35, -1, 1);
+
+    orientationOffsetX = normalizedGamma;
+    orientationOffsetY = normalizedBeta;
+    orientationActive = true;
+  };
+
+  const enableDeviceOrientation = async () => {
+    if (typeof window === 'undefined' || typeof DeviceOrientationEvent === 'undefined') return;
+
+    try {
+      if (typeof DeviceOrientationEvent.requestPermission === 'function') {
+        const permission = await DeviceOrientationEvent.requestPermission();
+        if (permission !== 'granted') return;
+      }
+
+      window.addEventListener('deviceorientation', updateOrientationOffsets, { passive: true });
+    } catch (error) {
+      console.warn('Device orientation permission was not granted:', error);
+    }
+  };
+
   document.addEventListener('mousemove', (e) => {
     updateHeroPointer(e.clientX, e.clientY);
   });
@@ -970,6 +1003,7 @@ if (heroSpeakBtn && chatWindow && voiceBtn) {
     const touch = e.touches[0];
     if (!touch) return;
     updateHeroPointer(touch.clientX, touch.clientY);
+    enableDeviceOrientation();
   }, { passive: true });
 
   document.addEventListener('touchmove', (e) => {
@@ -981,6 +1015,10 @@ if (heroSpeakBtn && chatWindow && voiceBtn) {
   document.addEventListener('touchend', () => {
     updateHeroPointer(window.innerWidth / 2, window.innerHeight / 2);
   }, { passive: true });
+
+  if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission !== 'function') {
+    enableDeviceOrientation();
+  }
 
   const animateGradient = () => {
     // 1. Button Gradient Logic
@@ -995,12 +1033,13 @@ if (heroSpeakBtn && chatWindow && voiceBtn) {
 
     // 2. Avatar Parallax Logic
     if (avatarIcon && window.mouseX !== undefined) {
-      // Calculate offset from center of screen
       const centerX = window.innerWidth / 2;
       const centerY = window.innerHeight / 2;
 
-      const offsetX = (window.mouseX - centerX) / centerX; // -1 to 1
-      const offsetY = (window.mouseY - centerY) / centerY; // -1 to 1
+      const pointerOffsetX = (window.mouseX - centerX) / centerX;
+      const pointerOffsetY = (window.mouseY - centerY) / centerY;
+      const offsetX = orientationActive ? orientationOffsetX : pointerOffsetX;
+      const offsetY = orientationActive ? orientationOffsetY : pointerOffsetY;
 
       // Max tilt angles
       const maxTilt = 20;
@@ -1016,14 +1055,14 @@ if (heroSpeakBtn && chatWindow && voiceBtn) {
     }
 
     // 3. Magical Glow Follow Logic (Laggy, floaty follow)
-    const glowElement = document.querySelector('.magical-glow');
     if (glowElement && window.mouseX !== undefined) {
       const centerX = window.innerWidth / 2;
       const centerY = window.innerHeight / 2;
 
-      // Calculate offset logic again or reuse
-      const offsetX = (window.mouseX - centerX) / centerX;
-      const offsetY = (window.mouseY - centerY) / centerY;
+      const pointerOffsetX = (window.mouseX - centerX) / centerX;
+      const pointerOffsetY = (window.mouseY - centerY) / centerY;
+      const offsetX = orientationActive ? orientationOffsetX : pointerOffsetX;
+      const offsetY = orientationActive ? orientationOffsetY : pointerOffsetY;
 
       // Glow moves slightly more than avatar to feel like expansive background energy
       const moveAmountGlow = 30;

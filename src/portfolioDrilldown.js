@@ -38,7 +38,8 @@ async function fetchPortfolioData() {
             };
         });
 
-        (projects || []).forEach(proj => {
+        (projects || []).forEach(rawProj => {
+            const proj = applyProjectOverrides(rawProj);
             if (data[proj.service_key]) {
                 data[proj.service_key].items.push({
                     id: proj.project_key,
@@ -80,7 +81,7 @@ let lastClickedTileIndex = 0; // Remember which tile was clicked
 // ==========================================
 function scrollToSectionTop() {
     if (!projectsSection) return;
-    const offset = projectsSection.getBoundingClientRect().top + window.scrollY - 20;
+    const offset = projectsSection.getBoundingClientRect().top + window.scrollY - 120;
     window.scrollTo({ top: offset, behavior: 'smooth' });
 }
 
@@ -88,7 +89,7 @@ function scrollToCard(index) {
     const cards = projectsGrid.querySelectorAll('.project-card');
     if (cards[index]) {
         setTimeout(() => {
-            const cardTop = cards[index].getBoundingClientRect().top + window.scrollY - 100;
+            const cardTop = cards[index].getBoundingClientRect().top + window.scrollY - 140;
             window.scrollTo({ top: cardTop, behavior: 'smooth' });
         }, 100);
     }
@@ -98,7 +99,7 @@ function scrollToTile(index) {
     const tiles = level2Container.querySelectorAll('.portfolio-tile');
     if (tiles[index]) {
         setTimeout(() => {
-            const tileTop = tiles[index].getBoundingClientRect().top + window.scrollY - 100;
+            const tileTop = tiles[index].getBoundingClientRect().top + window.scrollY - 140;
             window.scrollTo({ top: tileTop, behavior: 'smooth' });
         }, 100);
     }
@@ -584,8 +585,11 @@ function renderLevel2(service) {
         const tile = document.createElement('div');
         tile.className = 'portfolio-tile';
         tile.setAttribute('data-project-id', item.id);
+        const tileImageStyle = item.imageUrl
+            ? `background: ${item.gradient}; background-image: linear-gradient(rgba(5, 5, 16, 0.04), rgba(5, 5, 16, 0.16)), url('${item.imageUrl}'); background-size: cover; background-position: center;`
+            : `background: ${item.gradient};`;
         tile.innerHTML = `
-      <div class="portfolio-tile-image" style="background: ${item.gradient};">
+      <div class="portfolio-tile-image" style="${tileImageStyle}">
         <div class="portfolio-tile-overlay"></div>
       </div>
       <div class="portfolio-tile-content">
@@ -625,12 +629,21 @@ function renderLevel3(project) {
                 return `<p class="detail-text">${block.content}</p>`;
 
             case 'video':
-                // Custom video player: thumbnail + play button → loads YouTube on click
-                const videoId = extractYouTubeId(block.url);
-                const thumb = block.thumbnail || (videoId ? `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg` : '');
+                // Custom video player: thumbnail + play button → loads supported embeds on click
+                const videoMeta = getVideoMeta(block.url);
+                const thumb = block.thumbnail || videoMeta.thumbnail || '';
+                const shouldAutoCapture = !block.thumbnail && videoMeta.provider === 'file';
                 return `
-                  <div class="video-player-wrapper" data-video-url="${block.url}" data-video-id="${videoId || ''}">
-                    <div class="video-thumbnail" style="background-image: url('${thumb}'); background: ${!thumb ? project.gradient : `url('${thumb}') center/cover no-repeat`};">
+                  <div
+                    class="video-player-wrapper"
+                    data-video-url="${block.url}"
+                    data-video-provider="${videoMeta.provider}"
+                    data-video-embed="${videoMeta.embedSrc || ''}"
+                  >
+                    <div
+                      class="video-thumbnail ${shouldAutoCapture ? 'video-thumbnail-autocapture' : ''}"
+                      style="background-image: url('${thumb}'); background: ${!thumb ? project.gradient : `url('${thumb}') center/cover no-repeat`};"
+                    >
                       <div class="video-play-btn">
                         <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="white">
                           <path d="M8 5v14l11-7z"/>
@@ -654,6 +667,18 @@ function renderLevel3(project) {
                     <span>${block.label || 'View Full Project'}</span>
                   </a>`;
 
+            case 'certificate':
+                return `
+                  <button type="button" class="detail-external-link detail-certificate-link" data-certificate-id="${block.certificateId || ''}">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
+                      stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+                      <polyline points="15 3 21 3 21 9"></polyline>
+                      <line x1="10" y1="14" x2="21" y2="3"></line>
+                    </svg>
+                    <span>${block.label || 'View Certificate'}</span>
+                  </button>`;
+
             case 'image':
                 return `
                   <div class="detail-image-block">
@@ -676,7 +701,7 @@ function renderLevel3(project) {
         <span class="detail-category">${project.category}</span>
         <h2 class="detail-title">${project.title}</h2>
         <p class="detail-subtitle">${project.description}</p>
-        <div class="chip-container" style="justify-content: center;">
+        <div class="chip-container detail-tools">
           ${project.tools.map(t => `<span class="chip">${t}</span>`).join('')}
         </div>
       </div>
@@ -701,20 +726,24 @@ function renderLevel3(project) {
     detail.querySelectorAll('.video-player-wrapper').forEach(wrapper => {
         const thumbEl = wrapper.querySelector('.video-thumbnail');
         const iframeContainer = wrapper.querySelector('.video-iframe-container');
-        const videoId = wrapper.dataset.videoId;
+        const videoProvider = wrapper.dataset.videoProvider;
+        const embedSrc = wrapper.dataset.videoEmbed;
         const videoUrl = wrapper.dataset.videoUrl;
 
+        if (thumbEl.classList.contains('video-thumbnail-autocapture') && videoUrl) {
+            attemptVideoThumbnailCapture(thumbEl, videoUrl);
+        }
+
         thumbEl.addEventListener('click', () => {
-            if (videoId) {
-                // YouTube embed — nocookie, no branding, autoplay
+            if (embedSrc) {
                 iframeContainer.innerHTML = `
                   <iframe
-                    src="https://www.youtube-nocookie.com/embed/${videoId}?autoplay=1&rel=0&modestbranding=1&showinfo=0&controls=1&color=white&iv_load_policy=3"
+                    src="${embedSrc}"
                     frameborder="0"
-                    allow="autoplay; encrypted-media; picture-in-picture"
+                    allow="autoplay; encrypted-media; picture-in-picture; fullscreen"
                     allowfullscreen
                   ></iframe>`;
-            } else if (videoUrl) {
+            } else if (videoProvider === 'file' && videoUrl) {
                 // Direct video file
                 iframeContainer.innerHTML = `
                   <video autoplay controls playsinline>
@@ -725,13 +754,175 @@ function renderLevel3(project) {
             iframeContainer.style.display = 'block';
         });
     });
+
+    detail.querySelectorAll('.detail-certificate-link').forEach(button => {
+        button.addEventListener('click', () => {
+            const certificateId = button.dataset.certificateId;
+            if (!certificateId) return;
+
+            const certificateSection = document.getElementById('certificates');
+            const certificateTile = document.querySelector(`.certificate-tile[data-certificate-id="${certificateId}"]`);
+
+            if (certificateSection) {
+                const top = certificateSection.getBoundingClientRect().top + window.scrollY - 120;
+                window.scrollTo({ top, behavior: 'smooth' });
+            }
+
+            if (certificateTile) {
+                setTimeout(() => {
+                    certificateTile.click();
+                }, 450);
+            }
+        });
+    });
 }
 
 // ==========================================
-// Helper: Extract YouTube video ID from URL
+// Helpers: detect supported video providers and build official embed URLs
 // ==========================================
 function extractYouTubeId(url) {
     if (!url) return null;
     const match = url.match(/(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=))([^&\n?#]+)/);
     return match ? match[1] : null;
+}
+
+function extractVimeoId(url) {
+    if (!url) return null;
+    const match = url.match(/vimeo\.com\/(?:video\/)?(\d+)/);
+    return match ? match[1] : null;
+}
+
+function isFacebookVideoUrl(url) {
+    if (!url) return false;
+    return /facebook\.com|fb\.watch/.test(url);
+}
+
+function isDirectVideoFile(url) {
+    if (!url) return false;
+    return /\.(mp4|webm|ogg|mov)(\?.*)?$/i.test(url);
+}
+
+function getVideoMeta(url) {
+    const youtubeId = extractYouTubeId(url);
+    if (youtubeId) {
+        return {
+            provider: 'youtube',
+            embedSrc: `https://www.youtube-nocookie.com/embed/${youtubeId}?autoplay=1&rel=0&modestbranding=1&controls=1&color=white&iv_load_policy=3`,
+            thumbnail: `https://img.youtube.com/vi/${youtubeId}/maxresdefault.jpg`
+        };
+    }
+
+    const vimeoId = extractVimeoId(url);
+    if (vimeoId) {
+        return {
+            provider: 'vimeo',
+            embedSrc: `https://player.vimeo.com/video/${vimeoId}?autoplay=1&title=0&byline=0&portrait=0`,
+            thumbnail: ''
+        };
+    }
+
+    if (isFacebookVideoUrl(url)) {
+        return {
+            provider: 'facebook',
+            embedSrc: `https://www.facebook.com/plugins/video.php?href=${encodeURIComponent(url)}&show_text=false&autoplay=true`,
+            thumbnail: ''
+        };
+    }
+
+    if (isDirectVideoFile(url)) {
+        return {
+            provider: 'file',
+            embedSrc: '',
+            thumbnail: ''
+        };
+    }
+
+    return {
+        provider: 'unknown',
+        embedSrc: '',
+        thumbnail: ''
+    };
+}
+
+function applyProjectOverrides(project) {
+    if (!project || project.project_key !== 'mg-3') {
+        return project;
+    }
+
+    return {
+        ...project,
+        service_key: 'video-editing',
+        title: 'HUSAY 2026 Official Event Video',
+        category: 'End-to-End Video Production',
+        description: 'Executed the full post-production workflow for the HUSAY 2026 official event video, transforming a script-based direction into a polished Facebook-ready production published by Dr. Shirley C. Agrupis, Chairperson of the Commission on Higher Education in the Philippines.',
+        gradient: 'linear-gradient(135deg, #7c3aed 0%, #4c1d95 100%)',
+        tools: ['Adobe Premiere Pro', 'Adobe After Effects', 'CapCut'],
+        image_url: '/husay-2026-video-poster.svg',
+        details: [
+            {
+                type: 'text',
+                content: 'Handled the project end-to-end as the sole video editor, using the provided script as a creative starting point and personally managing clip selection, sequencing, audio pacing, sound effects, transitions, timing, and the overall emotional rhythm to turn the piece into a polished, high-retention event video from the ground up.'
+            },
+            {
+                type: 'video',
+                url: 'https://www.facebook.com/reel/950207200710625',
+                caption: 'Official HUSAY 2026 event video published on Facebook',
+                duration: ''
+            },
+            {
+                type: 'link',
+                url: 'https://www.facebook.com/reel/950207200710625',
+                label: 'Watch the published official video'
+            },
+            {
+                type: 'certificate',
+                certificateId: 'husay-2026',
+                label: 'View the supporting certificate'
+            }
+        ]
+    };
+}
+
+function attemptVideoThumbnailCapture(thumbnailEl, videoUrl) {
+    const video = document.createElement('video');
+    video.preload = 'metadata';
+    video.muted = true;
+    video.playsInline = true;
+    video.crossOrigin = 'anonymous';
+    video.src = videoUrl;
+
+    const applyCapturedFrame = () => {
+        try {
+            const canvas = document.createElement('canvas');
+            canvas.width = video.videoWidth || 1280;
+            canvas.height = video.videoHeight || 720;
+            const context = canvas.getContext('2d');
+            if (!context) return;
+
+            context.drawImage(video, 0, 0, canvas.width, canvas.height);
+            const dataUrl = canvas.toDataURL('image/jpeg', 0.92);
+            thumbnailEl.style.background = `url('${dataUrl}') center/cover no-repeat`;
+            thumbnailEl.classList.add('video-thumbnail-has-capture');
+        } catch (error) {
+            console.warn('Video thumbnail capture failed:', error);
+        } finally {
+            video.remove();
+        }
+    };
+
+    video.addEventListener('loadeddata', () => {
+        if (video.readyState >= 2) {
+            const targetTime = Math.min(1, Math.max(0.1, (video.duration || 1) * 0.15));
+            if (Number.isFinite(targetTime)) {
+                video.currentTime = targetTime;
+            } else {
+                applyCapturedFrame();
+            }
+        }
+    }, { once: true });
+
+    video.addEventListener('seeked', applyCapturedFrame, { once: true });
+    video.addEventListener('error', () => {
+        video.remove();
+    }, { once: true });
 }

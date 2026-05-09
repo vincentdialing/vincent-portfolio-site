@@ -1,0 +1,29 @@
+<svg width="1600" height="900" viewBox="0 0 1600 900" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="96" y1="58" x2="1488" y2="840" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#8B5CF6"/>
+      <stop offset="0.44" stop-color="#5B21B6"/>
+      <stop offset="1" stop-color="#12081F"/>
+    </linearGradient>
+    <linearGradient id="panel" x1="182" y1="148" x2="1380" y2="770" gradientUnits="userSpaceOnUse">
+      <stop stop-color="white" stop-opacity="0.14"/>
+      <stop offset="1" stop-color="white" stop-opacity="0.03"/>
+    </linearGradient>
+  </defs>
+  <rect width="1600" height="900" rx="48" fill="#060611"/>
+  <rect x="24" y="24" width="1552" height="852" rx="40" fill="url(#bg)"/>
+  <circle cx="280" cy="182" r="168" fill="#DDD6FE" fill-opacity="0.12"/>
+  <circle cx="1320" cy="760" r="220" fill="#A78BFA" fill-opacity="0.1"/>
+  <rect x="108" y="108" width="1384" height="684" rx="42" fill="url(#panel)" stroke="#FFFFFF" stroke-opacity="0.12"/>
+  <rect x="164" y="172" width="292" height="58" rx="29" fill="#FFFFFF" fill-opacity="0.12" stroke="#FFFFFF" stroke-opacity="0.08"/>
+  <text x="202" y="209" fill="white" fill-opacity="0.96" font-family="Inter, Arial, sans-serif" font-size="28" font-weight="700" letter-spacing="2">EVENT VIDEO</text>
+  <text x="164" y="336" fill="#F5F3FF" font-family="Inter, Arial, sans-serif" font-size="44" font-weight="600">Official HUSAY 2026</text>
+  <text x="164" y="434" fill="white" font-family="Inter, Arial, sans-serif" font-size="92" font-weight="800">Campaign Video</text>
+  <text x="164" y="516" fill="#E9D5FF" font-family="Inter, Arial, sans-serif" font-size="36" font-weight="500">Edited and fully assembled by Vincent Dialing</text>
+  <text x="164" y="590" fill="#E2D8FF" font-family="Inter, Arial, sans-serif" font-size="28" font-weight="400">Script provided as creative basis</text>
+  <text x="164" y="632" fill="#E2D8FF" font-family="Inter, Arial, sans-serif" font-size="28" font-weight="400">Pacing, audio, SFX, sequencing, and visual flow handled end-to-end</text>
+  <rect x="164" y="694" width="356" height="62" rx="18" fill="#0F0A1E" fill-opacity="0.32" stroke="#FFFFFF" stroke-opacity="0.14"/>
+  <text x="202" y="734" fill="white" font-family="Inter, Arial, sans-serif" font-size="28" font-weight="700">Published on Facebook</text>
+  <rect x="1222" y="206" width="170" height="170" rx="34" fill="#FFFFFF" fill-opacity="0.12" stroke="#FFFFFF" stroke-opacity="0.16"/>
+  <path d="M1284 255V327L1346 291L1284 255Z" fill="white"/>
+</svg>

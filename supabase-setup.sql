@@ -237,11 +237,11 @@ INSERT INTO portfolio_projects (project_key, service_key, title, category, descr
   2
 ),
 (
-  'mg-3', 'motion-graphics', 'Explainer Video Graphics', 'Motion Design',
-  'Custom illustrations and animations for a 2-minute explainer video.',
-  'linear-gradient(135deg, #22d3ee 0%, #083344 100%)',
-  ARRAY['Adobe After Effects', 'Adobe Photoshop'],
-  '[{"type":"text","content":"Illustrated and animated custom graphics for a product explainer video, including character animations, icon animations, and data visualizations."},{"type":"text","content":"Worked closely with the script to ensure visual storytelling reinforced key messages at every beat."}]'::jsonb,
+  'mg-3', 'video-editing', 'HUSAY 2026 Official Event Video', 'End-to-End Video Production',
+  'Executed the full post-production workflow for the HUSAY 2026 official event video, transforming a script-based direction into a polished Facebook-ready production published by Dr. Shirley C. Agrupis, Chairperson of the Commission on Higher Education in the Philippines.',
+  'linear-gradient(135deg, #7c3aed 0%, #4c1d95 100%)',
+  ARRAY['Adobe Premiere Pro', 'Adobe After Effects', 'CapCut'],
+  '[{"type":"text","content":"Handled the project end-to-end as the sole video editor, using the provided script as a creative starting point and personally managing clip selection, sequencing, audio pacing, sound effects, transitions, timing, and the overall emotional rhythm to turn the piece into a polished, high-retention event video from the ground up."},{"type":"video","url":"https://www.facebook.com/reel/950207200710625","caption":"Official HUSAY 2026 event video published on Facebook"},{"type":"link","url":"https://www.facebook.com/reel/950207200710625","label":"Watch the published official video"},{"type":"certificate","certificateId":"husay-2026","label":"View the supporting certificate"}]'::jsonb,
   3
 );
 

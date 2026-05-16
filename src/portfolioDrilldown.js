@@ -82,7 +82,12 @@ let lastClickedTileIndex = 0; // Remember which tile was clicked
 // ==========================================
 function scrollToSectionTop() {
     if (!projectsSection) return;
-    const offset = projectsSection.getBoundingClientRect().top + window.scrollY - 120;
+    // When in drill-down mode (Level 2/3), scroll to the back button row
+    // so tiles appear right below the navbar instead of below the section heading
+    const scrollTarget = (currentLevel >= 2 && backButtonRow)
+        ? backButtonRow
+        : projectsSection;
+    const offset = scrollTarget.getBoundingClientRect().top + window.scrollY - 100;
     window.scrollTo({ top: offset, behavior: 'smooth' });
 }
 
@@ -739,8 +744,20 @@ function renderLevel3(project) {
     const detail = document.createElement('div');
     detail.className = 'drilldown-detail-card';
 
-    // Build detail body content blocks
-    const bodyContent = project.details.map(block => {
+    // Separate text/action blocks from image blocks
+    const textBlocks = [];
+    const imageBlocks = [];
+
+    project.details.forEach(block => {
+        if (block.type === 'image') {
+            if (block.url) imageBlocks.push(block);
+        } else {
+            textBlocks.push(block);
+        }
+    });
+
+    // Build text/action content (top section)
+    const textContent = textBlocks.map(block => {
         switch (block.type) {
             case 'text':
                 return `<p class="detail-text">${block.content}</p>`;
@@ -796,20 +813,32 @@ function renderLevel3(project) {
                     <span>${block.label || 'View Certificate'}</span>
                   </button>`;
 
-            case 'image':
-                return `
-                  <div class="detail-image-block">
-                    <img src="${block.url}" alt="${block.alt || project.title}" loading="lazy" />
-                    ${block.caption ? `<p class="detail-image-caption">${block.caption}</p>` : ''}
-                  </div>`;
-
             default:
                 return '';
         }
     }).join('');
 
+    // Build image gallery (bottom section)
+    const imageGalleryHtml = imageBlocks.length > 0
+        ? `<div class="detail-placeholder-gallery detail-image-gallery">
+            ${imageBlocks.map(block => `
+              <div class="gallery-item detail-gallery-image-item" style="background: ${project.gradient};">
+                <img src="${block.url}" alt="${block.alt || project.title}" loading="lazy" />
+                ${block.caption ? `<p class="detail-image-caption">${block.caption}</p>` : ''}
+              </div>
+            `).join('')}
+           </div>`
+        : `<div class="detail-placeholder-gallery">
+            <div class="gallery-item" style="background: ${project.gradient}; opacity: 0.6;">
+              <span>Screenshot Placeholder</span>
+            </div>
+            <div class="gallery-item" style="background: ${project.gradient}; opacity: 0.4;">
+              <span>Screenshot Placeholder</span>
+            </div>
+           </div>`;
+
     // Check if project has any media (video/image) — if not, show placeholder gallery
-    const hasMedia = project.details.some(b => b.type === 'video' || b.type === 'image');
+    const hasMedia = project.details.some(b => b.type === 'video' || (b.type === 'image' && b.url));
     const detailHeroStyle = project.imageUrl
         ? `--detail-hero-image: url('${project.imageUrl}'); background: ${project.gradient};`
         : `background: ${project.gradient};`;
@@ -827,16 +856,8 @@ function renderLevel3(project) {
       </div>
     </div>
     <div class="detail-body">
-      ${bodyContent}
-      ${!hasMedia ? `
-        <div class="detail-placeholder-gallery">
-          <div class="gallery-item" style="background: ${project.gradient}; opacity: 0.6;">
-            <span>Screenshot Placeholder</span>
-          </div>
-          <div class="gallery-item" style="background: ${project.gradient}; opacity: 0.4;">
-            <span>Screenshot Placeholder</span>
-          </div>
-        </div>` : ''}
+      ${textContent}
+      ${imageGalleryHtml}
     </div>
   `;
 
@@ -974,8 +995,50 @@ function applyProjectOverrides(project) {
             ...project,
             title: 'Harmonia Polifonica Chorale Branding 2024',
             category: 'Branding & Content Direction',
-            description: 'A collection of branded posts and campaign materials made to give Harmonia Polifonica Chorale a more polished and recognizable presence online.',
-            tools: ['Canva', 'Adobe Photoshop', 'Adobe Illustrator', 'Figma', 'Affinity']
+            description: 'Full social media branding for an internationally competing university chorale — from website launch graphics and audition campaigns to competition achievement posts that reached thousands.',
+            tools: ['Canva', 'Adobe Photoshop', 'Adobe Illustrator', 'Figma', 'Affinity'],
+            details: [
+                {
+                    type: 'text',
+                    content: 'Harmonia Polifonica Chorale needed a complete visual overhaul to match the level they were performing at — an internationally competing university chorale with Gold Diplomas and Grand Prix placements. I designed and delivered a full branded content system that elevated their online presence from basic posts to a polished, professional identity.'
+                },
+                {
+                    type: 'image',
+                    url: '',
+                    alt: 'Website launch announcement design for Harmonia Polifonica Chorale',
+                    caption: 'Website launch announcement — driving traffic to hpcsingers.website'
+                },
+                {
+                    type: 'text',
+                    content: 'Deliverables included website launch graphics, audition recruitment campaigns, competition achievement announcements, event promotional posts, and branded story templates — all following a unified visual system built around warm gold tones, bold typography, and cinematic imagery.'
+                },
+                {
+                    type: 'image',
+                    url: '',
+                    alt: 'Audition call design for Harmonia Polifonica Chorale',
+                    caption: 'Recruitment campaign — "A Letter of Invitation to Sing With Us"'
+                },
+                {
+                    type: 'text',
+                    content: 'Each design was purpose-built: audition posts were structured to drive sign-ups with clear dates, locations, and calls to action. Achievement posts were designed to maximize shareability and build social proof. Website launch graphics directed followers to a new digital home for the chorale.'
+                },
+                {
+                    type: 'image',
+                    url: '',
+                    alt: 'Gold Diploma achievement post for Andrea O. Veneracion International Choral Festival',
+                    caption: 'Gold Diploma — Andrea O. Veneracion International Choral Festival Manila'
+                },
+                {
+                    type: 'image',
+                    url: '',
+                    alt: '3rd Place Grand Prix achievement post for Himig Handog International Choral Competition 2025',
+                    caption: '3rd Place Grand Prix — Himig Handog International Choral Competition 2025'
+                },
+                {
+                    type: 'text',
+                    content: 'The result: a consistent, scroll-stopping brand presence that gave the chorale the professional look they needed to attract new members, build credibility with event organizers, and celebrate their achievements in a way that felt as impressive as the wins themselves.'
+                }
+            ]
         };
     }
 
@@ -984,8 +1047,40 @@ function applyProjectOverrides(project) {
             ...project,
             title: 'Harmonia Polifonica Chorale World Choral Day 2024',
             category: 'Event Campaign Content',
-            description: 'A set of social media visuals created for World Choral Day 2024, highlighting the event, the people behind it, and the overall spirit of the celebration.',
-            tools: ['Canva', 'Adobe Photoshop', 'Adobe Illustrator', 'Figma']
+            description: 'A targeted social media campaign for World Choral Day 2024 — event announcements, member spotlights, and recap visuals designed to drive engagement and celebrate the chorale\'s community.',
+            tools: ['Canva', 'Adobe Photoshop', 'Adobe Illustrator', 'Figma'],
+            details: [
+                {
+                    type: 'text',
+                    content: 'World Choral Day is one of the biggest moments in the global choral calendar, and Harmonia Polifonica Chorale needed campaign content that would stand out. I designed a complete set of social media visuals — from pre-event teasers and countdown posts to member features and day-of celebration graphics.'
+                },
+                {
+                    type: 'image',
+                    url: '',
+                    alt: 'World Choral Day 2024 event announcement',
+                    caption: 'Event announcement post for World Choral Day 2024'
+                },
+                {
+                    type: 'text',
+                    content: 'Every piece was built around a clear goal: drive awareness of the event, highlight the people behind the music, and give the chorale\'s audience a reason to engage. The campaign used a warm, festive visual direction while staying consistent with the chorale\'s established brand.'
+                },
+                {
+                    type: 'image',
+                    url: '',
+                    alt: 'World Choral Day 2024 member spotlight designs',
+                    caption: 'Member spotlight and celebration posts'
+                },
+                {
+                    type: 'image',
+                    url: '',
+                    alt: 'World Choral Day 2024 recap visuals',
+                    caption: 'Day-of celebration and recap content'
+                },
+                {
+                    type: 'text',
+                    content: 'The campaign helped generate meaningful engagement across the chorale\'s social channels, with the event posts becoming some of their most-shared content of the year — exactly the kind of visibility that attracts new members and performance invitations.'
+                }
+            ]
         };
     }
 
@@ -994,8 +1089,40 @@ function applyProjectOverrides(project) {
             ...project,
             title: 'Harmonia Polifonica Chorale Branding 2023',
             category: 'Promotional Branding',
-            description: 'A series of promotional designs for announcements, performances, and seasonal posts, shaped to match the formal and expressive feel of the group.',
-            tools: ['Canva', 'Adobe Photoshop', 'Adobe Illustrator', 'Figma']
+            description: 'The foundation year — building a recognizable social media identity from the ground up through concert announcements, recruitment drives, and performance highlights.',
+            tools: ['Canva', 'Adobe Photoshop', 'Adobe Illustrator', 'Figma'],
+            details: [
+                {
+                    type: 'text',
+                    content: 'Before 2023, Harmonia Polifonica Chorale didn\'t have a consistent visual identity online. I stepped in to build one from scratch — creating the foundational design system that would carry their brand across concert announcements, audition campaigns, seasonal posts, and performance highlights.'
+                },
+                {
+                    type: 'image',
+                    url: '',
+                    alt: 'Harmonia Polifonica Chorale 2023 concert announcement',
+                    caption: 'Concert announcement design'
+                },
+                {
+                    type: 'text',
+                    content: 'The visual direction leaned into deep, elegant tones with bold typography — designed to reflect the group\'s formal choral tradition while still feeling modern enough for a social media audience. Every post was built to do two things: look professional and communicate clearly.'
+                },
+                {
+                    type: 'image',
+                    url: '',
+                    alt: 'Harmonia Polifonica Chorale 2023 recruitment campaign',
+                    caption: 'Audition and recruitment campaign materials'
+                },
+                {
+                    type: 'image',
+                    url: '',
+                    alt: 'Harmonia Polifonica Chorale 2023 seasonal and performance posts',
+                    caption: 'Performance highlights and seasonal content'
+                },
+                {
+                    type: 'text',
+                    content: 'This foundational work set the stage for everything that followed — giving the chorale a visual identity strong enough to scale into international competition branding, event campaigns, and the polished presence they carry today.'
+                }
+            ]
         };
     }
 

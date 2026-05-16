@@ -3468,6 +3468,38 @@ nav.floating-nav {
   border: 1px dashed rgba(255, 255, 255, 0.15);
 }
 
+/* Image gallery — real images in the 2-column grid */
+.detail-image-gallery {
+  gap: 1.25rem;
+}
+
+.detail-gallery-image-item {
+  height: auto;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-style: solid;
+  overflow: hidden;
+  flex-direction: column;
+  align-items: stretch;
+  padding: 0;
+}
+
+.detail-gallery-image-item img {
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  display: block;
+  object-fit: cover;
+  border-radius: var(--radius-md, 12px);
+}
+
+.detail-gallery-image-item .detail-image-caption {
+  padding: 0.75rem 1rem;
+  margin: 0;
+  font-size: 0.82rem;
+  color: rgba(255, 255, 255, 0.5);
+  text-align: center;
+  line-height: 1.4;
+}
+
 /* ==========================================
    Custom Video Player
    ========================================== */

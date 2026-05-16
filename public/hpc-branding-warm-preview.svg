@@ -1,0 +1,45 @@
+<svg width="1600" height="900" viewBox="0 0 1600 900" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="80" y1="40" x2="1520" y2="860" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FFF6E9"/>
+      <stop offset="0.42" stop-color="#F6B446"/>
+      <stop offset="1" stop-color="#F28A12"/>
+    </linearGradient>
+    <radialGradient id="hero" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(445 360) rotate(25) scale(390 390)">
+      <stop stop-color="#FFF9F0"/>
+      <stop offset="0.52" stop-color="#F6A019"/>
+      <stop offset="1" stop-color="#7B180F"/>
+    </radialGradient>
+    <linearGradient id="cardA" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#20110B"/>
+      <stop offset="1" stop-color="#F08D16"/>
+    </linearGradient>
+    <linearGradient id="cardB" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#FFF9F2"/>
+      <stop offset="1" stop-color="#F3921B"/>
+    </linearGradient>
+    <filter id="soft" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="18"/>
+    </filter>
+  </defs>
+  <rect width="1600" height="900" rx="44" fill="url(#bg)"/>
+  <rect x="74" y="74" width="1452" height="752" rx="28" fill="#FFF7EF" fill-opacity="0.18"/>
+  <rect x="112" y="108" width="650" height="578" rx="26" fill="url(#hero)"/>
+  <circle cx="426" cy="396" r="215" fill="#FFE0A6" fill-opacity="0.45" filter="url(#soft)"/>
+  <path d="M428 224C497 218 565 270 579 344C589 399 563 456 517 490C471 524 407 528 357 499C302 468 273 404 281 343C290 275 357 230 428 224Z" fill="none" stroke="#FFE9BF" stroke-width="18" stroke-linecap="round"/>
+  <path d="M486 250C430 295 382 362 388 429C391 466 418 499 454 514C383 540 309 516 279 456C249 396 270 316 328 267C381 223 450 211 486 250Z" fill="none" stroke="#7E170E" stroke-width="20" stroke-linecap="round"/>
+  <path d="M428 359C404 427 382 509 414 580C431 620 468 648 516 655" fill="none" stroke="#FFF0CB" stroke-width="16" stroke-linecap="round"/>
+  <rect x="790" y="108" width="304" height="287" rx="22" fill="url(#cardB)"/>
+  <rect x="805" y="123" width="274" height="116" rx="18" fill="#FFFFFF"/>
+  <rect x="850" y="286" width="184" height="58" rx="16" fill="#1F1B19"/>
+  <rect x="840" y="356" width="206" height="14" rx="7" fill="#F28A12" fill-opacity="0.6"/>
+  <rect x="1118" y="108" width="304" height="287" rx="22" fill="url(#cardA)"/>
+  <rect x="1166" y="160" width="208" height="44" rx="10" fill="#F0C47C" fill-opacity="0.32"/>
+  <rect x="1183" y="228" width="174" height="118" rx="16" fill="#E9D6BB" fill-opacity="0.9"/>
+  <rect x="790" y="419" width="304" height="267" rx="22" fill="#FFF6E8"/>
+  <rect x="820" y="468" width="244" height="136" rx="18" fill="#DFA04D"/>
+  <rect x="1118" y="419" width="304" height="267" rx="22" fill="url(#cardA)"/>
+  <rect x="1140" y="445" width="260" height="124" rx="18" fill="#F9A51C"/>
+  <rect x="1138" y="582" width="264" height="62" rx="18" fill="#C1442A"/>
+  <text x="182" y="770" fill="#FFF7EF" fill-opacity="0.92" font-family="Arial, Helvetica, sans-serif" font-size="44" font-weight="700">Warm premium branding direction</text>
+</svg>

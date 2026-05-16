@@ -1083,7 +1083,7 @@ nav.floating-nav {
   }
 
   .project-image {
-    height: 190px;
+    min-height: 190px;
   }
 
   .project-category,
@@ -1156,7 +1156,7 @@ nav.floating-nav {
   }
 
   .portfolio-tile-image {
-    height: 170px;
+    min-height: 170px;
   }
 
   .portfolio-tile-content {
@@ -1332,7 +1332,7 @@ nav.floating-nav {
 
   .project-image,
   .portfolio-tile-image {
-    height: 130px;
+    min-height: 130px;
   }
 
   .project-details,
@@ -2430,9 +2430,11 @@ nav.floating-nav {
 }
 
 .project-image {
-  height: 250px;
   width: 100%;
+  aspect-ratio: 16 / 9;
+  min-height: 250px;
   position: relative;
+  overflow: hidden;
 }
 
 .project-details {
@@ -3070,8 +3072,9 @@ nav.floating-nav {
 }
 
 .portfolio-tile-image {
-  height: 200px;
   width: 100%;
+  aspect-ratio: 16 / 9;
+  min-height: 200px;
   position: relative;
   display: flex;
   align-items: center;
@@ -3079,10 +3082,98 @@ nav.floating-nav {
   overflow: hidden;
 }
 
+.portfolio-tile-image-media,
+.portfolio-tile-image-loading {
+  position: absolute;
+  inset: 0;
+}
+
+.portfolio-tile-image-media {
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  opacity: 0;
+  transform: scale(1.02);
+  transition: opacity 0.65s ease, transform 0.9s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.portfolio-tile-image-loading {
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.03), rgba(255, 255, 255, 0.08)),
+    radial-gradient(circle at 20% 30%, rgba(255, 255, 255, 0.06), transparent 30%),
+    radial-gradient(circle at 80% 68%, rgba(255, 255, 255, 0.04), transparent 26%);
+  opacity: 0;
+  transition: opacity 0.35s ease;
+  overflow: hidden;
+}
+
+.portfolio-tile-image-loading::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: -32%;
+  width: 32%;
+  background: linear-gradient(90deg,
+      rgba(255, 255, 255, 0),
+      rgba(255, 255, 255, 0.16),
+      rgba(255, 255, 255, 0));
+  transform: skewX(-18deg) translateX(0);
+  opacity: 0;
+  will-change: transform, opacity;
+}
+
+.portfolio-tile-image.is-loading .portfolio-tile-image-loading {
+  opacity: 0.88;
+  animation: tileImagePulse 1.8s ease-in-out infinite;
+}
+
+.portfolio-tile-image.is-loading .portfolio-tile-image-loading::before {
+  opacity: 1;
+  animation: tileImageSweep 1.8s ease-in-out infinite;
+}
+
+.portfolio-tile-image.is-loaded .portfolio-tile-image-media {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.portfolio-tile-image.is-loaded .portfolio-tile-image-loading {
+  opacity: 0;
+  animation: none;
+}
+
 .portfolio-tile-overlay {
   position: absolute;
   inset: 0;
   background: linear-gradient(to bottom, transparent 50%, rgba(0, 0, 0, 0.4) 100%);
+  z-index: 1;
+}
+
+@keyframes tileImagePulse {
+  0% {
+    opacity: 0.54;
+  }
+
+  50% {
+    opacity: 0.88;
+  }
+
+  100% {
+    opacity: 0.54;
+  }
+}
+
+@keyframes tileImageSweep {
+  0% {
+    transform: skewX(-18deg) translateX(0);
+  }
+
+  100% {
+    transform: skewX(-18deg) translateX(420%);
+  }
 }
 
 .portfolio-tile-content {
@@ -3274,8 +3365,7 @@ nav.floating-nav {
 .video-thumbnail {
   position: relative;
   width: 100%;
-  padding-top: 56.25%;
-  /* 16:9 */
+  aspect-ratio: 16 / 9;
   cursor: pointer;
   overflow: hidden;
 }
@@ -3349,7 +3439,7 @@ nav.floating-nav {
 .video-iframe-container {
   position: relative;
   width: 100%;
-  padding-top: 56.25%;
+  aspect-ratio: 16 / 9;
   background: #000;
 }
 
@@ -5239,7 +5329,7 @@ body {
 
   .project-image,
   .portfolio-tile-image {
-    height: 130px !important;
+    min-height: 130px !important;
   }
 
   .project-details,

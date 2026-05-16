@@ -1,0 +1,40 @@
+<svg width="1600" height="900" viewBox="0 0 1600 900" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="90" y1="70" x2="1510" y2="860" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FFF8A7"/>
+      <stop offset="0.35" stop-color="#3E82CC"/>
+      <stop offset="1" stop-color="#0C4E9B"/>
+    </linearGradient>
+    <radialGradient id="hero" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(435 378) rotate(35) scale(442 412)">
+      <stop stop-color="#4A8BD3"/>
+      <stop offset="0.48" stop-color="#0F346E"/>
+      <stop offset="1" stop-color="#07122F"/>
+    </radialGradient>
+    <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="24"/>
+    </filter>
+  </defs>
+  <rect width="1600" height="900" rx="44" fill="url(#bg)"/>
+  <rect x="74" y="74" width="1452" height="752" rx="28" fill="#FFFFFF" fill-opacity="0.08"/>
+  <rect x="112" y="108" width="650" height="578" rx="26" fill="url(#hero)"/>
+  <circle cx="232" cy="198" r="92" fill="#FFE15E" fill-opacity="0.85" filter="url(#glow)"/>
+  <circle cx="630" cy="596" r="112" fill="#FFE15E" fill-opacity="0.32" filter="url(#glow)"/>
+  <circle cx="434" cy="392" r="196" fill="#8EB7E9" fill-opacity="0.16"/>
+  <path d="M421 250C493 243 558 289 576 356C592 417 567 485 514 523C460 560 386 562 330 527C273 491 242 422 255 355C268 290 336 256 421 250Z" fill="none" stroke="#C6D8F8" stroke-width="16" stroke-linecap="round"/>
+  <path d="M483 274C428 309 388 363 388 425C388 470 410 507 445 529C382 540 318 521 280 477C242 434 235 366 265 318C308 251 409 223 483 274Z" fill="none" stroke="#E7EDF9" stroke-width="14" stroke-linecap="round"/>
+  <path d="M420 387C393 452 378 520 404 580C423 623 464 648 516 656" fill="none" stroke="#D6E5FD" stroke-width="14" stroke-linecap="round"/>
+  <rect x="790" y="108" width="304" height="267" rx="22" fill="#CFB225"/>
+  <rect x="804" y="122" width="276" height="118" rx="18" fill="#6F879B"/>
+  <rect x="1118" y="108" width="304" height="267" rx="22" fill="#2F5F9C"/>
+  <text x="1178" y="250" fill="#FFFFFF" font-family="Arial, Helvetica, sans-serif" font-size="58" font-weight="700">WCD</text>
+  <text x="1168" y="314" fill="#FFFFFF" font-family="Arial, Helvetica, sans-serif" font-size="54" font-weight="700">2024</text>
+  <rect x="790" y="399" width="304" height="287" rx="22" fill="#315D93"/>
+  <circle cx="860" cy="463" r="18" fill="#FFF28A" filter="url(#glow)"/>
+  <circle cx="935" cy="515" r="12" fill="#FFF28A" filter="url(#glow)"/>
+  <circle cx="1010" cy="605" r="16" fill="#FFF28A" filter="url(#glow)"/>
+  <text x="840" y="565" fill="#FFFFFF" font-family="Arial, Helvetica, sans-serif" font-size="34" font-weight="700">HAPPY WORLD</text>
+  <text x="840" y="608" fill="#FFFFFF" font-family="Arial, Helvetica, sans-serif" font-size="34" font-weight="700">CHORAL DAY!</text>
+  <rect x="1118" y="399" width="304" height="287" rx="22" fill="#8B8F5A"/>
+  <rect x="1142" y="427" width="256" height="188" rx="18" fill="#5B7349"/>
+  <text x="172" y="770" fill="#F8FAFF" fill-opacity="0.96" font-family="Arial, Helvetica, sans-serif" font-size="44" font-weight="700">World Choral Day campaign system</text>
+</svg>

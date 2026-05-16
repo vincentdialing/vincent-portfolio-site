@@ -575,6 +575,27 @@ function goBackToLevel1() {
     }, 450);
 }
 
+function preloadPortfolioTileImage(src) {
+    return new Promise((resolve, reject) => {
+        if (!src) {
+            reject(new Error('Missing image source'));
+            return;
+        }
+
+        const image = new Image();
+        image.decoding = 'async';
+        image.onload = () => resolve(src);
+        image.onerror = () => reject(new Error(`Failed to load image: ${src}`));
+        image.src = src;
+
+        if (image.decode) {
+            image.decode().then(() => resolve(src)).catch(() => {
+                // Fall back to the regular onload handler when decode isn't available.
+            });
+        }
+    });
+}
+
 // ==========================================
 // Render Level 2 — Portfolio Tiles
 // ==========================================
@@ -585,11 +606,10 @@ function renderLevel2(service) {
         const tile = document.createElement('div');
         tile.className = 'portfolio-tile';
         tile.setAttribute('data-project-id', item.id);
-        const tileImageStyle = item.imageUrl
-            ? `background: ${item.gradient}; background-image: linear-gradient(rgba(5, 5, 16, 0.04), rgba(5, 5, 16, 0.16)), url('${item.imageUrl}'); background-size: cover; background-position: center;`
-            : `background: ${item.gradient};`;
         tile.innerHTML = `
-      <div class="portfolio-tile-image" style="${tileImageStyle}">
+      <div class="portfolio-tile-image ${item.imageUrl ? 'is-loading' : 'is-loaded'}" style="background: ${item.gradient};">
+        <div class="portfolio-tile-image-loading"></div>
+        <div class="portfolio-tile-image-media"></div>
         <div class="portfolio-tile-overlay"></div>
       </div>
       <div class="portfolio-tile-content">
@@ -602,6 +622,22 @@ function renderLevel2(service) {
       </div>
     `;
         tile.style.cursor = 'pointer';
+
+        const tileImageEl = tile.querySelector('.portfolio-tile-image');
+        const tileMediaEl = tile.querySelector('.portfolio-tile-image-media');
+
+        if (tileImageEl && tileMediaEl && item.imageUrl) {
+            preloadPortfolioTileImage(item.imageUrl)
+                .then((loadedSrc) => {
+                    tileMediaEl.style.backgroundImage = `linear-gradient(rgba(5, 5, 16, 0.04), rgba(5, 5, 16, 0.16)), url('${loadedSrc}')`;
+                    tileImageEl.classList.remove('is-loading');
+                    tileImageEl.classList.add('is-loaded');
+                })
+                .catch(() => {
+                    tileImageEl.classList.remove('is-loading');
+                    tileImageEl.classList.add('is-loaded');
+                });
+        }
 
         tile.addEventListener('click', () => {
             if (!isAnimating) {
@@ -845,7 +881,38 @@ function getVideoMeta(url) {
 }
 
 function applyProjectOverrides(project) {
-    if (!project || project.project_key !== 'mg-3') {
+    if (!project) {
+        return project;
+    }
+
+    if (project.project_key === 'smc-1') {
+        return {
+            ...project,
+            title: 'Harmonia Polifonica Chorale Branding 2024',
+            category: 'Warm Luxe Visual Identity',
+            description: 'A warm orange-and-gold branding direction with a radiant, celebratory feel crafted to make the brand look elevated, expressive, and premium.'
+        };
+    }
+
+    if (project.project_key === 'smc-2') {
+        return {
+            ...project,
+            title: 'Harmonia Polifonica Chorale World Choral Day 2024',
+            category: 'Bright Editorial Brand System',
+            description: 'A blue-and-gold visual system created for World Choral Day 2024, shaped with a fresh, uplifting character that feels clear, vibrant, and community-centered.'
+        };
+    }
+
+    if (project.project_key === 'smc-3') {
+        return {
+            ...project,
+            title: 'Harmonia Polifonica Chorale Branding 2023',
+            category: 'Elegant Dramatic Identity',
+            description: 'A deep maroon, black, and gold direction shaped with a refined, dramatic tone that gives the brand a timeless, formal, and performance-ready presence.'
+        };
+    }
+
+    if (project.project_key !== 'mg-3') {
         return project;
     }
 

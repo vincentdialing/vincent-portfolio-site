@@ -8,6 +8,7 @@ CREATE TABLE IF NOT EXISTS portfolio_services (
   id BIGSERIAL PRIMARY KEY,
   key TEXT UNIQUE NOT NULL,
   title TEXT NOT NULL,
+  image_url TEXT,
   display_order INT NOT NULL DEFAULT 0
 );
 

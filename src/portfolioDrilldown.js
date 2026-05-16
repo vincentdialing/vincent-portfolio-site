@@ -16,7 +16,7 @@ async function fetchPortfolioData() {
         // Fetch services
         const { data: services, error: sErr } = await supabase
             .from('portfolio_services')
-            .select('key, title, display_order')
+            .select('key, title, display_order, image_url')
             .order('display_order', { ascending: true });
 
         if (sErr) throw sErr;
@@ -34,6 +34,7 @@ async function fetchPortfolioData() {
         (services || []).forEach(svc => {
             data[svc.key] = {
                 title: svc.title,
+                imageUrl: svc.image_url || null,
                 items: []
             };
         });
@@ -133,8 +134,25 @@ export async function initPortfolioDrilldown() {
     const cards = projectsGrid.querySelectorAll('.project-card');
     cards.forEach((card, index) => {
         if (serviceKeys[index]) {
-            card.setAttribute('data-service', serviceKeys[index]);
+            const serviceKey = serviceKeys[index];
+            const serviceData = portfolioData[serviceKey];
+            card.setAttribute('data-service', serviceKey);
             card.style.cursor = 'pointer';
+
+            const imageEl = card.querySelector('.project-image');
+            if (imageEl) {
+                const { mediaEl } = ensureImageLayers(
+                    imageEl,
+                    'project-image-media',
+                    'project-image-loading'
+                );
+                applyImageLoadState(
+                    imageEl,
+                    mediaEl,
+                    serviceData?.imageUrl || '',
+                    'linear-gradient(rgba(10, 10, 24, 0.08), rgba(10, 10, 24, 0.24))'
+                );
+            }
         }
     });
 
@@ -290,10 +308,7 @@ function navigateToLevel2Instant(serviceKey) {
     renderLevel2(service);
     level2Container.style.display = 'grid';
     const tiles = level2Container.querySelectorAll('.portfolio-tile');
-    tiles.forEach((tile, i) => {
-        tile.style.animationDelay = `${i * 0.06}s`;
-        tile.classList.add('drilldown-tile-enter');
-    });
+    replayTileEntrance(tiles, 0.06);
     scrollToSectionTop();
 }
 
@@ -409,10 +424,7 @@ function goToLevel2(serviceKey, clickedCard) {
         // Staggered entrance
         requestAnimationFrame(() => {
             const tiles = level2Container.querySelectorAll('.portfolio-tile');
-            tiles.forEach((tile, i) => {
-                tile.style.animationDelay = `${i * 0.08}s`;
-                tile.classList.add('drilldown-tile-enter');
-            });
+            replayTileEntrance(tiles, 0.08);
 
             // Scroll to top of section
             scrollToSectionTop();
@@ -506,15 +518,10 @@ function goBackToLevel2() {
         // Show Level 2 again with animation
         level2Container.style.display = 'grid';
         const tiles = level2Container.querySelectorAll('.portfolio-tile');
-        tiles.forEach((tile, i) => {
-            tile.classList.remove('drilldown-tile-enter');
-            void tile.offsetWidth; // force reflow
-            tile.style.animationDelay = `${i * 0.06}s`;
-            tile.classList.add('drilldown-tile-enter');
-        });
+        replayTileEntrance(tiles, 0.06);
 
-        // Scroll back to the top of the section (default position)
-        scrollToSectionTop();
+        // Scroll back to the tile the user last opened
+        scrollToTile(lastClickedTileIndex);
 
         setTimeout(() => {
             isAnimating = false;
@@ -596,6 +603,80 @@ function preloadPortfolioTileImage(src) {
     });
 }
 
+function setCardContentReady(container) {
+    if (!container) return;
+
+    const card = container.closest('.project-card, .portfolio-tile');
+    if (!card) return;
+
+    card.classList.remove('is-awaiting-load');
+    card.classList.add('is-content-visible');
+}
+
+function ensureImageLayers(container, mediaClass, loadingClass) {
+    if (!container) return { mediaEl: null, loadingEl: null };
+
+    let mediaEl = container.querySelector(`.${mediaClass}`);
+    if (!mediaEl) {
+        mediaEl = document.createElement('div');
+        mediaEl.className = mediaClass;
+        container.insertBefore(mediaEl, container.firstChild);
+    }
+
+    let loadingEl = container.querySelector(`.${loadingClass}`);
+    if (!loadingEl) {
+        loadingEl = document.createElement('div');
+        loadingEl.className = loadingClass;
+        container.insertBefore(loadingEl, mediaEl);
+    }
+
+    return { mediaEl, loadingEl };
+}
+
+function applyImageLoadState(container, mediaEl, src, overlayGradient) {
+    if (!container || !mediaEl) return;
+
+    container.classList.remove('is-loaded');
+    const card = container.closest('.project-card, .portfolio-tile');
+    if (card) {
+        card.classList.add('is-awaiting-load');
+        card.classList.remove('is-content-visible');
+    }
+
+    if (!src) {
+        container.classList.remove('is-loading');
+        container.classList.add('is-loaded');
+        setCardContentReady(container);
+        return;
+    }
+
+    container.classList.add('is-loading');
+
+    preloadPortfolioTileImage(src)
+        .then((loadedSrc) => {
+            mediaEl.style.backgroundImage = `${overlayGradient}, url('${loadedSrc}')`;
+            container.classList.remove('is-loading');
+            container.classList.add('is-loaded');
+            setCardContentReady(container);
+        })
+        .catch(() => {
+            container.classList.remove('is-loading');
+            container.classList.add('is-loaded');
+            setCardContentReady(container);
+        });
+}
+
+function replayTileEntrance(tiles, stagger = 0.06) {
+    tiles.forEach((tile, i) => {
+        tile.classList.remove('drilldown-fade-out', 'drilldown-morph-out', 'drilldown-tile-enter');
+        tile.style.opacity = '1';
+        tile.style.transform = 'translateY(0) scale(1)';
+        void tile.offsetWidth;
+        tile.style.animationDelay = `${i * stagger}s`;
+        tile.classList.add('drilldown-tile-enter');
+    });
+}
+
 // ==========================================
 // Render Level 2 — Portfolio Tiles
 // ==========================================
@@ -624,19 +705,19 @@ function renderLevel2(service) {
         tile.style.cursor = 'pointer';
 
         const tileImageEl = tile.querySelector('.portfolio-tile-image');
-        const tileMediaEl = tile.querySelector('.portfolio-tile-image-media');
+        const { mediaEl: tileMediaEl } = ensureImageLayers(
+            tileImageEl,
+            'portfolio-tile-image-media',
+            'portfolio-tile-image-loading'
+        );
 
         if (tileImageEl && tileMediaEl && item.imageUrl) {
-            preloadPortfolioTileImage(item.imageUrl)
-                .then((loadedSrc) => {
-                    tileMediaEl.style.backgroundImage = `linear-gradient(rgba(5, 5, 16, 0.04), rgba(5, 5, 16, 0.16)), url('${loadedSrc}')`;
-                    tileImageEl.classList.remove('is-loading');
-                    tileImageEl.classList.add('is-loaded');
-                })
-                .catch(() => {
-                    tileImageEl.classList.remove('is-loading');
-                    tileImageEl.classList.add('is-loaded');
-                });
+            applyImageLoadState(
+                tileImageEl,
+                tileMediaEl,
+                item.imageUrl,
+                'linear-gradient(rgba(5, 5, 16, 0.04), rgba(5, 5, 16, 0.16))'
+            );
         }
 
         tile.addEventListener('click', () => {
@@ -729,9 +810,12 @@ function renderLevel3(project) {
 
     // Check if project has any media (video/image) — if not, show placeholder gallery
     const hasMedia = project.details.some(b => b.type === 'video' || b.type === 'image');
+    const detailHeroStyle = project.imageUrl
+        ? `--detail-hero-image: url('${project.imageUrl}'); background: ${project.gradient};`
+        : `background: ${project.gradient};`;
 
     detail.innerHTML = `
-    <div class="detail-hero" style="background: ${project.gradient};">
+    <div class="detail-hero ${project.imageUrl ? 'has-detail-hero-image' : ''}" style="${detailHeroStyle}">
       <div class="detail-hero-overlay"></div>
       <div class="detail-hero-content">
         <span class="detail-category">${project.category}</span>
@@ -889,8 +973,9 @@ function applyProjectOverrides(project) {
         return {
             ...project,
             title: 'Harmonia Polifonica Chorale Branding 2024',
-            category: 'Warm Luxe Visual Identity',
-            description: 'A warm orange-and-gold branding direction with a radiant, celebratory feel crafted to make the brand look elevated, expressive, and premium.'
+            category: 'Branding & Content Direction',
+            description: 'A collection of branded posts and campaign materials made to give Harmonia Polifonica Chorale a more polished and recognizable presence online.',
+            tools: ['Canva', 'Adobe Photoshop', 'Adobe Illustrator', 'Figma', 'Affinity']
         };
     }
 
@@ -898,8 +983,9 @@ function applyProjectOverrides(project) {
         return {
             ...project,
             title: 'Harmonia Polifonica Chorale World Choral Day 2024',
-            category: 'Bright Editorial Brand System',
-            description: 'A blue-and-gold visual system created for World Choral Day 2024, shaped with a fresh, uplifting character that feels clear, vibrant, and community-centered.'
+            category: 'Event Campaign Content',
+            description: 'A set of social media visuals created for World Choral Day 2024, highlighting the event, the people behind it, and the overall spirit of the celebration.',
+            tools: ['Canva', 'Adobe Photoshop', 'Adobe Illustrator', 'Figma']
         };
     }
 
@@ -907,8 +993,9 @@ function applyProjectOverrides(project) {
         return {
             ...project,
             title: 'Harmonia Polifonica Chorale Branding 2023',
-            category: 'Elegant Dramatic Identity',
-            description: 'A deep maroon, black, and gold direction shaped with a refined, dramatic tone that gives the brand a timeless, formal, and performance-ready presence.'
+            category: 'Promotional Branding',
+            description: 'A series of promotional designs for announcements, performances, and seasonal posts, shaped to match the formal and expressive feel of the group.',
+            tools: ['Canva', 'Adobe Photoshop', 'Adobe Illustrator', 'Figma']
         };
     }
 

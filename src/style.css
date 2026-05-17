@@ -4488,12 +4488,7 @@ body {
   margin: 0 0.5rem;
 }
 
-@media (hover: hover) and (pointer: fine) {
-  .ticker-wrap:hover .ticker {
-    animation-play-state: paused;
-    -webkit-animation-play-state: paused;
-  }
-}
+
 
 
 

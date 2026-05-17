@@ -77,7 +77,7 @@ async function fetchPortfolioData() {
                     title: proj.title,
                     category: proj.category,
                     description: proj.description,
-                    gradient: proj.gradient,
+                    gradient: 'linear-gradient(135deg, #2563eb 0%, #1e40af 50%, #0f172a 100%)',
                     tools: proj.tools || [],
                     details: mergedDetails,
                     imageUrl: proj.image_url || null
@@ -549,6 +549,11 @@ function goBackToLevel2() {
 
         // Update back title
         backButtonRow.querySelector('.drilldown-title').textContent = service.title;
+
+        // Ensure Level 2 content exists (handles direct deep links to Level 3)
+        if (level2Container.children.length === 0) {
+            renderLevel2(service);
+        }
 
         // Show Level 2 again with animation
         level2Container.style.display = 'grid';
@@ -1096,7 +1101,7 @@ function applyProjectOverrides(project) {
                 {
                     type: 'list',
                     items: [
-                        'Led the full creative direction for the chorale\'s social media presence across Facebook and Instagram',
+                        'Led the full creative direction for the choir\'s social media presence across Facebook and Instagram',
                         'Developed and maintained a cohesive brand identity system — color palette, typography, layout standards, and visual tone',
                         'Conceptualized, designed, and delivered all content types including announcements, campaigns, promotional posts, and event collateral',
                         'Managed the visual storytelling for a group competing at the international level, ensuring every piece matched the caliber of their achievements',
@@ -1112,18 +1117,18 @@ function applyProjectOverrides(project) {
             ...project,
             title: 'Harmonia Polifonica Chorale World Choral Day 2024',
             category: 'Event Campaign Content',
-            description: 'A targeted social media campaign for World Choral Day 2024 — designed to drive engagement, celebrate the chorale\'s community, and boost visibility during one of the biggest dates in the choral calendar.',
+            description: 'A targeted social media campaign for World Choral Day 2024 — designed to drive engagement, celebrate the choir\'s community, and boost visibility during one of the biggest dates in the choral calendar.',
             tools: ['Canva', 'Adobe Photoshop', 'Adobe Illustrator', 'Figma'],
             details: [
                 {
                     type: 'text',
-                    content: 'Handled the end-to-end visual campaign for the chorale\'s World Choral Day 2024 participation — from content strategy and visual direction to design execution and delivery.'
+                    content: 'Handled the end-to-end visual campaign for the choir\'s World Choral Day 2024 participation — from content strategy and visual direction to design execution and delivery.'
                 },
                 {
                     type: 'list',
                     items: [
                         'Planned and executed a multi-phase content campaign covering pre-event, day-of, and post-event stages',
-                        'Applied a consistent visual direction that aligned with the chorale\'s existing brand while introducing a festive, event-specific tone',
+                        'Applied a consistent visual direction that aligned with the choir\'s existing brand while introducing a festive, event-specific tone',
                         'Focused each piece on a clear engagement goal — awareness, community interaction, or celebration',
                         'Coordinated content timing and sequencing for maximum reach and audience engagement across platforms'
                     ]
@@ -1142,12 +1147,12 @@ function applyProjectOverrides(project) {
             details: [
                 {
                     type: 'text',
-                    content: 'Started as the chorale\'s first dedicated graphic designer in 2023, tasked with building a visual identity from zero and establishing the design standards that would define their brand going forward.'
+                    content: 'Started as the choir\'s first dedicated graphic designer in 2023, tasked with building a visual identity from zero and establishing the design standards that would define their brand going forward.'
                 },
                 {
                     type: 'list',
                     items: [
-                        'Created the chorale\'s first cohesive brand system — defining the visual language, color direction, and typography that all future content would follow',
+                        'Created the choir\'s first cohesive brand system — defining the visual language, color direction, and typography that all future content would follow',
                         'Handled all design needs across the full content lifecycle — from regular social posts to event-specific campaigns',
                         'Established a scalable design workflow that allowed fast turnaround without sacrificing quality or brand consistency',
                         'Built the visual foundation that the chorale still uses today, including the identity that carried them through international competitions'

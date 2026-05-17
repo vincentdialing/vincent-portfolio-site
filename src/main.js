@@ -11,6 +11,32 @@ if (document.readyState === 'loading') {
 }
 
 // ==========================================
+// Strict Zoom Lock (Bypass Chrome Minimum Font Bugs)
+// ==========================================
+function applyStrictZoomLock() {
+  if (window.innerWidth >= 1024) {
+    const scale = window.innerWidth / 1728;
+    const finalZoom = Math.min(1, scale);
+    document.body.style.zoom = finalZoom;
+    document.documentElement.style.setProperty('--zoom-factor', finalZoom);
+  } else {
+    document.body.style.zoom = 1;
+    document.documentElement.style.setProperty('--zoom-factor', 1);
+  }
+}
+window.addEventListener('resize', applyStrictZoomLock);
+applyStrictZoomLock();
+
+// ==========================================
+// Anti-Theft / Copy Protection
+// ==========================================
+document.addEventListener('contextmenu', (e) => {
+  if (e.target.tagName === 'IMG' || e.target.closest('.project-card') || e.target.closest('.portfolio-tile') || e.target.closest('.image-lightbox-overlay')) {
+    e.preventDefault();
+  }
+});
+
+// ==========================================
 // Page Loader Logic
 // ==========================================
 window.addEventListener('load', () => {

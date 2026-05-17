@@ -729,7 +729,7 @@ function renderLevel2(service) {
         tile.className = 'portfolio-tile';
         tile.setAttribute('data-project-id', item.id);
         tile.innerHTML = `
-      <div class="portfolio-tile-image ${item.imageUrl ? 'is-loading' : 'is-loaded'}" style="background: ${item.gradient};">
+      <div class="portfolio-tile-image watermark-overlay ${item.imageUrl ? 'is-loading' : 'is-loaded'}" style="background: ${item.gradient};">
         <div class="portfolio-tile-image-loading"></div>
         <div class="portfolio-tile-image-media"></div>
         <div class="portfolio-tile-overlay"></div>
@@ -863,7 +863,7 @@ function renderLevel3(project) {
     const imageGalleryHtml = imageBlocks.length > 0
         ? `<div class="detail-placeholder-gallery detail-image-gallery">
             ${imageBlocks.map(block => `
-              <div class="gallery-item detail-gallery-image-item is-loading" style="background: ${project.gradient};">
+              <div class="gallery-item detail-gallery-image-item is-loading watermark-overlay" style="background: ${project.gradient};">
                 <div class="portfolio-tile-image-loading"></div>
                 <img src="${block.url}" alt="${block.alt || project.title}" loading="lazy" onload="this.parentElement.classList.remove('is-loading'); this.parentElement.classList.add('is-loaded');" />
               </div>
@@ -975,7 +975,9 @@ function openImageLightbox(src, alt) {
     overlay.className = 'image-lightbox-overlay';
     overlay.innerHTML = `
         <button class="lightbox-close-btn" aria-label="Close">✕</button>
-        <img src="${src}" alt="${alt || ''}" />
+        <div class="lightbox-image-wrapper watermark-overlay">
+            <img src="${src}" alt="${alt || ''}" />
+        </div>
     `;
     document.body.appendChild(overlay);
     document.body.style.overflow = 'hidden';

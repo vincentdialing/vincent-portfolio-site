@@ -1627,6 +1627,7 @@ function startContentRotation(card) {
 // ==========================================
 const ctaBtn = document.querySelector('.cta-spotlight-btn');
 const navContactBtn = document.querySelector('.nav-contact-pill');
+const navLogoBtn = document.querySelector('.logo');
 
 const attachCursorGradient = (element, ease = 0.08) => {
   if (!element) return;
@@ -1657,3 +1658,4 @@ const attachCursorGradient = (element, ease = 0.08) => {
 
 attachCursorGradient(ctaBtn, 0.08);
 attachCursorGradient(navContactBtn, 0.12);
+attachCursorGradient(navLogoBtn, 0.12);

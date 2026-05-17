@@ -2930,12 +2930,28 @@ nav.floating-nav {
 }
 
 .detail-gallery-image-item {
+  position: relative;
   height: auto;
   border: 1px solid rgba(255, 255, 255, 0.08);
   overflow: hidden;
   padding: 0;
   cursor: pointer;
   transition: transform 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.detail-gallery-image-item.is-loading .portfolio-tile-image-loading {
+  opacity: 0.88;
+  animation: tileImagePulse 1.8s ease-in-out infinite;
+}
+
+.detail-gallery-image-item.is-loading .portfolio-tile-image-loading::before {
+  opacity: 1;
+  animation: tileImageSweep 1.8s ease-in-out infinite;
+}
+
+.detail-gallery-image-item.is-loaded .portfolio-tile-image-loading {
+  opacity: 0;
+  animation: none;
 }
 
 .detail-gallery-image-item:hover {
@@ -2950,6 +2966,17 @@ nav.floating-nav {
   display: block;
   object-fit: cover;
   border-radius: var(--radius-md, 12px);
+  transition: opacity 0.4s ease, transform 0.4s ease;
+}
+
+.detail-gallery-image-item.is-loading img {
+  opacity: 0;
+  transform: scale(0.95);
+}
+
+.detail-gallery-image-item.is-loaded img {
+  opacity: 1;
+  transform: scale(1);
 }
 
 /* Lightbox / Image Viewer Modal */

@@ -863,8 +863,9 @@ function renderLevel3(project) {
     const imageGalleryHtml = imageBlocks.length > 0
         ? `<div class="detail-placeholder-gallery detail-image-gallery">
             ${imageBlocks.map(block => `
-              <div class="gallery-item detail-gallery-image-item" style="background: ${project.gradient};">
-                <img src="${block.url}" alt="${block.alt || project.title}" loading="lazy" />
+              <div class="gallery-item detail-gallery-image-item is-loading" style="background: ${project.gradient};">
+                <div class="portfolio-tile-image-loading"></div>
+                <img src="${block.url}" alt="${block.alt || project.title}" loading="lazy" onload="this.parentElement.classList.remove('is-loading'); this.parentElement.classList.add('is-loaded');" />
               </div>
             `).join('')}
            </div>`

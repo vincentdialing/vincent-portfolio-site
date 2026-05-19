@@ -185,36 +185,36 @@ if (heroCopyStackEl && heroHeadingGroupEl && heroHeadingEl && heroRoleWrapEl && 
   const EXIT_DURATION = 800;
   const DESC_ENTER_DELAY = 600;
   const CYCLE_DURATION = VISIBLE_DURATION + EXIT_DURATION + ROLE_EXIT_DELAY + DESC_ENTER_DELAY;
-  
+
   // Fix for Vite HMR stacking intervals
   if (window.heroRotationInterval) {
     clearInterval(window.heroRotationInterval);
   }
-  
+
   window.heroRotationInterval = setInterval(() => {
     // Reverse the exit timing: description fades first, then the role.
     heroDescEl.style.opacity = '0';
-    
+
     setTimeout(() => {
       heroRoleEl.style.opacity = '0';
     }, ROLE_EXIT_DELAY);
-    
+
     setTimeout(() => {
       roleIndex = (roleIndex + 1) % rolesData.length;
-      
+
       // Update both text contents at the same time so layout adjusts while invisible
       heroRoleEl.textContent = rolesData[roleIndex].role;
       heroDescEl.textContent = rolesData[roleIndex].desc;
       syncHeroRoleClass(rolesData[roleIndex].role);
-      
+
       // Fade in the Role immediately
       heroRoleEl.style.opacity = '1';
-      
+
       // Delay the Description fade-in by 600ms
       setTimeout(() => {
         heroDescEl.style.opacity = '1';
       }, DESC_ENTER_DELAY);
-      
+
     }, EXIT_DURATION + ROLE_EXIT_DELAY); // Wait for the staggered fade-out to finish
   }, CYCLE_DURATION);
 }

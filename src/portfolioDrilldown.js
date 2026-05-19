@@ -710,12 +710,31 @@ function replayTileEntrance(tiles, stagger = 0.06) {
     tiles.forEach((tile, i) => {
         tile.classList.remove('drilldown-fade-out', 'drilldown-morph-out', 'drilldown-tile-enter', 'is-awaiting-load');
         tile.classList.add('is-content-visible');
-        tile.style.opacity = '1';
-        tile.style.transform = 'translateY(0) scale(1)';
-        void tile.offsetWidth;
-        tile.style.animationDelay = `${i * stagger}s`;
-        tile.classList.add('drilldown-tile-enter');
+        
+        // Set initial invisible/scaled-down state
+        tile.style.opacity = '0';
+        tile.style.transform = 'translateY(25px) scale(0.97)';
+        tile.style.transition = 'none';
+        
+        void tile.offsetWidth; // Trigger reflow
+        
+        // Trigger staggered transition
+        setTimeout(() => {
+            tile.style.transition = 'opacity 0.45s cubic-bezier(0.22, 1, 0.36, 1), transform 0.45s cubic-bezier(0.22, 1, 0.36, 1)';
+            tile.style.opacity = '1';
+            tile.style.transform = 'translateY(0) scale(1)';
+        }, i * stagger * 1000);
     });
+
+    // Clean up all inline styles and transitions once stagger animation finishes
+    const totalDuration = (tiles.length * stagger * 1000) + 450;
+    setTimeout(() => {
+        tiles.forEach(tile => {
+            tile.style.transition = '';
+            tile.style.opacity = '';
+            tile.style.transform = '';
+        });
+    }, totalDuration);
 }
 
 // ==========================================

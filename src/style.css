@@ -56,7 +56,8 @@ img {
   -webkit-touch-callout: none;
 }
 
-body { -webkit-text-size-adjust: 100%;
+body {
+  -webkit-text-size-adjust: 100%;
   text-size-adjust: 100%;
 }
 
@@ -282,7 +283,7 @@ nav.floating-nav {
   /* Slightly larger than the logo for glow bleed */
   z-index: 10;
   pointer-events: none;
-  
+
   /* Mask it EXACTLY to the logo's transparent shapes */
   -webkit-mask-image: url('/vincent-logo.png');
   -webkit-mask-size: contain;
@@ -298,10 +299,12 @@ nav.floating-nav {
       rgba(0, 210, 255, 0.9) 0%,
       rgba(0, 210, 255, 0.4) 15%,
       transparent 60%);
-      
-  opacity: 1; /* Always active, naturally fades out by distance */
+
+  opacity: 1;
+  /* Always active, naturally fades out by distance */
   transition: opacity 0.4s ease;
-  mix-blend-mode: normal; /* Normal blend mode so it paints pure cyan over the logo */
+  mix-blend-mode: normal;
+  /* Normal blend mode so it paints pure cyan over the logo */
 }
 
 .logo:hover {
@@ -2626,9 +2629,7 @@ nav.floating-nav {
   border: 1px solid rgba(59, 130, 246, 0.15);
   border-radius: var(--radius-lg);
   overflow: hidden;
-  transition: transform 0.3s ease, border-color 0.3s ease;
-  opacity: 0;
-  transform: translateY(25px) scale(0.97);
+  transition: transform 0.3s ease;
 }
 
 .portfolio-tile:hover {
@@ -4974,12 +4975,14 @@ body {
   pointer-events: auto;
   z-index: 5;
 }
+
 /* ==========================================
    Anti-Theft Watermark Overlay
    ========================================== */
 .watermark-overlay {
   /* Requires position relative or absolute on parent */
 }
+
 .watermark-overlay::after {
   content: '';
   position: absolute;
@@ -4987,24 +4990,26 @@ body {
   pointer-events: none;
   z-index: 10;
   /* 5-point alternating pattern (like a dice) to guarantee HUGE spacing and small size */
-  background-image: 
-    url("/vincent-logo.png"), url("/vincent-logo.png"), 
+  background-image:
+    url("/vincent-logo.png"), url("/vincent-logo.png"),
     url("/vincent-logo.png"),
     url("/vincent-logo.png"), url("/vincent-logo.png");
   background-repeat: no-repeat;
-  background-position: 
+  background-position:
     10% 10%, 90% 10%,
     50% 50%,
     10% 90%, 90% 90%;
   /* Make the middle one much larger while keeping corners small */
-  background-size: 
+  background-size:
     80px auto, 80px auto,
     260px auto,
     80px auto, 80px auto;
-  
-  opacity: 0.1; /* 10% opacity as requested */
-  mix-blend-mode: screen; /* Blends gorgeously into images but NEVER disappears on black backgrounds */
-  filter: brightness(0) invert(1); 
+
+  opacity: 0.1;
+  /* 10% opacity as requested */
+  mix-blend-mode: screen;
+  /* Blends gorgeously into images but NEVER disappears on black backgrounds */
+  filter: brightness(0) invert(1);
   image-rendering: -webkit-optimize-contrast;
   user-select: none;
   -webkit-user-select: none;

@@ -465,27 +465,33 @@ CREATE POLICY "Allow anon delete" ON brands FOR DELETE USING (true);
   <div class="modal-backdrop" id="gallery-modal">
     <div class="modal-card">
       <div class="modal-header">
-        <h3>Add Gallery Image</h3>
+        <h3>Add Gallery Images (Batch Upload)</h3>
         <button class="modal-close-btn">&times;</button>
       </div>
-      <form id="gallery-form" class="modal-form">
-        <div class="form-group">
-          <label for="gallery-img-url">Image URL*</label>
-          <div class="input-with-upload">
-            <input type="text" id="gallery-img-url" placeholder="https://..." required>
-            <label class="btn-file-label">
-              <input type="file" class="file-uploader-inline" data-target-input="gallery-img-url">
-              Upload
-            </label>
+      <div class="modal-body-padding" style="padding: 1.5rem;">
+        <div class="upload-zone" id="gallery-dropzone" style="padding: 3rem 1.5rem; text-align: center; border: 2px dashed var(--border-color); border-radius: 12px; cursor: pointer; transition: border-color 0.2s ease;">
+          <input type="file" id="gallery-file-input" class="hidden-input" accept="image/*" multiple style="display: none;">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 40px; height: 40px; color: var(--text-muted); margin-bottom: 1rem;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"/></svg>
+          <h4 style="margin: 0.5rem 0;">Drag & Drop Images Here</h4>
+          <p style="font-size: 0.85rem; color: var(--text-secondary); margin: 0.5rem 0 1rem 0;">or click to select multiple files</p>
+          <span class="file-types" style="font-size: 0.75rem; color: var(--text-muted); display: block;">Supports PNG, JPG, JPEG, GIF, SVG, WebP (max 5MB)</span>
+        </div>
+        
+        <!-- Upload Progress indicator -->
+        <div id="gallery-upload-progress" class="hidden" style="margin-top: 1.5rem; background: var(--bg-tertiary); border: 1px solid var(--border-color); border-radius: 8px; padding: 1rem;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+            <span id="gallery-progress-status" style="font-size: 0.85rem; font-weight: 500;">Uploading...</span>
+            <span id="gallery-progress-percent" style="font-size: 0.85rem; color: var(--accent-light);">0%</span>
+          </div>
+          <div style="width: 100%; height: 6px; background: var(--border-color); border-radius: 3px; overflow: hidden;">
+            <div id="gallery-progress-bar" style="width: 0%; height: 100%; background: var(--accent-color); transition: width 0.2s ease;"></div>
           </div>
         </div>
 
-
-        <div class="modal-actions">
-          <button type="button" class="btn btn-secondary modal-cancel-btn">Cancel</button>
-          <button type="submit" class="btn btn-primary">Save Image</button>
+        <div class="modal-actions" style="margin-top: 1.5rem; display: flex; justify-content: flex-end; gap: 0.75rem;">
+          <button type="button" class="btn btn-secondary modal-cancel-btn" style="padding: 0.5rem 1.25rem;">Cancel</button>
         </div>
-      </form>
+      </div>
     </div>
   </div>
 

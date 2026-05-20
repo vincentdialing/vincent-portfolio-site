@@ -971,40 +971,124 @@ async function deleteGalleryImage(id) {
 
 function openGalleryModal() {
   const modal = document.getElementById('gallery-modal');
-  const form = document.getElementById('gallery-form');
-  form.reset();
+  const fileInput = document.getElementById('gallery-file-input');
+  if (fileInput) fileInput.value = '';
+  const progressContainer = document.getElementById('gallery-upload-progress');
+  if (progressContainer) progressContainer.classList.add('hidden');
   modal.classList.add('is-open');
 }
 
-async function handleGallerySubmit(e) {
-  e.preventDefault();
+async function handleGalleryBatchUpload(files) {
   const projectKey = document.getElementById('gallery-project-selector').value;
-  const imageUrl = document.getElementById('gallery-img-url').value.trim();
+  if (!projectKey) {
+    showToast('No Project Selected', 'Please select a project first.', 'error');
+    return;
+  }
 
-  if (!projectKey) return;
+  const progressContainer = document.getElementById('gallery-upload-progress');
+  const progressStatus = document.getElementById('gallery-progress-status');
+  const progressPercent = document.getElementById('gallery-progress-percent');
+  const progressBar = document.getElementById('gallery-progress-bar');
 
-  // Auto-assign order at the end of the gallery list
-  const order = galleryImages.length + 1;
+  if (progressContainer) progressContainer.classList.remove('hidden');
 
-  const payload = {
-    project_key: projectKey,
-    image_url: imageUrl,
-    alt: '',
-    caption: '',
-    display_order: order
-  };
+  let successCount = 0;
+  let failCount = 0;
+  const totalFiles = files.length;
 
-  try {
-    const { error } = await supabase.from('portfolio_project_images').insert(payload);
-    if (error) throw error;
+  for (let i = 0; i < totalFiles; i++) {
+    const file = files[i];
 
-    showToast('Added', 'Image added to gallery successfully.', 'success');
+    if (file.size > 5 * 1024 * 1024) {
+      showToast('File Too Large', `"${file.name}" exceeds the 5MB limit.`, 'error');
+      failCount++;
+      continue;
+    }
+
+    try {
+      if (progressStatus) progressStatus.textContent = `Uploading ${i + 1} of ${totalFiles}: ${file.name}...`;
+      const pct = Math.round((i / totalFiles) * 100);
+      if (progressPercent) progressPercent.textContent = `${pct}%`;
+      if (progressBar) progressBar.style.width = `${pct}%`;
+
+      const asset = await uploadFileToSupabase(file, 'portfolio');
+
+      const order = galleryImages.length + successCount + 1;
+
+      const payload = {
+        project_key: projectKey,
+        image_url: asset.url,
+        alt: '',
+        caption: '',
+        display_order: order
+      };
+
+      const { error } = await supabase.from('portfolio_project_images').insert(payload);
+      if (error) throw error;
+
+      successCount++;
+    } catch (err) {
+      console.error('Batch gallery upload error:', err);
+      showToast('Upload Failed', `Failed to upload "${file.name}": ${err.message}`, 'error');
+      failCount++;
+    }
+  }
+
+  if (progressPercent) progressPercent.textContent = '100%';
+  if (progressBar) progressBar.style.width = '100%';
+  if (progressStatus) progressStatus.textContent = 'Done!';
+
+  setTimeout(() => {
+    if (progressContainer) progressContainer.classList.add('hidden');
+    if (progressBar) progressBar.style.width = '0%';
     closeModal('gallery-modal');
     fetchGalleryImages(projectKey);
-  } catch (err) {
-    console.error('Add gallery image error:', err);
-    showToast('Failed to Add', err.message, 'error');
-  }
+
+    if (successCount > 0) {
+      showToast('Success', `Successfully uploaded and added ${successCount} images to gallery.`, 'success');
+    }
+  }, 1000);
+}
+
+function initGalleryUploadZone() {
+  const dropzone = document.getElementById('gallery-dropzone');
+  const fileInput = document.getElementById('gallery-file-input');
+
+  if (!dropzone || !fileInput) return;
+
+  dropzone.addEventListener('click', () => {
+    fileInput.click();
+  });
+
+  dropzone.addEventListener('dragover', (e) => {
+    e.preventDefault();
+    dropzone.style.borderColor = 'var(--accent-color)';
+    dropzone.style.background = 'rgba(255, 255, 255, 0.02)';
+  });
+
+  dropzone.addEventListener('dragleave', () => {
+    dropzone.style.borderColor = 'var(--border-color)';
+    dropzone.style.background = 'none';
+  });
+
+  dropzone.addEventListener('drop', (e) => {
+    e.preventDefault();
+    dropzone.style.borderColor = 'var(--border-color)';
+    dropzone.style.background = 'none';
+
+    const files = e.dataTransfer.files;
+    if (files.length > 0) {
+      handleGalleryBatchUpload(files);
+    }
+  });
+
+  fileInput.addEventListener('change', () => {
+    const files = fileInput.files;
+    if (files.length > 0) {
+      handleGalleryBatchUpload(files);
+    }
+    fileInput.value = '';
+  });
 }
 
 // ==========================================
@@ -1972,10 +2056,12 @@ document.addEventListener('DOMContentLoaded', async () => {
   if (addGalleryBtn) {
     addGalleryBtn.addEventListener('click', openGalleryModal);
   }
+  
+  // Gallery batch dropzone setup
+  initGalleryUploadZone();
 
   // Form submits wiring
   document.getElementById('project-form').addEventListener('submit', handleProjectSubmit);
-  document.getElementById('gallery-form').addEventListener('submit', handleGallerySubmit);
   document.getElementById('service-form').addEventListener('submit', handleServiceSubmit);
   document.getElementById('brand-form').addEventListener('submit', handleBrandSubmit);
   document.getElementById('community-card-form').addEventListener('submit', handleCommunityCardSubmit);

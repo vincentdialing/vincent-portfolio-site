@@ -112,4 +112,20 @@ async function run() {
   console.log('\nConversion complete!');
 }
 
-run();
+// If SAMPLE_URL is provided, convert only that single image (safe test mode).
+const sampleUrl = process.env.SAMPLE_URL;
+if (sampleUrl) {
+  (async () => {
+    console.log(`Running single-image conversion for SAMPLE_URL=${sampleUrl}`);
+    const newUrl = await convertImage(sampleUrl);
+    if (newUrl) {
+      console.log('Converted URL ->', newUrl);
+      process.exit(0);
+    } else {
+      console.error('Sample conversion failed');
+      process.exit(2);
+    }
+  })();
+} else {
+  run();
+}

@@ -1297,8 +1297,8 @@ if (heroSpeakBtn && chatWindow && voiceBtn) {
 
   // 4. Advanced Blinking Logic
   const avatarImg = document.querySelector('.orb-avatar');
-  const openEyeSrc = '/vincent-avatar-open.png';
-  const closedEyeSrc = '/vincent-avatar-closed.png';
+  const openEyeSrc = '/vincent-avatar-open.webp';
+  const closedEyeSrc = '/vincent-avatar-closed.webp';
 
   // Preload
   const preloadClosed = new Image();

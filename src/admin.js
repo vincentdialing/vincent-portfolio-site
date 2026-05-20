@@ -1877,6 +1877,12 @@ document.addEventListener('DOMContentLoaded', async () => {
   initModalCloseHandlers();
   wireInlineFileUploads(document);
 
+  // Gallery add button wiring
+  const addGalleryBtn = document.getElementById('add-gallery-img-btn');
+  if (addGalleryBtn) {
+    addGalleryBtn.addEventListener('click', openGalleryModal);
+  }
+
   // Form submits wiring
   document.getElementById('project-form').addEventListener('submit', handleProjectSubmit);
   document.getElementById('gallery-form').addEventListener('submit', handleGallerySubmit);

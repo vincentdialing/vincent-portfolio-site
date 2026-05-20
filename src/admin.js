@@ -1117,18 +1117,20 @@ function initGalleryUploadZone() {
     dropzone.style.borderColor = 'var(--border-color)';
     dropzone.style.background = 'none';
 
-    const files = e.dataTransfer.files;
+    // Copy to array immediately — FileList is a live reference that dies after event ends
+    const files = Array.from(e.dataTransfer.files);
     if (files.length > 0) {
       handleGalleryBatchUpload(files);
     }
   });
 
   fileInput.addEventListener('change', () => {
-    const files = fileInput.files;
+    // Copy to array immediately — clearing the input destroys the FileList
+    const files = Array.from(fileInput.files);
+    fileInput.value = ''; // safe to clear now, we have a copy
     if (files.length > 0) {
       handleGalleryBatchUpload(files);
     }
-    fileInput.value = '';
   });
 }
 

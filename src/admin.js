@@ -779,6 +779,7 @@ async function deleteProject(id, projectKey) {
 // ==========================================
 
 let galleryImages = [];
+let galleryMarkedForDeletion = new Set();
 
 async function loadGallerySelector() {
   const select = document.getElementById('gallery-project-selector');
@@ -808,12 +809,16 @@ function handleGalleryProjectChange() {
 
   if (!projectKey) {
     addBtn.disabled = true;
+    const editBtn = document.getElementById('edit-gallery-btn');
+    if (editBtn) editBtn.disabled = true;
     noneBox.classList.remove('hidden');
     listGrid.classList.add('hidden');
     return;
   }
 
   addBtn.disabled = false;
+  const editBtn = document.getElementById('edit-gallery-btn');
+  if (editBtn) editBtn.disabled = false;
   noneBox.classList.add('hidden');
   listGrid.classList.remove('hidden');
 
@@ -868,17 +873,49 @@ function renderGallery() {
         <img src="${img.image_url}" alt="" loading="lazy">
       </div>
       <span class="gallery-order-badge">Order: ${img.display_order}</span>
-      <button class="gallery-delete-btn delete-gallery-img" data-id="${img.id}" title="Remove image">&times;</button>
     </div>
   `).join('');
 
-  // Wire deletes
-  listGrid.querySelectorAll('.delete-gallery-img').forEach(btn => {
-    btn.addEventListener('click', () => deleteGalleryImage(parseInt(btn.dataset.id)));
-  });
 
-  // Wire drag and drop reordering
-  wireGalleryDragAndDrop();
+  // Drag-and-drop reordering is disabled in the main view; reordering is available in Edit mode.
+}
+
+function wireGalleryEditDragAndDrop() {
+  const listEl = document.getElementById('gallery-edit-list');
+  if (!listEl) return;
+
+  const cards = listEl.querySelectorAll('.edit-thumb-card');
+  let dragged = null;
+
+  cards.forEach(card => {
+    card.setAttribute('draggable', 'true');
+    card.addEventListener('dragstart', (e) => {
+      dragged = card;
+      card.classList.add('dragging');
+      e.dataTransfer.effectAllowed = 'move';
+    });
+
+    card.addEventListener('dragend', () => {
+      if (card) card.classList.remove('dragging');
+      dragged = null;
+    });
+
+    card.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      const target = e.currentTarget;
+      if (target && target !== dragged) {
+        const children = Array.from(listEl.children);
+        const draggedIndex = children.indexOf(dragged);
+        const targetIndex = children.indexOf(target);
+
+        if (draggedIndex < targetIndex) {
+          listEl.insertBefore(dragged, target.nextSibling);
+        } else {
+          listEl.insertBefore(dragged, target);
+        }
+      }
+    });
+  });
 }
 
 function wireGalleryDragAndDrop() {
@@ -999,6 +1036,99 @@ function openGalleryModal() {
   const progressContainer = document.getElementById('gallery-upload-progress');
   if (progressContainer) progressContainer.classList.add('hidden');
   modal.classList.add('is-open');
+}
+
+function openGalleryEditModal() {
+  const modal = document.getElementById('gallery-edit-modal');
+  if (!modal) return;
+  galleryMarkedForDeletion.clear();
+  renderGalleryEditList();
+  wireGalleryEditDragAndDrop();
+  modal.classList.add('is-open');
+}
+
+function renderGalleryEditList() {
+  const listEl = document.getElementById('gallery-edit-list');
+  if (!listEl) return;
+  const projectKey = document.getElementById('gallery-project-selector').value;
+  listEl.innerHTML = galleryImages.map(img => `
+    <div class="edit-thumb-card" data-id="${img.id}" style="position:relative; border-radius:8px; overflow:hidden; background:var(--bg-tertiary); border:1px solid var(--border-color);">
+      <img src="${img.image_url}" style="width:100%; height:110px; object-fit:cover; display:block;" alt="">
+      <div style="position:absolute; top:8px; right:8px; display:flex; gap:6px;">
+        <button class="btn-icon gallery-edit-trash" data-id="${img.id}" title="Mark for delete" style="background: rgba(0,0,0,0.45); border: none; color: #fff; width:34px; height:34px; border-radius:8px; display:flex; align-items:center; justify-content:center;">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;color:var(--text-primary);"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+        </button>
+      </div>
+      <div style="padding:0.5rem; font-size:0.85rem; color:var(--text-secondary); display:flex; justify-content:space-between; align-items:center;">
+        <span>Order: ${img.display_order}</span>
+        <span style="font-weight:600; color:var(--text-primary)">${img.id}</span>
+      </div>
+    </div>
+  `).join('');
+
+  // Wire per-item trash toggles
+  listEl.querySelectorAll('.gallery-edit-trash').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const id = parseInt(btn.dataset.id);
+      const card = btn.closest('.edit-thumb-card');
+      if (galleryMarkedForDeletion.has(id)) {
+        galleryMarkedForDeletion.delete(id);
+        if (card) card.style.opacity = '1';
+        btn.style.background = 'rgba(0,0,0,0.45)';
+      } else {
+        galleryMarkedForDeletion.add(id);
+        if (card) card.style.opacity = '0.45';
+        btn.style.background = 'linear-gradient(90deg,#ef4444,#f97316)';
+      }
+    });
+  });
+}
+
+async function saveGalleryEdits() {
+  const toDelete = Array.from(galleryMarkedForDeletion);
+  if (toDelete.length === 0) {
+    // Nothing marked — just close
+    closeModal('gallery-edit-modal');
+    return;
+  }
+
+  if (!confirm(`Permanently delete ${toDelete.length} image(s)?`)) return;
+
+  try {
+    showToast('Saving Changes...', 'Applying gallery updates...', 'info');
+
+    // First, update display_order based on current visual order in the edit modal
+    const listEl = document.getElementById('gallery-edit-list');
+    const children = Array.from(listEl.children);
+    const updates = [];
+    let orderCounter = 1;
+    for (const child of children) {
+      const id = parseInt(child.dataset.id);
+      if (galleryMarkedForDeletion.has(id)) continue; // skip deleted
+      updates.push({ id, order: orderCounter });
+      orderCounter++;
+    }
+
+    // Apply order updates
+    for (const u of updates) {
+      const { error } = await supabase.from('portfolio_project_images').update({ display_order: u.order }).eq('id', u.id);
+      if (error) throw error;
+    }
+
+    // Now delete marked items
+    for (const id of toDelete) {
+      const { error } = await supabase.from('portfolio_project_images').delete().eq('id', id);
+      if (error) throw error;
+    }
+
+    showToast('Saved', 'Gallery changes applied.', 'success');
+    const projectKey = document.getElementById('gallery-project-selector').value;
+    fetchGalleryImages(projectKey);
+    closeModal('gallery-edit-modal');
+  } catch (err) {
+    console.error('Error deleting gallery images:', err);
+    showToast('Save Failed', err.message || 'Failed to apply gallery changes.', 'error');
+  }
 }
 
 async function handleGalleryBatchUpload(files) {
@@ -2228,6 +2358,14 @@ document.addEventListener('DOMContentLoaded', async () => {
   if (addGalleryBtn) {
     addGalleryBtn.addEventListener('click', openGalleryModal);
   }
+  // Gallery edit button wiring (opens modal for batch edits/deletes)
+  const editGalleryBtn = document.getElementById('edit-gallery-btn');
+  if (editGalleryBtn) {
+    editGalleryBtn.addEventListener('click', openGalleryEditModal);
+  }
+
+  const galleryEditSaveBtn = document.getElementById('gallery-edit-save');
+  if (galleryEditSaveBtn) galleryEditSaveBtn.addEventListener('click', saveGalleryEdits);
   
   // Gallery batch dropzone setup
   initGalleryUploadZone();

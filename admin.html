@@ -150,6 +150,10 @@
             <select id="project-service-filter">
               <option value="">All Services</option>
             </select>
+            <button id="edit-projects-btn" class="btn btn-secondary btn-sm" style="background: transparent; border: 1px solid rgba(255,255,255,0.08);" type="button">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px; margin-right:6px;"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 1 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+              Edit Projects
+            </button>
           </div>
 
           <div class="grid-layout projects-grid" id="projects-list">
@@ -195,6 +199,12 @@
 
         <!-- ================= SERVICES TAB ================= -->
         <section class="tab-panel" id="panel-services">
+          <div class="filter-bar" style="margin-bottom: 1rem; justify-content: flex-end;">
+            <button id="edit-services-btn" class="btn btn-secondary btn-sm" style="background: transparent; border: 1px solid rgba(255,255,255,0.08);" type="button">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px; margin-right:6px;"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 1 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+              Edit Services
+            </button>
+          </div>
           <div class="grid-layout services-grid-admin" id="services-list">
             <!-- Dynamic service cards -->
           </div>
@@ -202,6 +212,12 @@
 
         <!-- ================= BRANDS TAB ================= -->
         <section class="tab-panel" id="panel-brands">
+          <div class="filter-bar" style="margin-bottom: 1rem; justify-content: flex-end;">
+            <button id="edit-brands-btn" class="btn btn-secondary btn-sm" style="background: transparent; border: 1px solid rgba(255,255,255,0.08);" type="button">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px; margin-right:6px;"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 1 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+              Edit Brands
+            </button>
+          </div>
           <div class="grid-layout brands-grid-admin" id="brands-list">
             <!-- Dynamic brand cards -->
           </div>
@@ -224,10 +240,16 @@
             <div class="bento-card-editor">
               <div class="bento-card-header">
                 <h3>Community Cards (Rotating Carousel)</h3>
-                <button id="add-community-card-btn" class="btn btn-secondary btn-sm btn-with-icon">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-                  Add Card
-                </button>
+                <div style="display:flex; gap:0.5rem; align-items:center;">
+                  <button id="edit-community-cards-btn" class="btn btn-secondary btn-sm" style="background: transparent; border: 1px solid rgba(255,255,255,0.08);" type="button">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px; margin-right:6px;"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 1 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                    Edit Cards
+                  </button>
+                  <button id="add-community-card-btn" class="btn btn-secondary btn-sm btn-with-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                    Add Card
+                  </button>
+                </div>
               </div>
               <div class="bento-card-body">
                 <div class="community-cards-list" id="community-cards-list">
@@ -518,6 +540,78 @@ CREATE POLICY "Allow anon delete" ON brands FOR DELETE USING (true);
         <div class="modal-actions" style="margin-top: 1rem; display: flex; justify-content: flex-end; gap: 0.75rem;">
           <button type="button" class="btn btn-secondary modal-cancel-btn">Cancel</button>
           <button type="button" class="btn btn-primary" id="gallery-edit-save">Save Changes</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 2c. PROJECTS EDIT MODAL -->
+  <div class="modal-backdrop" id="projects-edit-modal">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3>Edit Projects</h3>
+        <button class="modal-close-btn">&times;</button>
+      </div>
+      <div class="modal-body-padding" style="padding: 1rem;">
+        <p style="margin:0 0 0.75rem 0; color: var(--text-secondary);">Drag to reorder. Click trash to mark delete. Save to apply.</p>
+        <div id="projects-edit-list" style="display:grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 0.75rem;"></div>
+        <div class="modal-actions" style="margin-top: 1rem; display: flex; justify-content: flex-end; gap: 0.75rem;">
+          <button type="button" class="btn btn-secondary modal-cancel-btn">Cancel</button>
+          <button type="button" class="btn btn-primary" id="projects-edit-save">Save Changes</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 2d. SERVICES EDIT MODAL -->
+  <div class="modal-backdrop" id="services-edit-modal">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3>Edit Services</h3>
+        <button class="modal-close-btn">&times;</button>
+      </div>
+      <div class="modal-body-padding" style="padding: 1rem;">
+        <p style="margin:0 0 0.75rem 0; color: var(--text-secondary);">Drag to reorder. Click trash to mark delete. Save to apply.</p>
+        <div id="services-edit-list" style="display:grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 0.75rem;"></div>
+        <div class="modal-actions" style="margin-top: 1rem; display: flex; justify-content: flex-end; gap: 0.75rem;">
+          <button type="button" class="btn btn-secondary modal-cancel-btn">Cancel</button>
+          <button type="button" class="btn btn-primary" id="services-edit-save">Save Changes</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 2e. BRANDS EDIT MODAL -->
+  <div class="modal-backdrop" id="brands-edit-modal">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3>Edit Brands</h3>
+        <button class="modal-close-btn">&times;</button>
+      </div>
+      <div class="modal-body-padding" style="padding: 1rem;">
+        <p style="margin:0 0 0.75rem 0; color: var(--text-secondary);">Drag to reorder if supported. Click trash to mark delete. Save to apply.</p>
+        <div id="brands-edit-list" style="display:grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 0.75rem;"></div>
+        <div class="modal-actions" style="margin-top: 1rem; display: flex; justify-content: flex-end; gap: 0.75rem;">
+          <button type="button" class="btn btn-secondary modal-cancel-btn">Cancel</button>
+          <button type="button" class="btn btn-primary" id="brands-edit-save">Save Changes</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 2f. COMMUNITY CARDS EDIT MODAL -->
+  <div class="modal-backdrop" id="community-edit-modal">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3>Edit Community Cards</h3>
+        <button class="modal-close-btn">&times;</button>
+      </div>
+      <div class="modal-body-padding" style="padding: 1rem;">
+        <p style="margin:0 0 0.75rem 0; color: var(--text-secondary);">Drag to reorder. Click trash to mark delete. Save to apply.</p>
+        <div id="community-edit-list" style="display:grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 0.75rem;"></div>
+        <div class="modal-actions" style="margin-top: 1rem; display: flex; justify-content: flex-end; gap: 0.75rem;">
+          <button type="button" class="btn btn-secondary modal-cancel-btn">Cancel</button>
+          <button type="button" class="btn btn-primary" id="community-edit-save">Save Changes</button>
         </div>
       </div>
     </div>

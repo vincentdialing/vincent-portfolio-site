@@ -276,6 +276,7 @@ function loadTabData(tab) {
 let allProjects = [];
 let allServices = [];
 let runProjectsFilter = null;
+let projectsMarkedForDeletion = new Set();
 
 async function fetchServices() {
   if (!supabase) return [];
@@ -406,10 +407,6 @@ function renderProjects(projects) {
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 1 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
               Edit
             </button>
-            <button class="btn btn-secondary btn-sm delete-proj-btn action-icon-btn delete" data-id="${proj.id}" data-key="${proj.project_key}">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
-              Delete
-            </button>
           </div>
         </div>
       </div>
@@ -421,9 +418,6 @@ function renderProjects(projects) {
     btn.addEventListener('click', () => openProjectModal(parseInt(btn.dataset.id)));
   });
 
-  container.querySelectorAll('.delete-proj-btn').forEach(btn => {
-    btn.addEventListener('click', () => deleteProject(parseInt(btn.dataset.id), btn.dataset.key));
-  });
 }
 
 // Live Search & Service filter for projects
@@ -1086,13 +1080,7 @@ function renderGalleryEditList() {
 
 async function saveGalleryEdits() {
   const toDelete = Array.from(galleryMarkedForDeletion);
-  if (toDelete.length === 0) {
-    // Nothing marked — just close
-    closeModal('gallery-edit-modal');
-    return;
-  }
-
-  if (!confirm(`Permanently delete ${toDelete.length} image(s)?`)) return;
+  if (toDelete.length > 0 && !confirm(`Permanently delete ${toDelete.length} image(s)?`)) return;
 
   try {
     showToast('Saving Changes...', 'Applying gallery updates...', 'info');
@@ -1128,6 +1116,292 @@ async function saveGalleryEdits() {
   } catch (err) {
     console.error('Error deleting gallery images:', err);
     showToast('Save Failed', err.message || 'Failed to apply gallery changes.', 'error');
+  }
+}
+
+function wireModalCardDnD(listEl) {
+  if (!listEl) return;
+  const cards = listEl.querySelectorAll('.edit-thumb-card');
+  let dragged = null;
+
+  cards.forEach(card => {
+    card.setAttribute('draggable', 'true');
+    card.addEventListener('dragstart', (e) => {
+      dragged = card;
+      card.classList.add('dragging');
+      e.dataTransfer.effectAllowed = 'move';
+    });
+
+    card.addEventListener('dragend', () => {
+      card.classList.remove('dragging');
+      dragged = null;
+    });
+
+    card.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      const target = e.currentTarget;
+      if (!dragged || !target || target === dragged) return;
+      const children = Array.from(listEl.children);
+      const draggedIndex = children.indexOf(dragged);
+      const targetIndex = children.indexOf(target);
+      if (draggedIndex < targetIndex) {
+        listEl.insertBefore(dragged, target.nextSibling);
+      } else {
+        listEl.insertBefore(dragged, target);
+      }
+    });
+  });
+}
+
+function wireModalTrashButtons(listEl, markedSet, selector = '.entity-edit-trash') {
+  if (!listEl) return;
+  listEl.querySelectorAll(selector).forEach(btn => {
+    btn.addEventListener('click', () => {
+      const id = parseInt(btn.dataset.id);
+      const card = btn.closest('.edit-thumb-card');
+      if (markedSet.has(id)) {
+        markedSet.delete(id);
+        if (card) card.style.opacity = '1';
+        btn.style.background = 'rgba(0,0,0,0.45)';
+      } else {
+        markedSet.add(id);
+        if (card) card.style.opacity = '0.45';
+        btn.style.background = 'linear-gradient(90deg,#ef4444,#f97316)';
+      }
+    });
+  });
+}
+
+function getOrderedIds(listEl, markedSet) {
+  const ids = [];
+  Array.from(listEl.children).forEach(child => {
+    const id = parseInt(child.dataset.id);
+    if (!markedSet.has(id)) ids.push(id);
+  });
+  return ids;
+}
+
+async function openProjectsEditModal() {
+  if (allProjects.length === 0) await loadProjects();
+  projectsMarkedForDeletion.clear();
+  const listEl = document.getElementById('projects-edit-list');
+  if (!listEl) return;
+
+  listEl.innerHTML = allProjects.map(p => `
+    <div class="edit-thumb-card" data-id="${p.id}" style="position:relative; border-radius:8px; overflow:hidden; background:var(--bg-tertiary); border:1px solid var(--border-color);">
+      <img src="${p.image_url || 'https://placehold.co/600x380'}" style="width:100%; height:105px; object-fit:cover; display:block;" alt="${p.title}">
+      <div style="position:absolute; top:8px; right:8px; display:flex; gap:6px;">
+        <button class="entity-edit-trash" data-id="${p.id}" title="Mark for delete" style="background: rgba(0,0,0,0.45); border: none; color: #fff; width:34px; height:34px; border-radius:8px; display:flex; align-items:center; justify-content:center;">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;color:var(--text-primary);"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+        </button>
+      </div>
+      <div style="padding:0.6rem;">
+        <div style="font-weight:600; font-size:0.86rem; color:var(--text-primary); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${p.title}</div>
+        <div style="font-size:0.78rem; color:var(--text-secondary);">Order: ${p.display_order}</div>
+      </div>
+    </div>
+  `).join('');
+
+  wireModalCardDnD(listEl);
+  wireModalTrashButtons(listEl, projectsMarkedForDeletion);
+  document.getElementById('projects-edit-modal').classList.add('is-open');
+}
+
+async function saveProjectsEdits() {
+  const listEl = document.getElementById('projects-edit-list');
+  if (!listEl) return;
+  const toDelete = Array.from(projectsMarkedForDeletion);
+  const orderedIds = getOrderedIds(listEl, projectsMarkedForDeletion);
+
+  if (toDelete.length > 0 && !confirm(`Permanently delete ${toDelete.length} project(s)?`)) return;
+
+  try {
+    showToast('Saving Changes...', 'Applying project updates...', 'info');
+    for (let i = 0; i < orderedIds.length; i++) {
+      const { error } = await supabase.from('portfolio_projects').update({ display_order: i + 1 }).eq('id', orderedIds[i]);
+      if (error) throw error;
+    }
+    for (const id of toDelete) {
+      const { error } = await supabase.from('portfolio_projects').delete().eq('id', id);
+      if (error) throw error;
+    }
+    closeModal('projects-edit-modal');
+    await loadProjects();
+    showToast('Saved', 'Projects updated successfully.', 'success');
+  } catch (err) {
+    console.error('Project edit save error:', err);
+    showToast('Save Failed', err.message || 'Failed to update projects.', 'error');
+  }
+}
+
+async function openServicesEditModal() {
+  if (services.length === 0) await loadServices();
+  servicesMarkedForDeletion.clear();
+  const listEl = document.getElementById('services-edit-list');
+  if (!listEl) return;
+
+  listEl.innerHTML = services.map(s => `
+    <div class="edit-thumb-card" data-id="${s.id}" style="position:relative; border-radius:8px; overflow:hidden; background:var(--bg-tertiary); border:1px solid var(--border-color);">
+      <img src="${s.image_url || 'https://placehold.co/600x380'}" style="width:100%; height:105px; object-fit:cover; display:block;" alt="${s.title}">
+      <div style="position:absolute; top:8px; right:8px; display:flex; gap:6px;">
+        <button class="entity-edit-trash" data-id="${s.id}" title="Mark for delete" style="background: rgba(0,0,0,0.45); border: none; color: #fff; width:34px; height:34px; border-radius:8px; display:flex; align-items:center; justify-content:center;">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;color:var(--text-primary);"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+        </button>
+      </div>
+      <div style="padding:0.6rem;">
+        <div style="font-weight:600; font-size:0.86rem; color:var(--text-primary); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${s.title}</div>
+        <div style="font-size:0.78rem; color:var(--text-secondary);">Order: ${s.display_order}</div>
+      </div>
+    </div>
+  `).join('');
+
+  wireModalCardDnD(listEl);
+  wireModalTrashButtons(listEl, servicesMarkedForDeletion);
+  document.getElementById('services-edit-modal').classList.add('is-open');
+}
+
+async function saveServicesEdits() {
+  const listEl = document.getElementById('services-edit-list');
+  if (!listEl) return;
+  const toDelete = Array.from(servicesMarkedForDeletion);
+  const orderedIds = getOrderedIds(listEl, servicesMarkedForDeletion);
+
+  if (toDelete.length > 0 && !confirm(`Permanently delete ${toDelete.length} service(s)?`)) return;
+
+  try {
+    showToast('Saving Changes...', 'Applying service updates...', 'info');
+    for (let i = 0; i < orderedIds.length; i++) {
+      const { error } = await supabase.from('portfolio_services').update({ display_order: i + 1 }).eq('id', orderedIds[i]);
+      if (error) throw error;
+    }
+    for (const id of toDelete) {
+      const { error } = await supabase.from('portfolio_services').delete().eq('id', id);
+      if (error) throw error;
+    }
+    closeModal('services-edit-modal');
+    await loadServices();
+    showToast('Saved', 'Services updated successfully.', 'success');
+  } catch (err) {
+    console.error('Service edit save error:', err);
+    showToast('Save Failed', err.message || 'Failed to update services.', 'error');
+  }
+}
+
+async function openBrandsEditModal() {
+  if (brands.length === 0) await loadBrands();
+  brandsMarkedForDeletion.clear();
+  const listEl = document.getElementById('brands-edit-list');
+  if (!listEl) return;
+
+  listEl.innerHTML = brands.map((b, index) => `
+    <div class="edit-thumb-card" data-id="${b.id}" style="position:relative; border-radius:8px; overflow:hidden; background:var(--bg-tertiary); border:1px solid var(--border-color);">
+      <img src="${b.logo_url || 'https://placehold.co/600x380'}" style="width:100%; height:105px; object-fit:contain; background:#fff; display:block;" alt="${b.name}">
+      <div style="position:absolute; top:8px; right:8px; display:flex; gap:6px;">
+        <button class="entity-edit-trash" data-id="${b.id}" title="Mark for delete" style="background: rgba(0,0,0,0.45); border: none; color: #fff; width:34px; height:34px; border-radius:8px; display:flex; align-items:center; justify-content:center;">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;color:var(--text-primary);"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+        </button>
+      </div>
+      <div style="padding:0.6rem;">
+        <div style="font-weight:600; font-size:0.86rem; color:var(--text-primary); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${b.name}</div>
+        <div style="font-size:0.78rem; color:var(--text-secondary);">Position: ${index + 1}</div>
+      </div>
+    </div>
+  `).join('');
+
+  wireModalCardDnD(listEl);
+  wireModalTrashButtons(listEl, brandsMarkedForDeletion);
+  document.getElementById('brands-edit-modal').classList.add('is-open');
+}
+
+async function saveBrandsEdits() {
+  const listEl = document.getElementById('brands-edit-list');
+  if (!listEl) return;
+  const toDelete = Array.from(brandsMarkedForDeletion);
+  const orderedIds = getOrderedIds(listEl, brandsMarkedForDeletion);
+
+  if (toDelete.length > 0 && !confirm(`Permanently delete ${toDelete.length} brand(s)?`)) return;
+
+  try {
+    showToast('Saving Changes...', 'Applying brand updates...', 'info');
+
+    // Try to persist ordering if display_order exists on brands.
+    let orderSupported = true;
+    for (let i = 0; i < orderedIds.length; i++) {
+      const { error } = await supabase.from('brands').update({ display_order: i + 1 }).eq('id', orderedIds[i]);
+      if (error) {
+        orderSupported = false;
+        break;
+      }
+    }
+
+    for (const id of toDelete) {
+      const { error } = await supabase.from('brands').delete().eq('id', id);
+      if (error) throw error;
+    }
+
+    closeModal('brands-edit-modal');
+    await loadBrands();
+    if (!orderSupported) {
+      showToast('Partially Saved', 'Deletes were saved. Brand reordering is not supported by current schema.', 'info');
+    } else {
+      showToast('Saved', 'Brands updated successfully.', 'success');
+    }
+  } catch (err) {
+    console.error('Brand edit save error:', err);
+    showToast('Save Failed', err.message || 'Failed to update brands.', 'error');
+  }
+}
+
+async function openCommunityEditModal() {
+  if (communityCards.length === 0) await loadCommunityCards();
+  communityMarkedForDeletion.clear();
+  const listEl = document.getElementById('community-edit-list');
+  if (!listEl) return;
+
+  listEl.innerHTML = communityCards.map(c => `
+    <div class="edit-thumb-card" data-id="${c.id}" style="position:relative; border-radius:8px; overflow:hidden; background:var(--bg-tertiary); border:1px solid var(--border-color);">
+      <img src="${c.image_url || 'https://placehold.co/600x380'}" style="width:100%; height:105px; object-fit:cover; display:block;" alt="${c.title}">
+      <div style="position:absolute; top:8px; right:8px; display:flex; gap:6px;">
+        <button class="entity-edit-trash" data-id="${c.id}" title="Mark for delete" style="background: rgba(0,0,0,0.45); border: none; color: #fff; width:34px; height:34px; border-radius:8px; display:flex; align-items:center; justify-content:center;">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;color:var(--text-primary);"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+        </button>
+      </div>
+      <div style="padding:0.6rem;">
+        <div style="font-weight:600; font-size:0.86rem; color:var(--text-primary); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${c.title}</div>
+        <div style="font-size:0.78rem; color:var(--text-secondary);">Order: ${c.display_order}</div>
+      </div>
+    </div>
+  `).join('');
+
+  wireModalCardDnD(listEl);
+  wireModalTrashButtons(listEl, communityMarkedForDeletion);
+  document.getElementById('community-edit-modal').classList.add('is-open');
+}
+
+async function saveCommunityEdits() {
+  const listEl = document.getElementById('community-edit-list');
+  if (!listEl) return;
+  const toDelete = Array.from(communityMarkedForDeletion);
+  const orderedIds = getOrderedIds(listEl, communityMarkedForDeletion);
+
+  if (toDelete.length > 0 && !confirm(`Permanently delete ${toDelete.length} community card(s)?`)) return;
+
+  try {
+    showToast('Saving Changes...', 'Applying community card updates...', 'info');
+    for (let i = 0; i < orderedIds.length; i++) {
+      const { error } = await supabase.from('community_cards').update({ display_order: i + 1 }).eq('id', orderedIds[i]);
+      if (error) throw error;
+    }
+    for (const id of toDelete) {
+      const { error } = await supabase.from('community_cards').delete().eq('id', id);
+      if (error) throw error;
+    }
+    closeModal('community-edit-modal');
+    await loadCommunityCards();
+    showToast('Saved', 'Community cards updated successfully.', 'success');
+  } catch (err) {
+    console.error('Community edit save error:', err);
+    showToast('Save Failed', err.message || 'Failed to update community cards.', 'error');
   }
 }
 
@@ -1272,6 +1546,7 @@ function initGalleryUploadZone() {
 // ==========================================
 
 let services = [];
+let servicesMarkedForDeletion = new Set();
 
 async function loadServices() {
   const container = document.getElementById('services-list');
@@ -1320,9 +1595,6 @@ function renderServices() {
         <button class="action-icon-btn edit-service-btn" data-id="${s.id}" title="Edit Service">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 1 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
         </button>
-        <button class="action-icon-btn delete-service-btn" data-id="${s.id}" title="Delete Service" style="color: #ef4444; border-color: rgba(239, 68, 68, 0.2);">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
-        </button>
       </div>
     </div>
   `).join('');
@@ -1332,10 +1604,6 @@ function renderServices() {
     btn.addEventListener('click', () => openServiceModal(parseInt(btn.dataset.id)));
   });
 
-  // Wire deletes
-  container.querySelectorAll('.delete-service-btn').forEach(btn => {
-    btn.addEventListener('click', () => deleteService(parseInt(btn.dataset.id)));
-  });
 }
 
 function openServiceModal(id = null) {
@@ -1438,6 +1706,7 @@ async function deleteService(id) {
 // ==========================================
 
 let brands = [];
+let brandsMarkedForDeletion = new Set();
 
 async function loadBrands() {
   const container = document.getElementById('brands-list');
@@ -1487,9 +1756,6 @@ function renderBrands() {
         <button class="action-icon-btn edit-brand-btn" data-id="${b.id}" title="Edit Name/Logo">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 1 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
         </button>
-        <button class="action-icon-btn delete delete-brand-btn" data-id="${b.id}" title="Remove Brand Logo">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
-        </button>
       </div>
     </div>
   `).join('');
@@ -1497,9 +1763,6 @@ function renderBrands() {
   // Wire edits and deletes
   container.querySelectorAll('.edit-brand-btn').forEach(btn => {
     btn.addEventListener('click', () => openBrandModal(parseInt(btn.dataset.id)));
-  });
-  container.querySelectorAll('.delete-brand-btn').forEach(btn => {
-    btn.addEventListener('click', () => deleteBrand(parseInt(btn.dataset.id)));
   });
 }
 
@@ -1572,6 +1835,7 @@ async function deleteBrand(id) {
 // ==========================================
 
 let communityCards = [];
+let communityMarkedForDeletion = new Set();
 
 async function loadBentoCards() {
   loadLocationCard();
@@ -1726,9 +1990,6 @@ function renderCommunityCards() {
         <button class="action-icon-btn edit-comm-btn" data-id="${c.id}" title="Edit Card">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 1 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
         </button>
-        <button class="action-icon-btn delete delete-comm-btn" data-id="${c.id}" title="Delete Card">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
-        </button>
       </div>
     </div>
   `).join('');
@@ -1736,9 +1997,6 @@ function renderCommunityCards() {
   // Wire edits/deletes
   container.querySelectorAll('.edit-comm-btn').forEach(btn => {
     btn.addEventListener('click', () => openCommunityCardModal(parseInt(btn.dataset.id)));
-  });
-  container.querySelectorAll('.delete-comm-btn').forEach(btn => {
-    btn.addEventListener('click', () => deleteCommunityCard(parseInt(btn.dataset.id)));
   });
 }
 
@@ -2366,6 +2624,30 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   const galleryEditSaveBtn = document.getElementById('gallery-edit-save');
   if (galleryEditSaveBtn) galleryEditSaveBtn.addEventListener('click', saveGalleryEdits);
+
+  const editProjectsBtn = document.getElementById('edit-projects-btn');
+  if (editProjectsBtn) editProjectsBtn.addEventListener('click', openProjectsEditModal);
+
+  const projectsEditSaveBtn = document.getElementById('projects-edit-save');
+  if (projectsEditSaveBtn) projectsEditSaveBtn.addEventListener('click', saveProjectsEdits);
+
+  const editServicesBtn = document.getElementById('edit-services-btn');
+  if (editServicesBtn) editServicesBtn.addEventListener('click', openServicesEditModal);
+
+  const servicesEditSaveBtn = document.getElementById('services-edit-save');
+  if (servicesEditSaveBtn) servicesEditSaveBtn.addEventListener('click', saveServicesEdits);
+
+  const editBrandsBtn = document.getElementById('edit-brands-btn');
+  if (editBrandsBtn) editBrandsBtn.addEventListener('click', openBrandsEditModal);
+
+  const brandsEditSaveBtn = document.getElementById('brands-edit-save');
+  if (brandsEditSaveBtn) brandsEditSaveBtn.addEventListener('click', saveBrandsEdits);
+
+  const editCommunityCardsBtn = document.getElementById('edit-community-cards-btn');
+  if (editCommunityCardsBtn) editCommunityCardsBtn.addEventListener('click', openCommunityEditModal);
+
+  const communityEditSaveBtn = document.getElementById('community-edit-save');
+  if (communityEditSaveBtn) communityEditSaveBtn.addEventListener('click', saveCommunityEdits);
   
   // Gallery batch dropzone setup
   initGalleryUploadZone();

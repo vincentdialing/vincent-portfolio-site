@@ -468,6 +468,64 @@ body {
   font-weight: 500;
 }
 
+/* Dark, consistent dropdowns for filter bars */
+.filter-bar select {
+  -webkit-appearance: none;
+  appearance: none;
+  background-color: var(--bg-tertiary);
+  color: var(--text-primary);
+  border: 2px solid var(--border-color);
+  border-radius: 8px;
+  min-height: 44px;
+  padding: 0.65rem 2.5rem 0.65rem 1rem;
+  font-family: var(--font-sans);
+  font-size: 0.95rem;
+  font-weight: 500;
+  line-height: 1.2;
+  outline: none;
+  transition: all 0.2s ease;
+  cursor: pointer;
+  accent-color: var(--accent-color);
+  
+  /* Custom caret */
+  background-image:
+    linear-gradient(45deg, transparent 50%, var(--accent-light) 50%),
+    linear-gradient(135deg, var(--accent-light) 50%, transparent 50%);
+  background-position:
+    calc(100% - 16px) calc(50% - 2px),
+    calc(100% - 10px) calc(50% - 2px);
+  background-size: 6px 6px, 6px 6px;
+  background-repeat: no-repeat;
+  
+  color-scheme: dark;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.03);
+}
+
+.filter-bar select:hover {
+  border-color: var(--accent-light);
+  background-color: var(--bg-tertiary);
+  box-shadow: 0 0 8px rgba(59, 130, 246, 0.15), inset 0 0 0 1px rgba(255, 255, 255, 0.05);
+}
+
+.filter-bar select:focus {
+  border-color: var(--accent-color);
+  box-shadow: 0 0 0 3px var(--accent-glow), inset 0 0 0 1px rgba(255, 255, 255, 0.08);
+}
+
+.filter-bar select option {
+  background-color: var(--bg-secondary);
+  color: var(--text-primary);
+  padding: 0.5rem;
+}
+
+#project-service-filter {
+  min-width: 220px;
+}
+
+#gallery-project-selector {
+  min-width: 290px;
+}
+
 /* Standard Grids */
 .grid-layout {
   display: grid;

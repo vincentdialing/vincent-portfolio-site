@@ -39,7 +39,19 @@ async function convertImage(url) {
   // 2. Convert to webp
   let webpBuffer;
   try {
-    webpBuffer = await sharp(Buffer.from(buffer)).webp({ quality: 82 }).toBuffer();
+    const inputBuffer = Buffer.from(buffer);
+    const img = sharp(inputBuffer).withMetadata();
+
+    // If original was PNG, use lossless WebP to avoid any visual changes
+    // (preserves contrast and exact pixel values). For JPEGs use high
+    // quality lossy conversion to save space while keeping appearance.
+    const ext = extMatch && extMatch[1] ? extMatch[1].toLowerCase() : '';
+    if (ext === 'png') {
+      console.log(`Using lossless WebP for ${path}`);
+      webpBuffer = await img.webp({ lossless: true }).toBuffer();
+    } else {
+      webpBuffer = await img.webp({ quality: 90 }).toBuffer();
+    }
   } catch (err) {
     console.error(`Sharp error on ${path}:`, err);
     return null;

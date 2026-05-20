@@ -1776,12 +1776,25 @@ async function uploadFileToSupabase(file, bucketName = 'portfolio') {
     throw new Error('Database client not connected. Configure credentials first.');
   }
 
-  // Generate unique URL-safe filename
-  const timestamp = Date.now();
-  const safeName = file.name.replace(/[^a-zA-Z0-9.-]/g, '_');
-  const filePath = `uploads/${timestamp}-${safeName}`;
+  // Compress/convert to WebP before uploading (skip SVG and GIF)
+  let uploadFile = file;
+  const skipTypes = ['image/svg+xml', 'image/gif'];
+  if (file.type.startsWith('image/') && !skipTypes.includes(file.type)) {
+    try {
+      uploadFile = await compressToWebP(file, 0.82);
+    } catch (err) {
+      console.warn('WebP compression failed, uploading original:', err);
+      uploadFile = file; // fallback to original
+    }
+  }
 
-  // Upload directly via Supabase Storage REST API (bypasses JS client hanging issue)
+  // Generate unique URL-safe filename (use .webp extension for compressed files)
+  const timestamp = Date.now();
+  const baseName = file.name.replace(/\.[^.]+$/, '').replace(/[^a-zA-Z0-9.-]/g, '_');
+  const ext = uploadFile === file ? file.name.split('.').pop() : 'webp';
+  const filePath = `uploads/${timestamp}-${baseName}.${ext}`;
+
+  // Upload directly via Supabase Storage REST API
   const response = await fetch(`${url}/storage/v1/object/${bucketName}/${filePath}`, {
     method: 'POST',
     headers: {
@@ -1790,7 +1803,7 @@ async function uploadFileToSupabase(file, bucketName = 'portfolio') {
       'x-upsert': 'true',
       'cache-control': 'max-age=3600'
     },
-    body: file
+    body: uploadFile
   });
 
   if (!response.ok) {
@@ -1801,13 +1814,69 @@ async function uploadFileToSupabase(file, bucketName = 'portfolio') {
   // Build public URL
   const publicUrl = `${url}/storage/v1/object/public/${bucketName}/${filePath}`;
 
+  const originalKB = (file.size / 1024).toFixed(1);
+  const compressedKB = (uploadFile.size / 1024).toFixed(1);
+  const saved = uploadFile !== file ? ` (was ${originalKB} KB → ${compressedKB} KB WebP)` : '';
+
   return {
     name: file.name,
     path: filePath,
     url: publicUrl,
-    size: (file.size / 1024).toFixed(1) + ' KB',
+    size: compressedKB + ' KB' + saved,
     time: new Date().toLocaleTimeString()
   };
+}
+
+/**
+ * Compress an image file to WebP format using the Canvas API.
+ * @param {File} file - The original image file
+ * @param {number} quality - WebP quality 0-1 (0.82 = great balance of quality/size)
+ * @returns {Promise<File>} - A new File object in WebP format
+ */
+function compressToWebP(file, quality = 0.82) {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    const objectUrl = URL.createObjectURL(file);
+
+    img.onload = () => {
+      URL.revokeObjectURL(objectUrl);
+
+      const canvas = document.createElement('canvas');
+      canvas.width = img.naturalWidth;
+      canvas.height = img.naturalHeight;
+
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0);
+
+      canvas.toBlob(
+        (blob) => {
+          if (!blob) {
+            reject(new Error('Canvas toBlob failed'));
+            return;
+          }
+
+          const webpName = file.name.replace(/\.[^.]+$/, '.webp');
+          const webpFile = new File([blob], webpName, { type: 'image/webp' });
+
+          // Only use WebP if it's actually smaller
+          if (webpFile.size < file.size) {
+            resolve(webpFile);
+          } else {
+            resolve(file); // original was already smaller, keep it
+          }
+        },
+        'image/webp',
+        quality
+      );
+    };
+
+    img.onerror = () => {
+      URL.revokeObjectURL(objectUrl);
+      reject(new Error('Failed to load image for compression'));
+    };
+
+    img.src = objectUrl;
+  });
 }
 
 async function handleFilesUpload(files) {

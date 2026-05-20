@@ -275,6 +275,7 @@ function loadTabData(tab) {
 
 let allProjects = [];
 let allServices = [];
+let runProjectsFilter = null;
 
 async function fetchServices() {
   if (!supabase) return [];
@@ -337,7 +338,11 @@ async function loadProjects() {
     if (error) throw error;
 
     allProjects = data || [];
-    renderProjects(allProjects);
+    if (runProjectsFilter) {
+      runProjectsFilter();
+    } else {
+      renderProjects(allProjects);
+    }
   } catch (err) {
     console.error('Load projects error:', err);
     container.innerHTML = `
@@ -426,14 +431,17 @@ function initProjectsFilter() {
   const searchInput = document.getElementById('project-search');
   const serviceSelect = document.getElementById('project-service-filter');
 
-  const runFilter = () => {
+  runProjectsFilter = () => {
+    if (!searchInput || !serviceSelect) return;
     const q = searchInput.value.toLowerCase().trim();
     const serviceKey = serviceSelect.value;
 
     const filtered = allProjects.filter(p => {
-      const matchSearch = p.title.toLowerCase().includes(q) || 
-                          p.category.toLowerCase().includes(q) || 
-                          p.description.toLowerCase().includes(q);
+      const titleStr = p.title ? p.title.toLowerCase() : '';
+      const catStr = p.category ? p.category.toLowerCase() : '';
+      const descStr = p.description ? p.description.toLowerCase() : '';
+      
+      const matchSearch = titleStr.includes(q) || catStr.includes(q) || descStr.includes(q);
       const matchService = !serviceKey || p.service_key === serviceKey;
       return matchSearch && matchService;
     });
@@ -441,8 +449,8 @@ function initProjectsFilter() {
     renderProjects(filtered);
   };
 
-  if (searchInput) searchInput.addEventListener('input', runFilter);
-  if (serviceSelect) serviceSelect.addEventListener('change', runFilter);
+  if (searchInput) searchInput.addEventListener('input', runProjectsFilter);
+  if (serviceSelect) serviceSelect.addEventListener('change', runProjectsFilter);
 }
 
 // JSON Block Builder details arrays

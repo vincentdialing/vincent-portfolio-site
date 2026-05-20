@@ -1026,12 +1026,7 @@ async function handleGalleryBatchUpload(files) {
       if (progressBar) progressBar.style.width = `${pct}%`;
     };
 
-    if (file.size > 5 * 1024 * 1024) {
-      showToast('File Too Large', `"${file.name}" exceeds the 5MB limit.`, 'error');
-      failCount++;
-      updateProgress();
-      continue;
-    }
+
 
     try {
       // Update status text BEFORE upload starts
@@ -1887,12 +1882,7 @@ async function handleFilesUpload(files) {
   for (let i = 0; i < files.length; i++) {
     const file = files[i];
     
-    // Check size limit (5MB)
-    if (file.size > 5 * 1024 * 1024) {
-      showToast('File Too Large', `"${file.name}" exceeds the 5MB size limit.`, 'error');
-      failCount++;
-      continue;
-    }
+
 
     showToast('Uploading', `Uploading ${file.name}...`, 'info');
 

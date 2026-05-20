@@ -353,6 +353,8 @@ async function fetchLocationCard() {
 let communityCardsData = []; // Store fetched data for rotation
 let communityRotationInterval = null;
 let communityCurrentIndex = 0;
+// Tracks the last index shown via hover so each new hover advances to the next item
+let communityHoverLastIndex = -1;
 let communitySwipeStartX = 0;
 let communitySwipeStartY = 0;
 let communitySwipeActive = false;
@@ -459,6 +461,17 @@ function initCommunityBentoRotation() {
 
   communityBento.addEventListener('mouseenter', () => {
     if (isCommunitySwipeLayout()) return;
+
+    // Advance to the next item on each hover. This ensures the first hover
+    // shows item 0, next hover shows item 1, then item 2, etc.
+    const items = document.querySelectorAll('#community-bento-content .bento-rotating-item');
+    if (items.length === 0) return;
+
+    // Compute next index based on last hover index
+    const nextIndex = (communityHoverLastIndex + 1) % items.length;
+    communityCurrentIndex = nextIndex;
+    communityHoverLastIndex = nextIndex;
+
     startBentoRotation();
   });
 

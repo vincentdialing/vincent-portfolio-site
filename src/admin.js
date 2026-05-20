@@ -1019,9 +1019,17 @@ async function handleGalleryBatchUpload(files) {
   for (let i = 0; i < totalFiles; i++) {
     const file = files[i];
 
+    // Update progress for every file (success or fail)
+    const updateProgress = () => {
+      const pct = Math.round(((i + 1) / totalFiles) * 100);
+      if (progressPercent) progressPercent.textContent = `${pct}%`;
+      if (progressBar) progressBar.style.width = `${pct}%`;
+    };
+
     if (file.size > 5 * 1024 * 1024) {
       showToast('File Too Large', `"${file.name}" exceeds the 5MB limit.`, 'error');
       failCount++;
+      updateProgress();
       continue;
     }
 
@@ -1029,7 +1037,15 @@ async function handleGalleryBatchUpload(files) {
       // Update status text BEFORE upload starts
       if (progressStatus) progressStatus.textContent = `Uploading ${i + 1} of ${totalFiles}: ${file.name}...`;
 
-      const asset = await uploadFileToSupabase(file, 'portfolio');
+      // Wrap upload in a timeout (30 seconds) so it never hangs forever
+      const uploadWithTimeout = (f) => {
+        return Promise.race([
+          uploadFileToSupabase(f, 'portfolio'),
+          new Promise((_, reject) => setTimeout(() => reject(new Error('Upload timed out after 30 seconds')), 30000))
+        ]);
+      };
+
+      const asset = await uploadWithTimeout(file);
 
       const order = galleryImages.length + successCount + 1;
       const payload = {
@@ -1044,15 +1060,18 @@ async function handleGalleryBatchUpload(files) {
       if (error) throw error;
 
       successCount++;
-
-      // Update progress bar AFTER each file completes
-      const pct = Math.round(((i + 1) / totalFiles) * 100);
-      if (progressPercent) progressPercent.textContent = `${pct}%`;
-      if (progressBar) progressBar.style.width = `${pct}%`;
     } catch (err) {
       console.error(`[GalleryBatch] Error uploading "${file.name}":`, err);
-      showToast('Upload Failed', `Failed to upload "${file.name}": ${err.message}`, 'error');
+      showToast('Upload Failed', `"${file.name}": ${err.message}`, 'error');
       failCount++;
+    }
+
+    // Always update progress after each file (success or fail)
+    updateProgress();
+
+    // Small delay between uploads to avoid rate-limiting
+    if (i < totalFiles - 1) {
+      await new Promise(r => setTimeout(r, 300));
     }
   }
 

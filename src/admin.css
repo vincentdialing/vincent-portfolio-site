@@ -47,6 +47,10 @@ body {
   overflow-x: hidden;
 }
 
+.hidden {
+  display: none !important;
+}
+
 /* Spinner / Loader Styles */
 .admin-loader {
   position: fixed;

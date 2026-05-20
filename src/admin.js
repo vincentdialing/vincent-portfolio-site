@@ -1766,7 +1766,11 @@ async function verifyBucket() {
 }
 
 async function uploadFileToSupabase(file, bucketName = 'portfolio') {
-  if (!supabase) {
+  // Resolve Supabase URL and key from the same sources as initSupabase
+  const url = localStorage.getItem('admin_supabase_url') || import.meta.env.VITE_SUPABASE_URL;
+  const key = localStorage.getItem('admin_supabase_key') || import.meta.env.VITE_SUPABASE_ANON_KEY;
+
+  if (!url || !key) {
     throw new Error('Database client not connected. Configure credentials first.');
   }
 
@@ -1775,29 +1779,30 @@ async function uploadFileToSupabase(file, bucketName = 'portfolio') {
   const safeName = file.name.replace(/[^a-zA-Z0-9.-]/g, '_');
   const filePath = `uploads/${timestamp}-${safeName}`;
 
-  // Upload raw file
-  const { data, error } = await supabase.storage
-    .from(bucketName)
-    .upload(filePath, file, {
-      cacheControl: '3600',
-      upsert: true
-    });
+  // Upload directly via Supabase Storage REST API (bypasses JS client hanging issue)
+  const response = await fetch(`${url}/storage/v1/object/${bucketName}/${filePath}`, {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${key}`,
+      'apikey': key,
+      'x-upsert': 'true',
+      'cache-control': 'max-age=3600'
+    },
+    body: file
+  });
 
-  if (error) throw error;
-
-  // Retrieve public URL
-  const { data: publicUrlData } = supabase.storage
-    .from(bucketName)
-    .getPublicUrl(filePath);
-
-  if (!publicUrlData || !publicUrlData.publicUrl) {
-    throw new Error('Could not resolve public URL from storage.');
+  if (!response.ok) {
+    const errorBody = await response.json().catch(() => ({}));
+    throw new Error(errorBody.message || errorBody.error || `Upload failed (HTTP ${response.status})`);
   }
+
+  // Build public URL
+  const publicUrl = `${url}/storage/v1/object/public/${bucketName}/${filePath}`;
 
   return {
     name: file.name,
     path: filePath,
-    url: publicUrlData.publicUrl,
+    url: publicUrl,
     size: (file.size / 1024).toFixed(1) + ' KB',
     time: new Date().toLocaleTimeString()
   };

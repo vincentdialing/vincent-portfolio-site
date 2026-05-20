@@ -153,7 +153,7 @@ function showToast(title, message, type = 'info') {
 const TAB_CONFIGS = {
   projects: { title: 'Projects', subtitle: 'Manage portfolio works and project details.', button: 'Add New Project' },
   gallery: { title: 'Project Gallery', subtitle: 'Manage secondary gallery images for project drilldown pages.', button: '' },
-  services: { title: 'Services', subtitle: 'Manage services categories and display parameters.', button: '' },
+  services: { title: 'Services', subtitle: 'Manage services categories and display parameters.', button: 'Add Service' },
   brands: { title: 'Brand Logos', subtitle: 'Manage client and partner logos for the scrolling marquee.', button: 'Add Brand Logo' },
   bento: { title: 'Bento Hover Cards', subtitle: 'Manage bento layout interactive cards.', button: '' },
   uploads: { title: 'File Manager', subtitle: 'Upload static images directly to your Supabase Storage.', button: '' },
@@ -213,6 +213,8 @@ function initTabs() {
         openProjectModal();
       } else if (activeTab === 'brands') {
         openBrandModal();
+      } else if (activeTab === 'services') {
+        openServiceModal();
       }
     });
   }
@@ -1144,6 +1146,9 @@ function renderServices() {
         <button class="action-icon-btn edit-service-btn" data-id="${s.id}" title="Edit Service">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 1 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
         </button>
+        <button class="action-icon-btn delete-service-btn" data-id="${s.id}" title="Delete Service" style="color: #ef4444; border-color: rgba(239, 68, 68, 0.2);">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
+        </button>
       </div>
     </div>
   `).join('');
@@ -1152,20 +1157,38 @@ function renderServices() {
   container.querySelectorAll('.edit-service-btn').forEach(btn => {
     btn.addEventListener('click', () => openServiceModal(parseInt(btn.dataset.id)));
   });
+
+  // Wire deletes
+  container.querySelectorAll('.delete-service-btn').forEach(btn => {
+    btn.addEventListener('click', () => deleteService(parseInt(btn.dataset.id)));
+  });
 }
 
-function openServiceModal(id) {
+function openServiceModal(id = null) {
   const modal = document.getElementById('service-modal');
-  const service = services.find(s => s.id === id);
-  if (!service) return;
-
-  document.getElementById('service-db-id').value = service.id;
+  const titleEl = document.getElementById('service-modal-title');
   const keyInput = document.getElementById('service-key');
-  keyInput.value = service.key;
-  keyInput.readOnly = true; // Key should not change as it acts as foreign key
-  document.getElementById('service-title').value = service.title;
-  document.getElementById('service-image').value = service.image_url || '';
-  document.getElementById('service-order').value = service.display_order;
+
+  if (id) {
+    const service = services.find(s => s.id === id);
+    if (!service) return;
+
+    titleEl.textContent = 'Edit Service';
+    document.getElementById('service-db-id').value = service.id;
+    keyInput.value = service.key;
+    keyInput.readOnly = true; // Key should not change as it acts as foreign key
+    document.getElementById('service-title').value = service.title;
+    document.getElementById('service-image').value = service.image_url || '';
+    document.getElementById('service-order').value = service.display_order;
+  } else {
+    titleEl.textContent = 'Add New Service';
+    document.getElementById('service-db-id').value = '';
+    keyInput.value = '';
+    keyInput.readOnly = false; // Allow key entry for new service
+    document.getElementById('service-title').value = '';
+    document.getElementById('service-image').value = '';
+    document.getElementById('service-order').value = services.length + 1;
+  }
 
   modal.classList.add('is-open');
 }
@@ -1173,6 +1196,7 @@ function openServiceModal(id) {
 async function handleServiceSubmit(e) {
   e.preventDefault();
   const id = document.getElementById('service-db-id').value;
+  const key = document.getElementById('service-key').value.trim().toLowerCase();
   const title = document.getElementById('service-title').value.trim();
   const imageUrl = document.getElementById('service-image').value.trim();
   const order = parseInt(document.getElementById('service-order').value) || 0;
@@ -1184,19 +1208,54 @@ async function handleServiceSubmit(e) {
   };
 
   try {
-    const { error } = await supabase
-      .from('portfolio_services')
-      .update(payload)
-      .eq('id', parseInt(id));
+    if (id) {
+      // Update existing service
+      const { error } = await supabase
+        .from('portfolio_services')
+        .update(payload)
+        .eq('id', parseInt(id));
 
-    if (error) throw error;
+      if (error) throw error;
+      showToast('Success', 'Service updated successfully.', 'success');
+    } else {
+      // Create new service
+      payload.key = key;
+      const { error } = await supabase
+        .from('portfolio_services')
+        .insert(payload);
 
-    showToast('Success', 'Service updated successfully.', 'success');
+      if (error) throw error;
+      showToast('Success', 'Service created successfully.', 'success');
+    }
+
     closeModal('service-modal');
     loadServices();
   } catch (err) {
-    console.error('Update service error:', err);
+    console.error('Save service error:', err);
     showToast('Save Failed', err.message, 'error');
+  }
+}
+
+async function deleteService(id) {
+  const service = services.find(s => s.id === id);
+  if (!service) return;
+
+  const confirmMsg = `Are you sure you want to delete the service "${service.title}"?\n\nWarning: Any project linked to this service key ("${service.key}") will no longer display in this category on the main portfolio page.`;
+  if (!confirm(confirmMsg)) return;
+
+  try {
+    const { error } = await supabase
+      .from('portfolio_services')
+      .delete()
+      .eq('id', id);
+
+    if (error) throw error;
+
+    showToast('Deleted', 'Service deleted successfully.', 'success');
+    loadServices();
+  } catch (err) {
+    console.error('Delete service error:', err);
+    showToast('Delete Failed', err.message, 'error');
   }
 }
 

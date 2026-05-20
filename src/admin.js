@@ -981,10 +981,8 @@ function openGalleryModal() {
 }
 
 async function handleGalleryBatchUpload(files) {
-  console.log('[GalleryBatch] Starting batch upload of', files.length, 'files');
   const projectKey = document.getElementById('gallery-project-selector').value;
   if (!projectKey) {
-    console.error('[GalleryBatch] Error: No project selected.');
     showToast('No Project Selected', 'Please select a project first.', 'error');
     return;
   }
@@ -1000,26 +998,25 @@ async function handleGalleryBatchUpload(files) {
   let failCount = 0;
   const totalFiles = files.length;
 
+  // Show initial starting state
+  if (progressStatus) progressStatus.textContent = `Preparing ${totalFiles} file${totalFiles > 1 ? 's' : ''}...`;
+  if (progressPercent) progressPercent.textContent = '0%';
+  if (progressBar) progressBar.style.width = '2%'; // small initial indicator
+
   for (let i = 0; i < totalFiles; i++) {
     const file = files[i];
-    console.log(`[GalleryBatch] Processing file ${i + 1}/${totalFiles}:`, file.name, 'size:', file.size);
 
     if (file.size > 5 * 1024 * 1024) {
-      console.warn(`[GalleryBatch] File ${file.name} exceeds 5MB size limit.`);
       showToast('File Too Large', `"${file.name}" exceeds the 5MB limit.`, 'error');
       failCount++;
       continue;
     }
 
     try {
+      // Update status text BEFORE upload starts
       if (progressStatus) progressStatus.textContent = `Uploading ${i + 1} of ${totalFiles}: ${file.name}...`;
-      const pct = Math.round((i / totalFiles) * 100);
-      if (progressPercent) progressPercent.textContent = `${pct}%`;
-      if (progressBar) progressBar.style.width = `${pct}%`;
 
-      console.log(`[GalleryBatch] Calling uploadFileToSupabase for ${file.name}...`);
       const asset = await uploadFileToSupabase(file, 'portfolio');
-      console.log(`[GalleryBatch] Upload successful for ${file.name}. Asset URL:`, asset.url);
 
       const order = galleryImages.length + successCount + 1;
       const payload = {
@@ -1030,14 +1027,17 @@ async function handleGalleryBatchUpload(files) {
         display_order: order
       };
 
-      console.log(`[GalleryBatch] Inserting image row into portfolio_project_images for ${file.name}...`);
       const { error } = await supabase.from('portfolio_project_images').insert(payload);
       if (error) throw error;
 
-      console.log(`[GalleryBatch] Database insert successful for ${file.name}.`);
       successCount++;
+
+      // Update progress bar AFTER each file completes
+      const pct = Math.round(((i + 1) / totalFiles) * 100);
+      if (progressPercent) progressPercent.textContent = `${pct}%`;
+      if (progressBar) progressBar.style.width = `${pct}%`;
     } catch (err) {
-      console.error(`[GalleryBatch] Error processing file ${file.name}:`, err);
+      console.error(`[GalleryBatch] Error uploading "${file.name}":`, err);
       showToast('Upload Failed', `Failed to upload "${file.name}": ${err.message}`, 'error');
       failCount++;
     }
@@ -1734,9 +1734,7 @@ async function verifyBucket() {
 }
 
 async function uploadFileToSupabase(file, bucketName = 'portfolio') {
-  console.log('[UploadUtility] uploadFileToSupabase invoked for:', file.name, 'bucket:', bucketName);
   if (!supabase) {
-    console.error('[UploadUtility] Supabase client is not connected!');
     throw new Error('Database client not connected. Configure credentials first.');
   }
 
@@ -1744,48 +1742,33 @@ async function uploadFileToSupabase(file, bucketName = 'portfolio') {
   const timestamp = Date.now();
   const safeName = file.name.replace(/[^a-zA-Z0-9.-]/g, '_');
   const filePath = `uploads/${timestamp}-${safeName}`;
-  console.log('[UploadUtility] Generated path:', filePath);
 
-  try {
-    // Upload raw file
-    console.log('[UploadUtility] Calling supabase.storage.from().upload...');
-    const { data, error } = await supabase.storage
-      .from(bucketName)
-      .upload(filePath, file, {
-        cacheControl: '3600',
-        upsert: true
-      });
+  // Upload raw file
+  const { data, error } = await supabase.storage
+    .from(bucketName)
+    .upload(filePath, file, {
+      cacheControl: '3600',
+      upsert: true
+    });
 
-    console.log('[UploadUtility] supabase.storage.from().upload returned:', { data, error });
+  if (error) throw error;
 
-    if (error) {
-      console.error('[UploadUtility] Supabase Storage upload error:', error);
-      throw error;
-    }
+  // Retrieve public URL
+  const { data: publicUrlData } = supabase.storage
+    .from(bucketName)
+    .getPublicUrl(filePath);
 
-    // Retrieve public URL
-    console.log('[UploadUtility] Fetching public URL...');
-    const { data: publicUrlData } = supabase.storage
-      .from(bucketName)
-      .getPublicUrl(filePath);
-
-    console.log('[UploadUtility] getPublicUrl returned:', publicUrlData);
-
-    if (!publicUrlData || !publicUrlData.publicUrl) {
-      throw new Error('Could not resolve public URL from storage.');
-    }
-
-    return {
-      name: file.name,
-      path: filePath,
-      url: publicUrlData.publicUrl,
-      size: (file.size / 1024).toFixed(1) + ' KB',
-      time: new Date().toLocaleTimeString()
-    };
-  } catch (err) {
-    console.error('[UploadUtility] Caught error in uploadFileToSupabase:', err);
-    throw err;
+  if (!publicUrlData || !publicUrlData.publicUrl) {
+    throw new Error('Could not resolve public URL from storage.');
   }
+
+  return {
+    name: file.name,
+    path: filePath,
+    url: publicUrlData.publicUrl,
+    size: (file.size / 1024).toFixed(1) + ' KB',
+    time: new Date().toLocaleTimeString()
+  };
 }
 
 async function handleFilesUpload(files) {

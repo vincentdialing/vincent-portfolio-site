@@ -1,0 +1,637 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Dashboard | Vincent Portfolio</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    /* Critical reset styles to avoid jumpiness before admin.css loads */
+    body {
+      background-color: #09090b;
+      color: #f4f4f5;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      margin: 0;
+      padding: 0;
+      opacity: 0;
+      transition: opacity 0.2s ease;
+    }
+    body.loaded {
+      opacity: 1;
+    }
+  </style>
+</head>
+<body>
+  <div id="page-loader" class="admin-loader">
+    <div class="spinner"></div>
+  </div>
+
+  <!-- Glassmorphic Login Screen -->
+  <div id="login-screen" class="admin-login-overlay">
+    <div class="login-card">
+      <div class="login-header">
+        <img src="/vincent-avatar-open.png" alt="Vincent Dialing" style="height: 64px; width: 64px; border-radius: 50%; object-fit: cover; margin-bottom: 1rem; background: var(--bg-tertiary); border: 2px solid var(--accent-color);" />
+        <h2>Vincent Dialing</h2>
+        <p>Enter Master Passcode to access Admin Control Panel.</p>
+      </div>
+      <form id="login-form">
+        <div class="form-group">
+          <label for="login-passcode">Master Passcode</label>
+          <input type="password" id="login-passcode" placeholder="••••••••" required>
+        </div>
+        <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 0.5rem;">Unlock Dashboard</button>
+        <p class="login-error hidden" id="login-error-msg">Incorrect passcode. Please try again.</p>
+      </form>
+    </div>
+  </div>
+
+  <div class="admin-layout">
+    <!-- Sidebar Navigation -->
+    <aside class="admin-sidebar">
+      <div class="sidebar-header">
+        <a href="/" class="logo-group">
+          <img src="/vincent-avatar-open.png" alt="Vincent Dialing" style="height: 36px; width: 36px; border-radius: 50%; object-fit: cover; background: var(--bg-tertiary);" />
+          <div class="logo-text">
+            <span class="logo-title">Vincent</span>
+            <span class="logo-subtitle">Admin Control</span>
+          </div>
+        </a>
+      </div>
+
+      <div class="db-status-card">
+        <div class="status-indicator connected" id="status-badge">
+          <span class="status-dot"></span>
+          <span class="status-label">Checking connection...</span>
+        </div>
+        <p class="status-desc" id="status-key-type">Using environment credentials</p>
+      </div>
+
+      <nav class="sidebar-nav">
+        <button class="nav-tab-btn active" data-tab="projects">
+          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+          Projects
+        </button>
+        <button class="nav-tab-btn" data-tab="gallery">
+          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+          Project Gallery
+        </button>
+        <button class="nav-tab-btn" data-tab="services">
+          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
+          Services
+        </button>
+        <button class="nav-tab-btn" data-tab="brands">
+          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+          Brand Logos
+        </button>
+        <button class="nav-tab-btn" data-tab="bento">
+          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg>
+          Bento Hover Cards
+        </button>
+        <button class="nav-tab-btn" data-tab="uploads">
+          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"/></svg>
+          File Manager
+        </button>
+        <button class="nav-tab-btn" data-tab="config">
+          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+          Supabase Credentials
+        </button>
+      </nav>
+
+      <div class="sidebar-footer" style="display: flex; flex-direction: column; gap: 0.75rem;">
+        <a href="/" class="view-site-link">
+          <svg class="footer-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6M15 3h6v6M10 14L21 3"/></svg>
+          Go to Portfolio
+        </a>
+        <button id="logout-btn" class="btn btn-secondary btn-sm" style="width: 100%; justify-content: flex-start; gap: 0.5rem; background: transparent; border-color: rgba(239, 68, 68, 0.2); color: #f87171;">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 14px; height: 14px;"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+          Log Out
+        </button>
+      </div>
+    </aside>
+
+    <!-- Main Content Area -->
+    <main class="admin-main">
+      <header class="main-header">
+        <div class="header-left">
+          <h1 id="active-tab-title">Projects</h1>
+          <p class="tab-subtitle" id="active-tab-subtitle">Manage portfolio works and project details.</p>
+        </div>
+        <div class="header-actions">
+          <button id="add-item-btn" class="btn btn-primary btn-with-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            Add New Project
+          </button>
+        </div>
+      </header>
+
+      <div class="content-container">
+        <!-- Error Alert / Warning Banner when RLS blocks updates -->
+        <div class="alert-banner hidden" id="rls-warning-banner">
+          <div class="alert-banner-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+          </div>
+          <div class="alert-banner-content">
+            <h4>Row-Level Security (RLS) is blocking edits</h4>
+            <p>Your Supabase tables are public read-only. To perform uploads and edits from this UI, you must either enter your <strong>Service Role Key</strong> in the Credentials tab, or configure the database policies. <button class="alert-banner-link" id="goto-config-btn">Setup Guide</button></p>
+          </div>
+          <button class="alert-banner-close" id="dismiss-rls-btn" style="background: none; border: none; color: var(--text-secondary); font-size: 1.5rem; cursor: pointer; padding: 0 0.5rem; line-height: 1; opacity: 0.7; transition: opacity 0.2s; align-self: flex-start;">&times;</button>
+        </div>
+
+        <!-- ================= PROJECTS TAB ================= -->
+        <section class="tab-panel active" id="panel-projects">
+          <div class="filter-bar">
+            <div class="search-input-group">
+              <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+              <input type="text" id="project-search" placeholder="Search projects by title, category...">
+            </div>
+            <select id="project-service-filter">
+              <option value="">All Services</option>
+            </select>
+          </div>
+
+          <div class="grid-layout projects-grid" id="projects-list">
+            <!-- Dynamic project cards -->
+            <div class="loading-state">
+              <div class="spinner-small"></div>
+              <span>Fetching projects...</span>
+            </div>
+          </div>
+        </section>
+
+        <!-- ================= GALLERY IMAGES TAB ================= -->
+        <section class="tab-panel" id="panel-gallery">
+          <div class="filter-bar">
+            <div class="select-project-group">
+              <label for="gallery-project-selector">Select Project to View Gallery:</label>
+              <select id="gallery-project-selector">
+                <option value="">-- Choose a project --</option>
+              </select>
+            </div>
+            <button id="add-gallery-img-btn" class="btn btn-secondary btn-with-icon" disabled>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+              Add Gallery Image
+            </button>
+          </div>
+
+          <div class="gallery-info-box" id="gallery-info-none">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+            <h3>No Project Selected</h3>
+            <p>Please select a project from the dropdown above to view and manage its image gallery.</p>
+          </div>
+
+          <div class="grid-layout gallery-grid hidden" id="gallery-images-list">
+            <!-- Dynamic gallery items -->
+          </div>
+        </section>
+
+        <!-- ================= SERVICES TAB ================= -->
+        <section class="tab-panel" id="panel-services">
+          <div class="grid-layout services-grid-admin" id="services-list">
+            <!-- Dynamic service cards -->
+          </div>
+        </section>
+
+        <!-- ================= BRANDS TAB ================= -->
+        <section class="tab-panel" id="panel-brands">
+          <div class="grid-layout brands-grid-admin" id="brands-list">
+            <!-- Dynamic brand cards -->
+          </div>
+        </section>
+
+        <!-- ================= BENTO HOVER CARDS TAB ================= -->
+        <section class="tab-panel" id="panel-bento">
+          <div class="bento-sections">
+            <div class="bento-card-editor">
+              <div class="bento-card-header">
+                <h3>Location Card ("Based In Davao")</h3>
+                <span class="badge">Single Item</span>
+              </div>
+              <div class="bento-card-body" id="location-card-container">
+                <!-- Location card details and quick edit -->
+                <div class="loading-state"><div class="spinner-small"></div></div>
+              </div>
+            </div>
+
+            <div class="bento-card-editor">
+              <div class="bento-card-header">
+                <h3>Community Cards (Rotating Carousel)</h3>
+                <button id="add-community-card-btn" class="btn btn-secondary btn-sm btn-with-icon">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                  Add Card
+                </button>
+              </div>
+              <div class="bento-card-body">
+                <div class="community-cards-list" id="community-cards-list">
+                  <!-- Community cards list -->
+                  <div class="loading-state"><div class="spinner-small"></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ================= FILE UPLOADER TAB ================= -->
+        <section class="tab-panel" id="panel-uploads">
+          <div class="uploads-layout">
+            <div class="file-uploader-box">
+              <div class="upload-zone" id="dropzone">
+                <input type="file" id="file-input" class="hidden-input" accept="image/*" multiple>
+                <svg class="upload-zone-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"/></svg>
+                <h3>Drag & Drop Files Here</h3>
+                <p>or click to browse from your computer</p>
+                <span class="file-types">Supports PNG, JPG, JPEG, GIF, SVG, WebP (max 5MB)</span>
+              </div>
+
+              <div class="bucket-selector-group">
+                <label for="upload-bucket-select">Supabase Storage Bucket:</label>
+                <div class="input-with-action">
+                  <input type="text" id="upload-bucket-name" value="portfolio" placeholder="Bucket name (e.g. portfolio)">
+                  <button id="check-bucket-btn" class="btn btn-secondary">Verify Bucket</button>
+                </div>
+                <p class="field-help">Files will be uploaded into the root of this bucket. Make sure the bucket is configured as "Public".</p>
+              </div>
+            </div>
+
+            <div class="uploaded-files-list">
+              <div class="panel-section-title">
+                <h3>Uploaded Assets</h3>
+                <button id="clear-upload-history-btn" class="btn-clear-history">Clear History</button>
+              </div>
+              <div class="assets-scroll-container" id="uploaded-assets-grid">
+                <div class="no-assets-state">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                  <p>No files uploaded in this session yet.</p>
+                  <p class="subtext">Uploaded files will appear here with links to copy.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ================= SUPABASE CONFIG TAB ================= -->
+        <section class="tab-panel" id="panel-config">
+          <div class="config-layout">
+            <div class="config-form-card">
+              <h3>Supabase Connection Settings</h3>
+              <p class="card-desc">By default, the dashboard uses the environment variables from your <code>.env</code> file. You can override them here or paste a <strong>Service Role Key</strong> to bypass RLS policies during admin operations. These keys are only stored in your browser's local storage.</p>
+
+              <form id="config-form">
+                <div class="form-group">
+                  <label for="config-url">Supabase API URL</label>
+                  <input type="text" id="config-url" placeholder="https://your-project.supabase.co" required>
+                </div>
+                <div class="form-group">
+                  <label for="config-key">Supabase API Key (Anon Key or Service Role Key)</label>
+                  <div class="input-password-wrap">
+                    <input type="password" id="config-key" placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..." required>
+                    <button type="button" class="btn-toggle-password" id="toggle-config-key">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                    </button>
+                  </div>
+                  <p class="field-help warning-text"><strong class="highlight-warn">Important:</strong> Use the <strong>Service Role Key</strong> (found in Supabase Settings > API) to insert/edit/delete records directly if you have not set up public insert policies.</p>
+                </div>
+
+                <div class="form-actions-row">
+                  <button type="submit" class="btn btn-primary">Save & Apply Settings</button>
+                  <button type="button" id="config-reset-btn" class="btn btn-secondary">Reset to Default (.env)</button>
+                </div>
+              </form>
+            </div>
+
+            <div class="config-sql-guide">
+              <h3>Database Setup Helper</h3>
+              <p class="card-desc">If you want to use your public <strong>Anon Key</strong> but are getting permissions errors, you must run these commands in your <strong>Supabase SQL Editor</strong> to enable write operations:</p>
+
+              <div class="sql-box">
+                <div class="sql-box-header">
+                  <span>Enable Write Policies (SQL)</span>
+                  <button class="btn-copy-code" data-copy-target="sql-code-block">Copy</button>
+                </div>
+                <pre class="code-block" id="sql-code-block"><code>-- 1. Enable insert/update/delete for Anon Key on all tables
+-- portfolio_services
+CREATE POLICY "Allow anon insert" ON portfolio_services FOR INSERT WITH CHECK (true);
+CREATE POLICY "Allow anon update" ON portfolio_services FOR UPDATE USING (true) WITH CHECK (true);
+CREATE POLICY "Allow anon delete" ON portfolio_services FOR DELETE USING (true);
+
+-- portfolio_projects
+CREATE POLICY "Allow anon insert" ON portfolio_projects FOR INSERT WITH CHECK (true);
+CREATE POLICY "Allow anon update" ON portfolio_projects FOR UPDATE USING (true) WITH CHECK (true);
+CREATE POLICY "Allow anon delete" ON portfolio_projects FOR DELETE USING (true);
+
+-- portfolio_project_images
+CREATE POLICY "Allow anon insert" ON portfolio_project_images FOR INSERT WITH CHECK (true);
+CREATE POLICY "Allow anon update" ON portfolio_project_images FOR UPDATE USING (true) WITH CHECK (true);
+CREATE POLICY "Allow anon delete" ON portfolio_project_images FOR DELETE USING (true);
+
+-- location_card
+CREATE POLICY "Allow anon insert" ON location_card FOR INSERT WITH CHECK (true);
+CREATE POLICY "Allow anon update" ON location_card FOR UPDATE USING (true) WITH CHECK (true);
+CREATE POLICY "Allow anon delete" ON location_card FOR DELETE USING (true);
+
+-- community_cards
+CREATE POLICY "Allow anon insert" ON community_cards FOR INSERT WITH CHECK (true);
+CREATE POLICY "Allow anon update" ON community_cards FOR UPDATE USING (true) WITH CHECK (true);
+CREATE POLICY "Allow anon delete" ON community_cards FOR DELETE USING (true);
+
+-- brands
+CREATE POLICY "Allow anon insert" ON brands FOR INSERT WITH CHECK (true);
+CREATE POLICY "Allow anon update" ON brands FOR UPDATE USING (true) WITH CHECK (true);
+CREATE POLICY "Allow anon delete" ON brands FOR DELETE USING (true);
+
+-- 2. Alternatively, disable Row Level Security (RLS) entirely:
+-- ALTER TABLE portfolio_projects DISABLE ROW LEVEL SECURITY;
+-- ALTER TABLE portfolio_services DISABLE ROW LEVEL SECURITY;
+-- ALTER TABLE portfolio_project_images DISABLE ROW LEVEL SECURITY;
+-- ALTER TABLE location_card DISABLE ROW LEVEL SECURITY;
+-- ALTER TABLE community_cards DISABLE ROW LEVEL SECURITY;
+-- ALTER TABLE brands DISABLE ROW LEVEL SECURITY;</code></pre>
+              </div>
+            </div>
+          </div>
+        </section>
+      </div>
+    </main>
+  </div>
+
+  <!-- ================= MODALS ================= -->
+
+  <!-- 1. PROJECT EDIT MODAL -->
+  <div class="modal-backdrop" id="project-modal">
+    <div class="modal-card modal-large">
+      <div class="modal-header">
+        <h3 id="project-modal-title">Add New Project</h3>
+        <button class="modal-close-btn">&times;</button>
+      </div>
+      <form id="project-form" class="modal-form">
+        <input type="hidden" id="project-db-id">
+
+        <div class="form-row-two">
+          <div class="form-group">
+            <label for="proj-key">Project Key (Unique identifier)*</label>
+            <input type="text" id="proj-key" placeholder="e.g. smc-4" required>
+            <p class="field-help">Used to link project detail pages (e.g. 'smc-1', 've-1')</p>
+          </div>
+          <div class="form-group">
+            <label for="proj-service-key">Service Category*</label>
+            <select id="proj-service-key" required>
+              <!-- Populated dynamically -->
+            </select>
+          </div>
+        </div>
+
+        <div class="form-row-two">
+          <div class="form-group">
+            <label for="proj-title">Project Title*</label>
+            <input type="text" id="proj-title" placeholder="e.g. Brand Design Concept" required>
+          </div>
+          <div class="form-group">
+            <label for="proj-category">Sub-category Label*</label>
+            <input type="text" id="proj-category" placeholder="e.g. Instagram Carousel, Reel editing" required>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="proj-desc">Short Description (for grids)*</label>
+          <textarea id="proj-desc" rows="3" placeholder="Explain the project in 1-2 sentences..." required></textarea>
+        </div>
+
+        <div class="form-row-two">
+          <div class="form-group">
+            <label for="proj-gradient">Background Gradient CSS*</label>
+            <div class="input-with-color">
+              <input type="text" id="proj-gradient" value="linear-gradient(135deg, #007bff 0%, #00d2ff 100%)" required>
+              <div class="gradient-preview-swatch" id="gradient-preview"></div>
+            </div>
+            <div class="preset-gradients">
+              <button type="button" class="preset-btn" data-gradient="linear-gradient(135deg, #007bff 0%, #00d2ff 100%)" style="background: linear-gradient(135deg, #007bff 0%, #00d2ff 100%)"></button>
+              <button type="button" class="preset-btn" data-gradient="linear-gradient(135deg, #e11d48 0%, #7c1d3e 100%)" style="background: linear-gradient(135deg, #e11d48 0%, #7c1d3e 100%)"></button>
+              <button type="button" class="preset-btn" data-gradient="linear-gradient(135deg, #0ea5e9 0%, #0369a1 100%)" style="background: linear-gradient(135deg, #0ea5e9 0%, #0369a1 100%)"></button>
+              <button type="button" class="preset-btn" data-gradient="linear-gradient(135deg, #10b981 0%, #065f46 100%)" style="background: linear-gradient(135deg, #10b981 0%, #065f46 100%)"></button>
+              <button type="button" class="preset-btn" data-gradient="linear-gradient(135deg, #f59e0b 0%, #b45309 100%)" style="background: linear-gradient(135deg, #f59e0b 0%, #b45309 100%)"></button>
+              <button type="button" class="preset-btn" data-gradient="linear-gradient(135deg, #06b6d4 0%, #155e75 100%)" style="background: linear-gradient(135deg, #06b6d4 0%, #155e75 100%)"></button>
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="proj-order">Display Order (Sorting)</label>
+            <input type="number" id="proj-order" value="0">
+          </div>
+        </div>
+
+        <div class="form-row-two">
+          <div class="form-group">
+            <label for="proj-image">Cover Image URL*</label>
+            <div class="input-with-upload">
+              <input type="text" id="proj-image" placeholder="https://..." required>
+              <label class="btn-file-label">
+                <input type="file" class="file-uploader-inline" data-target-input="proj-image">
+                Upload
+              </label>
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="proj-tools">Tools Used (comma separated)</label>
+            <input type="text" id="proj-tools" placeholder="Adobe Photoshop, Figma, After Effects">
+          </div>
+        </div>
+
+        <!-- PROJECT DETAIL BLOCKS (JSON BUILDER) -->
+        <div class="detail-blocks-section">
+          <div class="detail-blocks-header">
+            <h4>Detailed Page Layout Blocks (JSON Content)</h4>
+            <div class="detail-block-actions">
+              <button type="button" class="btn btn-secondary btn-xs" id="add-text-block-btn">+ Text Block</button>
+              <button type="button" class="btn btn-secondary btn-xs" id="add-video-block-btn">+ Video Block</button>
+              <button type="button" class="btn btn-secondary btn-xs" id="add-link-block-btn">+ Link Block</button>
+              <button type="button" class="btn btn-secondary btn-xs" id="add-cert-block-btn">+ Certificate Block</button>
+            </div>
+          </div>
+          <div class="detail-blocks-list" id="project-detail-blocks-container">
+            <!-- Dynamic JSON blocks rendered as editable list items -->
+            <div class="no-blocks-msg">No content blocks added. Add text, video, or link blocks above to design the drill-down view.</div>
+          </div>
+        </div>
+
+        <div class="modal-actions">
+          <button type="button" class="btn btn-secondary modal-cancel-btn">Cancel</button>
+          <button type="submit" class="btn btn-primary" id="save-project-submit">Save Project</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- 2. GALLERY IMAGE ADD MODAL -->
+  <div class="modal-backdrop" id="gallery-modal">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3>Add Gallery Image</h3>
+        <button class="modal-close-btn">&times;</button>
+      </div>
+      <form id="gallery-form" class="modal-form">
+        <div class="form-group">
+          <label for="gallery-img-url">Image URL*</label>
+          <div class="input-with-upload">
+            <input type="text" id="gallery-img-url" placeholder="https://..." required>
+            <label class="btn-file-label">
+              <input type="file" class="file-uploader-inline" data-target-input="gallery-img-url">
+              Upload
+            </label>
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="gallery-img-alt">Alt Text</label>
+          <input type="text" id="gallery-img-alt" placeholder="Description for search engines and screen readers">
+        </div>
+        <div class="form-group">
+          <label for="gallery-img-caption">Caption</label>
+          <input type="text" id="gallery-img-caption" placeholder="Short caption shown under the image">
+        </div>
+        <div class="form-group">
+          <label for="gallery-img-order">Display Order</label>
+          <input type="number" id="gallery-img-order" value="0">
+        </div>
+
+        <div class="modal-actions">
+          <button type="button" class="btn btn-secondary modal-cancel-btn">Cancel</button>
+          <button type="submit" class="btn btn-primary">Save Image</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- 3. SERVICE EDIT MODAL -->
+  <div class="modal-backdrop" id="service-modal">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3 id="service-modal-title">Edit Service</h3>
+        <button class="modal-close-btn">&times;</button>
+      </div>
+      <form id="service-form" class="modal-form">
+        <input type="hidden" id="service-db-id">
+        <div class="form-group">
+          <label for="service-key">Service Key* (Read Only for seed items)</label>
+          <input type="text" id="service-key" placeholder="e.g. brand-identity" required>
+        </div>
+        <div class="form-group">
+          <label for="service-title">Title*</label>
+          <input type="text" id="service-title" placeholder="e.g. Brand Identity Design" required>
+        </div>
+        <div class="form-group">
+          <label for="service-image">Background Image URL</label>
+          <div class="input-with-upload">
+            <input type="text" id="service-image" placeholder="https://...">
+            <label class="btn-file-label">
+              <input type="file" class="file-uploader-inline" data-target-input="service-image">
+              Upload
+            </label>
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="service-order">Display Order</label>
+          <input type="number" id="service-order" value="0">
+        </div>
+
+        <div class="modal-actions">
+          <button type="button" class="btn btn-secondary modal-cancel-btn">Cancel</button>
+          <button type="submit" class="btn btn-primary">Save Service</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- 4. BRAND EDIT MODAL -->
+  <div class="modal-backdrop" id="brand-modal">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3 id="brand-modal-title">Add Brand Logo</h3>
+        <button class="modal-close-btn">&times;</button>
+      </div>
+      <form id="brand-form" class="modal-form">
+        <input type="hidden" id="brand-db-id">
+        <div class="form-group">
+          <label for="brand-name">Brand Name*</label>
+          <input type="text" id="brand-name" placeholder="e.g. Google Developers" required>
+        </div>
+        <div class="form-group">
+          <label for="brand-logo">Logo Image URL (monotone transparent SVG/PNG is best)*</label>
+          <div class="input-with-upload">
+            <input type="text" id="brand-logo" placeholder="https://..." required>
+            <label class="btn-file-label">
+              <input type="file" class="file-uploader-inline" data-target-input="brand-logo">
+              Upload
+            </label>
+          </div>
+        </div>
+
+        <div class="modal-actions">
+          <button type="button" class="btn btn-secondary modal-cancel-btn">Cancel</button>
+          <button type="submit" class="btn btn-primary">Save Brand</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- 5. COMMUNITY CARD EDIT MODAL -->
+  <div class="modal-backdrop" id="community-card-modal">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3 id="community-modal-title">Add Community Card</h3>
+        <button class="modal-close-btn">&times;</button>
+      </div>
+      <form id="community-card-form" class="modal-form">
+        <input type="hidden" id="community-db-id">
+        <div class="form-group">
+          <label for="comm-label">Label (Category)*</label>
+          <input type="text" id="comm-label" placeholder="e.g. Achievement, Role" required>
+        </div>
+        <div class="form-group">
+          <label for="comm-title">Title*</label>
+          <input type="text" id="comm-title" placeholder="e.g. Community Leader" required>
+        </div>
+        <div class="form-group">
+          <label for="comm-desc">Description*</label>
+          <textarea id="comm-desc" rows="3" placeholder="Details about this role or achievement..." required></textarea>
+        </div>
+        <div class="form-group">
+          <label for="comm-image">Image URL</label>
+          <div class="input-with-upload">
+            <input type="text" id="comm-image" placeholder="https://...">
+            <label class="btn-file-label">
+              <input type="file" class="file-uploader-inline" data-target-input="comm-image">
+              Upload
+            </label>
+          </div>
+        </div>
+        <div class="form-row-two">
+          <div class="form-group">
+            <label for="comm-gradient">Gradient Style</label>
+            <select id="comm-gradient">
+              <option value="gradient-cyan">Cyan (gradient-cyan)</option>
+              <option value="gradient-purple">Purple (gradient-purple)</option>
+              <option value="gradient-emerald">Emerald (gradient-emerald)</option>
+              <option value="gradient-pink">Pink (gradient-pink)</option>
+              <option value="gradient-blue">Blue (gradient-blue)</option>
+              <option value="gradient-sunset">Sunset (gradient-sunset)</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="comm-order">Display Order</label>
+            <input type="number" id="comm-order" value="1">
+          </div>
+        </div>
+
+        <div class="modal-actions">
+          <button type="button" class="btn btn-secondary modal-cancel-btn">Cancel</button>
+          <button type="submit" class="btn btn-primary">Save Card</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- TOAST NOTIFICATION CONTAINER -->
+  <div class="toast-container" id="toast-container"></div>
+
+  <script type="module" src="/src/admin.js"></script>
+</body>
+</html>

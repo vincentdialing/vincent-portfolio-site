@@ -103,29 +103,8 @@
       <div class="sidebar-footer" style="display: flex; flex-direction: column; gap: 0.75rem;">
         <a href="/" class="view-site-link">
           <svg class="footer-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6M15 3h6v6M10 14L21 3"/></svg>
-
-      <!-- 2b. GALLERY EDIT MODAL -->
-      <div class="modal-backdrop" id="gallery-edit-modal">
-        <div class="modal-card">
-          <div class="modal-header">
-            <h3>Edit Gallery Images</h3>
-            <button class="modal-close-btn">&times;</button>
-          </div>
-          <div class="modal-body-padding" style="padding: 1rem;">
-            <p style="margin:0 0 0.75rem 0; color: var(--text-secondary);">Click the trash icon to mark images for removal. Click <strong>Save Changes</strong> to apply deletions.</p>
-            <div id="gallery-edit-list" style="display:grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 0.75rem;">
-              <!-- Items populated by JS -->
-            </div>
-
-            <div class="modal-actions" style="margin-top: 1rem; display: flex; justify-content: flex-end; gap: 0.75rem;">
-              <button type="button" class="btn btn-secondary modal-cancel-btn">Cancel</button>
-              <button type="button" class="btn btn-primary" id="gallery-edit-save">Save Changes</button>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- 3. SERVICE EDIT MODAL -->
+          Go to Portfolio
+        </a>
         <button id="logout-btn" class="btn btn-secondary btn-sm" style="width: 100%; justify-content: flex-start; gap: 0.5rem; background: transparent; border-color: rgba(239, 68, 68, 0.2); color: #f87171;">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 14px; height: 14px;"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
           Log Out
@@ -518,6 +497,27 @@ CREATE POLICY "Allow anon delete" ON brands FOR DELETE USING (true);
 
         <div class="modal-actions" style="margin-top: 1.5rem; display: flex; justify-content: flex-end; gap: 0.75rem;">
           <button type="button" class="btn btn-secondary modal-cancel-btn" style="padding: 0.5rem 1.25rem;">Cancel</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 2b. GALLERY EDIT MODAL -->
+  <div class="modal-backdrop" id="gallery-edit-modal">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3>Edit Gallery Images</h3>
+        <button class="modal-close-btn">&times;</button>
+      </div>
+      <div class="modal-body-padding" style="padding: 1rem;">
+        <p style="margin:0 0 0.75rem 0; color: var(--text-secondary);">Click the trash icon to mark images for removal. Click <strong>Save Changes</strong> to apply deletions.</p>
+        <div id="gallery-edit-list" style="display:grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 0.75rem;">
+          <!-- Items populated by JS -->
+        </div>
+
+        <div class="modal-actions" style="margin-top: 1rem; display: flex; justify-content: flex-end; gap: 0.75rem;">
+          <button type="button" class="btn btn-secondary modal-cancel-btn">Cancel</button>
+          <button type="button" class="btn btn-primary" id="gallery-edit-save">Save Changes</button>
         </div>
       </div>
     </div>

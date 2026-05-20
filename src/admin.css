@@ -621,11 +621,14 @@ body {
   margin-top: 1rem;
   font-size: 0.9rem;
 }
-.error-state svg, .gallery-info-box svg {
-  width: 48px;
-  height: 48px;
+.error-state svg, .no-assets-state svg, .gallery-info-box svg {
+  width: 48px !important;
+  height: 48px !important;
+  min-width: 48px;
+  min-height: 48px;
   color: var(--text-muted);
   margin-bottom: 1rem;
+  display: block;
 }
 .error-state button {
   margin-top: 1rem;
@@ -644,7 +647,16 @@ body {
   border-radius: 12px;
   overflow: hidden;
   position: relative;
-  transition: all 0.2s ease;
+  transition: transform 0.2s ease, border-color 0.2s ease;
+  cursor: grab;
+}
+.gallery-item-card:active {
+  cursor: grabbing;
+}
+.gallery-item-card.dragging {
+  opacity: 0.4;
+  transform: scale(0.95);
+  border: 2px dashed var(--accent-color);
 }
 .gallery-item-card:hover {
   border-color: var(--border-hover);

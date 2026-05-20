@@ -840,13 +840,9 @@ function renderGallery() {
   }
 
   listGrid.innerHTML = galleryImages.map(img => `
-    <div class="gallery-item-card" data-id="${img.id}">
+    <div class="gallery-item-card" data-id="${img.id}" draggable="true">
       <div class="gallery-img-box">
-        <img src="${img.image_url}" alt="${img.alt || ''}" loading="lazy">
-      </div>
-      <div class="gallery-caption-box">
-        <div class="gallery-caption-title">${img.alt || 'No alt text'}</div>
-        <div class="gallery-caption-desc">${img.caption || 'No caption'}</div>
+        <img src="${img.image_url}" alt="" loading="lazy">
       </div>
       <span class="gallery-order-badge">Order: ${img.display_order}</span>
       <button class="gallery-delete-btn delete-gallery-img" data-id="${img.id}" title="Remove image">&times;</button>
@@ -857,6 +853,100 @@ function renderGallery() {
   listGrid.querySelectorAll('.delete-gallery-img').forEach(btn => {
     btn.addEventListener('click', () => deleteGalleryImage(parseInt(btn.dataset.id)));
   });
+
+  // Wire drag and drop reordering
+  wireGalleryDragAndDrop();
+}
+
+function wireGalleryDragAndDrop() {
+  const listGrid = document.getElementById('gallery-images-list');
+  if (!listGrid) return;
+
+  const cards = listGrid.querySelectorAll('.gallery-item-card');
+  let draggedCard = null;
+
+  cards.forEach(card => {
+    card.addEventListener('dragstart', (e) => {
+      draggedCard = card;
+      card.classList.add('dragging');
+      e.dataTransfer.effectAllowed = 'move';
+    });
+
+    card.addEventListener('dragend', async () => {
+      card.classList.remove('dragging');
+      draggedCard = null;
+      
+      // Auto-save new order sequence to Supabase when drag ends
+      await saveNewGalleryOrder();
+    });
+
+    card.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'move';
+      
+      const targetCard = e.currentTarget;
+      if (targetCard && targetCard !== draggedCard) {
+        const children = Array.from(listGrid.children);
+        const draggedIndex = children.indexOf(draggedCard);
+        const targetIndex = children.indexOf(targetCard);
+
+        if (draggedIndex < targetIndex) {
+          listGrid.insertBefore(draggedCard, targetCard.nextSibling);
+        } else {
+          listGrid.insertBefore(draggedCard, targetCard);
+        }
+      }
+    });
+  });
+}
+
+async function saveNewGalleryOrder() {
+  const listGrid = document.getElementById('gallery-images-list');
+  if (!listGrid) return;
+
+  const cards = listGrid.querySelectorAll('.gallery-item-card');
+  const updates = [];
+
+  cards.forEach((card, index) => {
+    const id = parseInt(card.dataset.id);
+    const order = index + 1;
+    
+    const badge = card.querySelector('.gallery-order-badge');
+    if (badge) badge.textContent = `Order: ${order}`;
+
+    updates.push({ id, order });
+  });
+
+  try {
+    showToast('Saving Order...', 'Updating gallery sorting...', 'info');
+
+    // Update display order sequentially in database
+    for (const update of updates) {
+      const { error } = await supabase
+        .from('portfolio_project_images')
+        .update({ display_order: update.order })
+        .eq('id', update.id);
+      
+      if (error) throw error;
+    }
+
+    // Update local list structure to preserve new state
+    const projectKey = document.getElementById('gallery-project-selector').value;
+    const { data } = await supabase
+      .from('portfolio_project_images')
+      .select('*')
+      .eq('project_key', projectKey)
+      .order('display_order', { ascending: true });
+    
+    if (data) {
+      galleryImages = data;
+    }
+
+    showToast('Order Saved', 'Images reordered successfully.', 'success');
+  } catch (err) {
+    console.error('Error saving order:', err);
+    showToast('Reorder Failed', err.message, 'error');
+  }
 }
 
 async function deleteGalleryImage(id) {
@@ -890,17 +980,17 @@ async function handleGallerySubmit(e) {
   e.preventDefault();
   const projectKey = document.getElementById('gallery-project-selector').value;
   const imageUrl = document.getElementById('gallery-img-url').value.trim();
-  const alt = document.getElementById('gallery-img-alt').value.trim();
-  const caption = document.getElementById('gallery-img-caption').value.trim();
-  const order = parseInt(document.getElementById('gallery-img-order').value) || 0;
 
   if (!projectKey) return;
+
+  // Auto-assign order at the end of the gallery list
+  const order = galleryImages.length + 1;
 
   const payload = {
     project_key: projectKey,
     image_url: imageUrl,
-    alt,
-    caption,
+    alt: '',
+    caption: '',
     display_order: order
   };
 

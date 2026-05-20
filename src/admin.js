@@ -173,6 +173,7 @@ function initTabs() {
     tab.addEventListener('click', () => {
       const target = tab.dataset.tab;
       activeTab = target;
+      localStorage.setItem('admin_active_tab', target);
 
       // Update Nav active states
       tabs.forEach(t => t.classList.remove('active'));
@@ -205,6 +206,18 @@ function initTabs() {
       loadTabData(target);
     });
   });
+
+  // Restore last active tab from localStorage
+  const savedTab = localStorage.getItem('admin_active_tab');
+  if (savedTab && TAB_CONFIGS[savedTab]) {
+    const savedTabBtn = document.querySelector(`.nav-tab-btn[data-tab="${savedTab}"]`);
+    if (savedTabBtn) savedTabBtn.click();
+  } else {
+    // Default: click first tab
+    const firstTab = document.querySelector('.nav-tab-btn');
+    if (firstTab) firstTab.click();
+  }
+
 
   // Wire header action btn click to opening the respective modal
   if (actionBtn) {

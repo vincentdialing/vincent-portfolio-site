@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
+import Groq from 'groq-sdk';
 import './admin.css';
 
 // ==========================================
@@ -270,6 +271,392 @@ function loadTabData(tab) {
 }
 
 // ==========================================
+// 3b. AI CONTENT WRITER (Groq — FREE)
+// ==========================================
+
+const AI_COPY_STYLE_EXAMPLES = `
+Here are examples of Vincent Dialing's portfolio copy style. Match this tone exactly:
+
+SHORT DESCRIPTIONS (1-2 sentences for project cards):
+- "Full social media branding for an internationally competing university chorale — from website launch graphics and audition campaigns to competition achievement posts that reached thousands."
+- "A targeted social media campaign for World Choral Day 2024 — designed to drive engagement, celebrate the choir's community, and boost visibility during one of the biggest dates in the choral calendar."
+- "The foundation year — building a recognizable social media identity from the ground up that would later scale into international-level branding."
+- "Executed the full post-production workflow for the HUSAY 2026 official event video, transforming a script-based direction into a polished Facebook-ready production."
+
+DETAILED WRITEUPS (first paragraph):
+- "Served as the sole graphic designer and content director for Harmonia Polifonica Chorale throughout the 2024 season, handling all visual branding and social media content from concept to final output."
+- "Handled the end-to-end visual campaign for the choir's World Choral Day 2024 participation — from content strategy and visual direction to design execution and delivery."
+- "Started as the choir's first dedicated graphic designer in 2023, tasked with building a visual identity from zero and establishing the design standards that would define their brand going forward."
+
+BULLET POINTS (deliverables/scope):
+- "Led the full creative direction for the choir's social media presence across Facebook and Instagram"
+- "Developed and maintained a cohesive brand identity system — color palette, typography, layout standards, and visual tone"
+- "Managed the visual storytelling for a group competing at the international level, ensuring every piece matched the caliber of their achievements"
+- "Planned and executed a multi-phase content campaign covering pre-event, day-of, and post-event stages"
+
+STYLE RULES:
+- Use em dashes (—) to connect ideas mid-sentence
+- Be action-oriented and outcome-focused
+- Mention specific deliverables, platforms, and results
+- Professional but conversational tone
+- Short descriptions should be 1-2 punchy sentences
+- Detailed writeup should be 1 paragraph of first-person professional narrative
+- Bullet points should list 4-5 specific deliverables or responsibilities
+`;
+
+function getGroqApiKey() {
+  return localStorage.getItem('admin_groq_api_key') || '';
+}
+
+function initAIWriter() {
+  const generateBtn = document.getElementById('ai-generate-btn');
+  if (!generateBtn) return;
+
+  generateBtn.addEventListener('click', handleAIGenerate);
+
+  // Groq key save button
+  const saveGroqKeyBtn = document.getElementById('save-gemini-key-btn') || document.getElementById('save-groq-key-btn');
+  if (saveGroqKeyBtn) {
+    saveGroqKeyBtn.addEventListener('click', () => {
+      const keyInput = document.getElementById('config-gemini-key') || document.getElementById('config-groq-key');
+      const statusEl = document.getElementById('gemini-key-status') || document.getElementById('groq-key-status');
+      if (keyInput && keyInput.value.trim()) {
+        localStorage.setItem('admin_groq_api_key', keyInput.value.trim());
+        if (statusEl) {
+          statusEl.textContent = '✓ Saved';
+          statusEl.style.color = 'var(--success)';
+          setTimeout(() => { statusEl.textContent = ''; }, 3000);
+        }
+      }
+    });
+
+    // Load saved key
+    const savedKey = getGroqApiKey();
+    const keyInput = document.getElementById('config-gemini-key') || document.getElementById('config-groq-key');
+    if (savedKey && keyInput) keyInput.value = savedKey;
+  }
+
+  // Toggle key visibility
+  const toggleKey = document.getElementById('toggle-gemini-key') || document.getElementById('toggle-groq-key');
+  if (toggleKey) {
+    toggleKey.addEventListener('click', () => {
+      const input = document.getElementById('config-gemini-key') || document.getElementById('config-groq-key');
+      if (input) input.type = input.type === 'password' ? 'text' : 'password';
+    });
+  }
+}
+
+async function handleAIGenerate() {
+  const apiKey = getGroqApiKey();
+  console.log('Groq API Key loaded:', apiKey ? `${apiKey.substring(0, 8)}...` : 'EMPTY/MISSING');
+  const resultsContainer = document.getElementById('ai-writer-results');
+  const noKeyMsg = document.getElementById('ai-no-key-msg');
+  const generateBtn = document.getElementById('ai-generate-btn');
+
+  if (!apiKey) {
+    if (noKeyMsg) noKeyMsg.classList.remove('hidden');
+    return;
+  }
+  if (noKeyMsg) noKeyMsg.classList.add('hidden');
+
+  // Gather context from the form
+  const title = document.getElementById('proj-title')?.value?.trim() || '';
+  const category = document.getElementById('proj-category')?.value?.trim() || '';
+  const serviceSelect = document.getElementById('proj-service-key');
+  const serviceTitle = serviceSelect?.options[serviceSelect.selectedIndex]?.text || '';
+  const tools = document.getElementById('proj-tools')?.value?.trim() || '';
+  const existingDesc = document.getElementById('proj-desc')?.value?.trim() || '';
+  const coverImage = document.getElementById('proj-image')?.value?.trim() || '';
+  const extraContext = document.getElementById('ai-extra-context')?.value?.trim() || '';
+  const projKey = document.getElementById('proj-key')?.value?.trim() || '';
+
+  if (!title) {
+    showToast('Missing Info', 'Please fill in at least the Project Title before generating copy.', 'error');
+    return;
+  }
+
+  // Show loading state
+  generateBtn.disabled = true;
+  generateBtn.innerHTML = `<div class="spinner-small"></div> Scanning images & writing...`;
+  resultsContainer.classList.remove('hidden');
+  resultsContainer.innerHTML = `
+    <div class="ai-loading-indicator">
+      <div class="spinner-small"></div>
+      <span>Scanning images and writing your copy...</span>
+    </div>
+  `;
+
+  try {
+    // 1. Gather all images (Cover Image + Gallery Images from Supabase)
+    const imageUrls = [];
+    if (coverImage && (coverImage.startsWith('http://') || coverImage.startsWith('https://'))) {
+      imageUrls.push(coverImage);
+    }
+
+    if (projKey && supabase) {
+      const { data: galleryData } = await supabase
+        .from('portfolio_project_images')
+        .select('image_url')
+        .eq('project_key', projKey)
+        .order('display_order', { ascending: true });
+        
+      if (galleryData && galleryData.length > 0) {
+        galleryData.forEach(img => {
+          if (img.image_url && (img.image_url.startsWith('http://') || img.image_url.startsWith('https://'))) {
+            // Cap at 4 total images to prevent token overload
+            if (imageUrls.length < 4) {
+              imageUrls.push(img.image_url);
+            }
+          }
+        });
+      }
+    }
+
+    // 2. Build Prompt
+    const userPromptText = `Generate portfolio copy for this project:
+
+PROJECT TITLE: ${title}
+SERVICE CATEGORY: ${serviceTitle}
+SUB-CATEGORY: ${category}
+TOOLS USED: ${tools || 'Not specified'}
+EXISTING DESCRIPTION: ${existingDesc || 'None yet'}
+${imageUrls.length > 0 ? `I have provided ${imageUrls.length} image(s) of this project. PLEASE ANALYZE THE IMAGES and use their visual details (content, style, event type, design elements) to write the copy!` : 'No images provided.'}
+${extraContext ? `ADDITIONAL CONTEXT: ${extraContext}` : ''}
+
+Please generate:
+1. SHORT_DESCRIPTION: A comprehensive 1-2 sentence description (MUST BE EXACTLY 25 to 40 words). It MUST connect multiple details using an em dash (—). Include the main scope AND the specific impact/purpose. Example: "A targeted social media campaign for World Choral Day 2024 — designed to drive engagement, celebrate the choir's community, and boost visibility during one of the biggest dates in the choral calendar."
+2. DETAILED_WRITEUP: A professional first-person paragraph (2-3 sentences) for the project detail page
+3. BULLET_POINTS: 4-5 specific deliverables or responsibilities as bullet points
+4. SUB_CATEGORY: A short 2-4 word label describing the specific type of project (e.g., 'Event Campaign Content', 'Social Media Branding', 'Product Showcase Reel').
+
+Format your response exactly like this:
+---SHORT_DESCRIPTION---
+[your short description here]
+---DETAILED_WRITEUP---
+[your detailed paragraph here]
+---BULLET_POINTS---
+- [bullet 1]
+- [bullet 2]
+- [bullet 3]
+- [bullet 4]
+- [bullet 5]
+---SUB_CATEGORY---
+[your sub-category label here]`;
+
+    // 3. Initialize Groq SDK
+    const groq = new Groq({
+      apiKey: apiKey,
+      dangerouslyAllowBrowser: true
+    });
+
+    // 4. Build messages with images (Base64) if available
+    const userContent = [];
+    userContent.push({ type: 'text', text: userPromptText });
+
+    let useVisionModel = false;
+
+    if (imageUrls.length > 0) {
+      for (const url of imageUrls) {
+        try {
+          const imgRes = await fetch(url);
+          const blob = await imgRes.blob();
+
+          // Compress & convert to WebP via Canvas for smaller file size
+          const webpBase64 = await new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.readAsDataURL(blob);
+            reader.onload = (event) => {
+              const img = new Image();
+              img.src = event.target.result;
+              img.onload = () => {
+                const canvas = document.createElement('canvas');
+                const MAX_WIDTH = 800;
+                const scale = Math.min(MAX_WIDTH / img.width, 1); // don't upscale
+                canvas.width = img.width * scale;
+                canvas.height = img.height * scale;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                resolve(canvas.toDataURL('image/webp', 0.7));
+              };
+              img.onerror = reject;
+            };
+            reader.onerror = reject;
+          });
+
+          console.log(`Image compressed: ${(blob.size / 1024).toFixed(0)}KB → ~${(webpBase64.length * 0.75 / 1024).toFixed(0)}KB webp`);
+
+          userContent.push({
+            type: 'image_url',
+            image_url: { url: webpBase64 }
+          });
+          useVisionModel = true;
+        } catch (err) {
+          console.warn('Failed to fetch/compress image for AI vision:', url, err);
+        }
+      }
+    }
+
+    const selectedModel = useVisionModel ? 'meta-llama/llama-4-scout-17b-16e-instruct' : 'llama-3.3-70b-versatile';
+    console.log('Using Groq model:', selectedModel, '| Images:', imageUrls.length);
+
+    let completion;
+    try {
+      completion = await groq.chat.completions.create({
+        model: selectedModel,
+        messages: [
+          { role: 'system', content: `You are a portfolio copywriter for Vincent Dialing, a Filipino creative professional. Write in his exact copy style. ${AI_COPY_STYLE_EXAMPLES}` },
+          { role: 'user', content: useVisionModel ? userContent : userPromptText }
+        ],
+        temperature: 0.8,
+        max_tokens: 1024
+      });
+    } catch (visionErr) {
+      // If vision model fails, fallback to text-only
+      if (useVisionModel) {
+        console.warn('Groq Vision model failed, falling back to text-only:', visionErr.message);
+        showToast('Vision Fallback', 'Vision model unavailable. Using text-only generation.', 'warning');
+        completion = await groq.chat.completions.create({
+          model: 'llama-3.3-70b-versatile',
+          messages: [
+            { role: 'system', content: `You are a portfolio copywriter for Vincent Dialing, a Filipino creative professional. Write in his exact copy style. ${AI_COPY_STYLE_EXAMPLES}` },
+            { role: 'user', content: userPromptText }
+          ],
+          temperature: 0.8,
+          max_tokens: 1024
+        });
+      } else {
+        throw visionErr;
+      }
+    }
+
+    const content = completion.choices[0].message.content;
+
+    if (!content) {
+      throw new Error('No content returned from Groq. Please try again.');
+    }
+
+    // Parse the structured response
+    const shortDesc = extractSection(content, 'SHORT_DESCRIPTION');
+    const detailedWriteup = extractSection(content, 'DETAILED_WRITEUP');
+    const bulletPoints = extractSection(content, 'BULLET_POINTS');
+    const subCategory = extractSection(content, 'SUB_CATEGORY');
+
+    // Render results
+    resultsContainer.innerHTML = `
+      ${subCategory ? `
+        <div class="ai-result-card">
+          <div class="ai-result-card-header">
+            <span class="ai-result-label">Sub-Category Label</span>
+            <button type="button" class="ai-apply-btn" data-target="proj-category" data-content="${escapeAttr(subCategory)}">Apply ↓</button>
+          </div>
+          <p class="ai-result-text" style="font-weight: 500; letter-spacing: 0.5px; text-transform: uppercase;">${subCategory}</p>
+        </div>
+      ` : ''}
+      ${shortDesc ? `
+        <div class="ai-result-card">
+          <div class="ai-result-card-header">
+            <span class="ai-result-label">Short Description</span>
+            <button type="button" class="ai-apply-btn" data-target="proj-desc" data-content="${escapeAttr(shortDesc)}">Apply ↓</button>
+          </div>
+          <p class="ai-result-text">${shortDesc}</p>
+        </div>
+      ` : ''}
+      ${detailedWriteup ? `
+        <div class="ai-result-card">
+          <div class="ai-result-card-header">
+            <span class="ai-result-label">Detailed Writeup</span>
+            <button type="button" class="ai-apply-btn" data-action="add-text-block" data-content="${escapeAttr(detailedWriteup)}">+ Add as Text Block</button>
+          </div>
+          <p class="ai-result-text">${detailedWriteup}</p>
+        </div>
+      ` : ''}
+      ${bulletPoints ? `
+        <div class="ai-result-card">
+          <div class="ai-result-card-header">
+            <span class="ai-result-label">Key Deliverables</span>
+            <button type="button" class="ai-apply-btn" data-action="add-list-block" data-content="${escapeAttr(bulletPoints)}">+ Add as List Block</button>
+          </div>
+          <p class="ai-result-text">${bulletPoints}</p>
+        </div>
+      ` : ''}
+    `;
+
+    // Wire apply buttons
+    resultsContainer.querySelectorAll('.ai-apply-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const target = btn.dataset.target;
+        const action = btn.dataset.action;
+        const content = btn.dataset.content;
+
+        if (target) {
+          // Apply directly to a form field
+          const field = document.getElementById(target);
+          if (field) {
+            field.value = content;
+            field.dispatchEvent(new Event('input'));
+          }
+          btn.textContent = '✓ Applied';
+          btn.classList.add('applied');
+        } else if (action === 'add-text-block') {
+          // Add as a text block in the detail blocks
+          saveBlockInputs();
+          currentDetailBlocks.push({ type: 'text', content: content });
+          renderDetailBlocks();
+          btn.textContent = '✓ Added';
+          btn.classList.add('applied');
+        } else if (action === 'add-list-block') {
+          // Parse bullet points into an array
+          const items = content.split('\n').map(l => l.replace(/^[-*•]\s*/, '').trim()).filter(l => l);
+          saveBlockInputs();
+          currentDetailBlocks.push({ type: 'list', items: items });
+          renderDetailBlocks();
+          btn.textContent = '✓ Added';
+          btn.classList.add('applied');
+        } else if (action === 'copy-clipboard') {
+          navigator.clipboard.writeText(content).then(() => {
+            btn.textContent = '✓ Copied';
+            btn.classList.add('applied');
+            setTimeout(() => {
+              btn.textContent = 'Copy';
+              btn.classList.remove('applied');
+            }, 2000);
+          });
+        }
+      });
+    });
+
+  } catch (err) {
+    console.error('AI Writer error:', err);
+    resultsContainer.innerHTML = `
+      <div class="ai-result-card" style="border-color: rgba(239, 68, 68, 0.2);">
+        <p class="ai-result-text" style="color: var(--error);">
+          <strong>Error:</strong> ${err.message}
+        </p>
+        <p class="ai-result-text" style="margin-top: 0.5rem; font-size: 0.8rem;">
+          Make sure your Groq API key is valid. Get a free key from <a href="https://console.groq.com/keys" target="_blank" style="color: var(--accent-light);">console.groq.com/keys</a>
+        </p>
+      </div>
+    `;
+  } finally {
+    generateBtn.disabled = false;
+    generateBtn.innerHTML = `
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width: 14px; height: 14px;"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+      Generate Copy
+    `;
+  }
+}
+
+function extractSection(text, sectionName) {
+  const regex = new RegExp(`---${sectionName}---\\s*([\\s\\S]*?)(?=---[A-Z_]+---|$)`);
+  const match = text.match(regex);
+  return match ? match[1].trim() : '';
+}
+
+function escapeAttr(str) {
+  return str.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/'/g, '&#39;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
+// ==========================================
 // 4. PROJECTS MANAGEMENT CODE
 // ==========================================
 
@@ -299,6 +686,12 @@ function populateServiceSelects() {
   if (filterSelect) {
     filterSelect.innerHTML = '<option value="">All Services</option>' + 
       allServices.map(s => `<option value="${s.key}">${s.title}</option>`).join('');
+
+    // Restore saved filter from localStorage
+    const savedFilter = localStorage.getItem('admin_projects_service_filter');
+    if (savedFilter && filterSelect.querySelector(`option[value="${savedFilter}"]`)) {
+      filterSelect.value = savedFilter;
+    }
   }
 
   // Populate form select
@@ -444,7 +837,12 @@ function initProjectsFilter() {
   };
 
   if (searchInput) searchInput.addEventListener('input', runProjectsFilter);
-  if (serviceSelect) serviceSelect.addEventListener('change', runProjectsFilter);
+  if (serviceSelect) {
+    serviceSelect.addEventListener('change', () => {
+      localStorage.setItem('admin_projects_service_filter', serviceSelect.value);
+      runProjectsFilter();
+    });
+  }
 }
 
 // JSON Block Builder details arrays
@@ -467,6 +865,13 @@ function renderDetailBlocks() {
         <div class="block-field-group">
           <label>Text Content</label>
           <textarea class="block-input-content" rows="2" required>${block.content || ''}</textarea>
+        </div>
+      `;
+    } else if (block.type === 'list') {
+      formFieldsHtml = `
+        <div class="block-field-group">
+          <label>List Items (One per line)</label>
+          <textarea class="block-input-list-items" rows="4" required>${(block.items || []).join('\n')}</textarea>
         </div>
       `;
     } else if (block.type === 'video') {
@@ -591,6 +996,9 @@ function saveBlockInputs() {
 
     if (block.type === 'text') {
       block.content = blockEl.querySelector('.block-input-content').value;
+    } else if (block.type === 'list') {
+      const textVal = blockEl.querySelector('.block-input-list-items').value || '';
+      block.items = textVal.split('\n').map(l => l.trim()).filter(l => l);
     } else if (block.type === 'video') {
       block.url = blockEl.querySelector('.block-input-url').value;
       block.thumbnail = blockEl.querySelector('.block-input-thumbnail').value;
@@ -612,6 +1020,15 @@ function initJsonBlockBuilder() {
     currentDetailBlocks.push({ type: 'text', content: '' });
     renderDetailBlocks();
   });
+
+  const addListBtn = document.getElementById('add-list-block-btn');
+  if (addListBtn) {
+    addListBtn.addEventListener('click', () => {
+      saveBlockInputs();
+      currentDetailBlocks.push({ type: 'list', items: [''] });
+      renderDetailBlocks();
+    });
+  }
 
   document.getElementById('add-video-block-btn').addEventListener('click', () => {
     saveBlockInputs();
@@ -777,26 +1194,85 @@ let galleryMarkedForDeletion = new Set();
 
 async function loadGallerySelector() {
   const select = document.getElementById('gallery-project-selector');
+  const serviceFilter = document.getElementById('gallery-service-filter');
   if (!select) return;
 
   if (allProjects.length === 0) {
     await fetchServices();
     // Load projects to get the list
-    const { data } = await supabase.from('portfolio_projects').select('project_key, title').order('title');
+    const { data } = await supabase.from('portfolio_projects').select('project_key, title, service_key').order('title');
     allProjects = data || [];
   }
 
-  select.innerHTML = '<option value="">-- Choose a project --</option>' +
-    allProjects.map(p => `<option value="${p.project_key}">${p.title} (${p.project_key})</option>`).join('');
+  // Populate service filter dropdown
+  if (serviceFilter) {
+    serviceFilter.innerHTML = '<option value="">All Categories</option>' +
+      allServices.map(s => `<option value="${s.key}">${s.title}</option>`).join('');
+
+    // Remove old listener, add new
+    serviceFilter.removeEventListener('change', handleGalleryServiceFilterChange);
+    serviceFilter.addEventListener('change', handleGalleryServiceFilterChange);
+
+    // Restore saved service filter
+    const savedService = localStorage.getItem('admin_gallery_service_filter');
+    if (savedService && serviceFilter.querySelector(`option[value="${savedService}"]`)) {
+      serviceFilter.value = savedService;
+    }
+  }
+
+  // Populate project dropdown based on restored or default service filter
+  const activeService = serviceFilter ? serviceFilter.value : '';
+  updateGalleryProjectOptions(activeService);
+
+  // Restore saved project selection
+  const savedProject = localStorage.getItem('admin_gallery_project');
+  if (savedProject && select.querySelector(`option[value="${savedProject}"]`)) {
+    select.value = savedProject;
+    handleGalleryProjectChange();
+  }
 
   // Wire select handler
   select.removeEventListener('change', handleGalleryProjectChange);
   select.addEventListener('change', handleGalleryProjectChange);
 }
 
+function handleGalleryServiceFilterChange() {
+  const serviceFilter = document.getElementById('gallery-service-filter');
+  const serviceKey = serviceFilter ? serviceFilter.value : '';
+  localStorage.setItem('admin_gallery_service_filter', serviceKey);
+  updateGalleryProjectOptions(serviceKey);
+
+  // Reset project selection when service changes
+  const select = document.getElementById('gallery-project-selector');
+  if (select) select.value = '';
+  localStorage.removeItem('admin_gallery_project');
+  handleGalleryProjectChange();
+}
+
+function updateGalleryProjectOptions(serviceKey) {
+  const select = document.getElementById('gallery-project-selector');
+  if (!select) return;
+
+  const filtered = serviceKey
+    ? allProjects.filter(p => p.service_key === serviceKey)
+    : allProjects;
+
+  const serviceName = serviceKey
+    ? (allServices.find(s => s.key === serviceKey)?.title || serviceKey)
+    : '';
+
+  const placeholder = serviceKey
+    ? `-- ${filtered.length} project${filtered.length !== 1 ? 's' : ''} in ${serviceName} --`
+    : `-- Choose a project (${allProjects.length}) --`;
+
+  select.innerHTML = `<option value="">${placeholder}</option>` +
+    filtered.map(p => `<option value="${p.project_key}">${p.title} (${p.project_key})</option>`).join('');
+}
+
 function handleGalleryProjectChange() {
   const select = document.getElementById('gallery-project-selector');
   const projectKey = select.value;
+  localStorage.setItem('admin_gallery_project', projectKey);
   const addBtn = document.getElementById('add-gallery-img-btn');
   const noneBox = document.getElementById('gallery-info-none');
   const listGrid = document.getElementById('gallery-images-list');
@@ -2610,6 +3086,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   initConfigPanel();
   initModalCloseHandlers();
   wireInlineFileUploads(document);
+  initAIWriter();
 
   // Gallery add button wiring
   const addGalleryBtn = document.getElementById('add-gallery-img-btn');

@@ -2010,3 +2010,125 @@ body {
   display: none;
 }
 
+
+/* =========================================================
+   THUMBNAIL GENERATOR 
+   ========================================================= */
+.thumbnail-gen-layout {
+  display: grid;
+  grid-template-columns: 350px 1fr;
+  gap: 2rem;
+  margin-top: 1.5rem;
+}
+
+.thumbnail-controls {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  padding: 1.5rem;
+}
+
+.thumbnail-preview-area {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  padding: 2rem;
+  overflow: hidden;
+}
+
+/* The wrapper that scales the huge canvas down to fit the screen */
+.thumbnail-scale-wrapper {
+  width: 100%;
+  max-width: 600px;
+  position: relative;
+  aspect-ratio: 16 / 9;
+  background: var(--bg-tertiary);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+}
+
+/* The actual 1600x900 canvas that gets exported */
+.thumbnail-canvas {
+  width: 1600px;
+  height: 900px;
+  background: linear-gradient(to bottom, #0f0f13 0%, #1a1a24 100%);
+  position: absolute;
+  top: 0;
+  left: 0;
+  transform-origin: top left;
+  border-radius: 0; /* No baked-in rounded corners */
+  overflow: hidden;
+  box-shadow: inset 0 0 100px rgba(255, 255, 255, 0.05);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 80px;
+}
+
+
+/* Bento Layout */
+.thumb-layout {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 40px;
+  width: 100%;
+  height: 100%;
+  position: relative;
+  z-index: 2;
+}
+
+.thumb-main-col {
+  width: 100%;
+  height: 100%;
+}
+
+.thumb-grid-col {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: 1fr 1fr;
+  gap: 40px;
+  width: 100%;
+  height: 100%;
+}
+
+.thumb-img-box {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 30px;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  box-shadow: 0 30px 60px rgba(0, 0, 0, 0.4);
+  position: relative;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+.thumb-img-box::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 30px;
+  border: 2px solid rgba(255, 255, 255, 0.1);
+  pointer-events: none;
+}
+
+.thumb-img-box .placeholder-text {
+  font-family: 'Outfit', sans-serif;
+  font-size: 24px;
+  color: rgba(255, 255, 255, 0.3);
+  font-weight: 500;
+}
+
+.preview-hint {
+  margin-top: 1.5rem;
+  color: var(--text-muted);
+  font-size: 0.85rem;
+}

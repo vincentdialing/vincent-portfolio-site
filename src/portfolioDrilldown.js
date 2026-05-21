@@ -16,7 +16,7 @@ async function fetchPortfolioData() {
         // Fetch services
         const { data: services, error: sErr } = await supabase
             .from('portfolio_services')
-            .select('key, title, display_order, image_url')
+            .select('key, title, display_order, image_url, description, short_bio, tools')
             .order('display_order', { ascending: true });
 
         if (sErr) throw sErr;
@@ -59,6 +59,9 @@ async function fetchPortfolioData() {
             data[svc.key] = {
                 title: svc.title,
                 imageUrl: svc.image_url || null,
+                description: svc.description || null,
+                shortBio: svc.short_bio || null,
+                tools: svc.tools || null,
                 items: []
             };
         });
@@ -149,6 +152,80 @@ let level2Container = null;
 let level3Container = null;
 
 // ==========================================
+// Render Service Cards Dynamically from DB
+// ==========================================
+function renderServiceCards(data) {
+    if (!projectsGrid) return;
+    const serviceKeys = Object.keys(data);
+    if (serviceKeys.length === 0) return;
+
+    // Clear existing hardcoded cards
+    projectsGrid.innerHTML = '';
+
+    serviceKeys.forEach(key => {
+        const svc = data[key];
+        const toolsArray = svc.tools
+            ? svc.tools.split(',').map(t => t.trim()).filter(Boolean)
+            : [];
+
+        const toolChips = toolsArray
+            .map(t => `<span class="chip">${t}</span>`)
+            .join('');
+
+        const highlightHtml = svc.shortBio
+            ? `<div class="case-study-result">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                  stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline>
+                  <polyline points="17 6 23 6 23 12"></polyline>
+                </svg>
+                <span>${svc.shortBio}</span>
+              </div>`
+            : '';
+
+        const isCaseStudy = !!svc.shortBio;
+        const badgeText = key === 'social-media-content' ? 'Social Media Graphics' : 'Case Study';
+        const badgeHtml = isCaseStudy ? `<span class="case-study-badge">${badgeText}</span>` : '';
+
+        const card = document.createElement('div');
+        card.className = `project-card ${isCaseStudy ? 'is-case-study' : ''}`;
+        card.setAttribute('data-service', key);
+        card.style.cursor = 'pointer';
+
+        card.innerHTML = `
+            <div class="project-image" style="background: linear-gradient(135deg, #2563eb 0%, #1e40af 50%, #0f172a 100%);">
+                ${badgeHtml}
+            </div>
+            <div class="project-details">
+                <span class="project-category">${isCaseStudy ? (key === 'social-media-content' ? 'Branding Showcase' : 'Case Study') : svc.title}</span>
+                <h3>${svc.title}</h3>
+                ${svc.description ? `<p>${svc.description}</p>` : ''}
+                ${highlightHtml}
+                ${toolChips ? `<div class="chip-container">${toolChips}</div>` : ''}
+            </div>
+        `;
+
+        // Apply service cover image
+        const imageEl = card.querySelector('.project-image');
+        if (imageEl && svc.imageUrl) {
+            const { mediaEl } = ensureImageLayers(
+                imageEl,
+                'project-image-media',
+                'project-image-loading'
+            );
+            applyImageLoadState(
+                imageEl,
+                mediaEl,
+                svc.imageUrl,
+                'linear-gradient(rgba(10, 10, 24, 0.08), rgba(10, 10, 24, 0.24))'
+            );
+        }
+
+        projectsGrid.appendChild(card);
+    });
+}
+
+// ==========================================
 // Initialize
 // ==========================================
 export async function initPortfolioDrilldown() {
@@ -164,33 +241,11 @@ export async function initPortfolioDrilldown() {
         return;
     }
 
-    // Add data-service attributes to existing cards
-    const serviceKeys = Object.keys(portfolioData);
+    // Dynamically render service cards from DB data
+    renderServiceCards(portfolioData);
+
+    // Re-query the cards after dynamic render
     const cards = projectsGrid.querySelectorAll('.project-card');
-    cards.forEach((card, index) => {
-        if (serviceKeys[index]) {
-            const serviceKey = serviceKeys[index];
-            const serviceData = portfolioData[serviceKey];
-            card.setAttribute('data-service', serviceKey);
-            card.style.cursor = 'pointer';
-
-            const imageEl = card.querySelector('.project-image');
-            if (imageEl) {
-                const { mediaEl } = ensureImageLayers(
-                    imageEl,
-                    'project-image-media',
-                    'project-image-loading'
-                );
-                applyImageLoadState(
-                    imageEl,
-                    mediaEl,
-                    serviceData?.imageUrl || '',
-                    'linear-gradient(rgba(10, 10, 24, 0.08), rgba(10, 10, 24, 0.24))'
-                );
-            }
-        }
-    });
-
 
     // Create back button row
     backButtonRow = document.createElement('div');

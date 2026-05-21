@@ -1,5 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
 import Groq from 'groq-sdk';
+import html2canvas from 'html2canvas';
 import './admin.css';
 
 // ==========================================
@@ -158,6 +159,7 @@ const TAB_CONFIGS = {
   brands: { title: 'Brand Logos', subtitle: 'Manage client and partner logos for the scrolling marquee.', button: 'Add Brand Logo' },
   bento: { title: 'Bento Hover Cards', subtitle: 'Manage bento layout interactive cards.', button: '' },
   uploads: { title: 'File Manager', subtitle: 'Upload static images directly to your Supabase Storage.', button: '' },
+  thumbnail: { title: 'Thumbnail Generator', subtitle: 'Create composite cover images.', button: '' },
   config: { title: 'Supabase Credentials', subtitle: 'Configure credentials to authenticate your write sessions.', button: '' }
 };
 
@@ -344,6 +346,179 @@ function initAIWriter() {
       if (input) input.type = input.type === 'password' ? 'text' : 'password';
     });
   }
+}
+
+function initServiceAIWriter() {
+  const btn = document.getElementById('service-ai-generate-btn');
+  if (!btn) return;
+
+  btn.addEventListener('click', async () => {
+    const apiKey = getGroqApiKey();
+    const resultsContainer = document.getElementById('service-ai-results');
+    const noKeyMsg = document.getElementById('service-ai-no-key-msg');
+
+    if (!apiKey) {
+      if (noKeyMsg) noKeyMsg.classList.remove('hidden');
+      return;
+    }
+    if (noKeyMsg) noKeyMsg.classList.add('hidden');
+
+    const serviceKey = document.getElementById('service-key').value.trim();
+    const serviceTitle = document.getElementById('service-title').value.trim();
+
+    if (!serviceKey) {
+      showToast('Missing', 'Service key is required to scan projects.', 'error');
+      return;
+    }
+
+    btn.disabled = true;
+    btn.innerHTML = `<div class="spinner-small"></div> Scanning projects...`;
+    resultsContainer.classList.remove('hidden');
+    resultsContainer.innerHTML = `<div class="ai-loading-indicator"><div class="spinner-small"></div><span>Scanning projects under "${serviceTitle}"...</span></div>`;
+
+    try {
+      // Fetch all projects under this service
+      const { data: projects, error } = await supabase
+        .from('portfolio_projects')
+        .select('title, description, tools, category')
+        .eq('service_key', serviceKey)
+        .order('display_order', { ascending: true });
+
+      if (error) throw error;
+
+      if (!projects || projects.length === 0) {
+        resultsContainer.innerHTML = `<p style="color:var(--text-muted);font-size:0.85rem;">No projects found under this service yet. Add some projects first, then generate.</p>`;
+        return;
+      }
+
+      // Build context from all projects
+      const projectSummaries = projects.map((p, i) =>
+        `${i + 1}. "${p.title}" — ${p.category || ''} | Tools: ${Array.isArray(p.tools) ? p.tools.join(', ') : (p.tools || 'N/A')} | Desc: ${p.description || 'N/A'}`
+      ).join('\n');
+
+      // Collect all unique tools from ALL projects (programmatic, not AI)
+      const mergedTools = [...new Set(
+        projects.flatMap(p => Array.isArray(p.tools) ? p.tools : (p.tools || '').split(',').map(t => t.trim()).filter(Boolean))
+      )].join(', ');
+
+      // Build a short, punchy highlight stat from real data
+      const uniqueCategories = [...new Set(projects.map(p => p.category).filter(Boolean))];
+      const projectCount = projects.length;
+      // Map raw category labels to short readable keywords
+      const areaKeywords = [...new Set(
+        uniqueCategories.flatMap(c =>
+          c.toLowerCase().includes('brand') ? ['branding'] :
+          c.toLowerCase().includes('event') ? ['events'] :
+          c.toLowerCase().includes('social') ? ['social content'] :
+          c.toLowerCase().includes('video') || c.toLowerCase().includes('edit') ? ['video production'] :
+          c.toLowerCase().includes('web') || c.toLowerCase().includes('ui') ? ['web & UI'] :
+          c.toLowerCase().includes('motion') ? ['motion graphics'] :
+          c.toLowerCase().includes('campaign') ? ['campaigns'] :
+          c.toLowerCase().includes('choral') || c.toLowerCase().includes('music') ? ['campaigns'] :
+          [c.split(' ').slice(0, 2).join(' ')]
+        )
+      )].slice(0, 3);
+      const areaPhrase = areaKeywords.length >= 2
+        ? areaKeywords.slice(0, -1).join(', ') + ', and ' + areaKeywords[areaKeywords.length - 1]
+        : areaKeywords[0] || 'creative projects';
+      const computedStat = `${projectCount} project${projectCount !== 1 ? 's' : ''} across ${areaPhrase}.`;
+
+      const prompt = `You are a portfolio copywriter for Vincent Dialing, a Filipino creative professional. Write copy that sounds polished, client-facing, and specific — the kind that makes someone want to hire him.
+
+SERVICE: "${serviceTitle}"
+PROJECTS UNDER THIS SERVICE (${projects.length} total):
+${projectSummaries}
+
+Write ONLY:
+1. DESCRIPTION: Exactly 2 sentences. Around 40-55 words total. Sentence 1 describes what the service covers and the types of deliverables (be specific — mention real content types, platforms, or audiences from the projects). Sentence 2 states the outcome or value for the client. Use one em dash (—) naturally. Do NOT use generic phrases like "leveraging expertise" or "driving engagement." Be vivid and specific.
+
+Good example: "A curated collection of social media content spanning event campaigns, chorale season launches, and branded community graphics — crafted to build recognition and keep audiences consistently engaged. Each project is built around a distinct visual direction tailored to the client's identity and goals."
+
+Bad example: "Social media content — for events and brands." (Too vague, no substance)
+
+Format EXACTLY:
+---DESCRIPTION---
+[two sentences here]`;
+
+      const groq = new Groq({ apiKey, dangerouslyAllowBrowser: true });
+      const completion = await groq.chat.completions.create({
+        model: 'llama-3.3-70b-versatile',
+        messages: [
+          { role: 'system', content: 'You are a client-facing portfolio copywriter. Write specific, vivid, compelling copy. Follow the format and word count exactly.' },
+          { role: 'user', content: prompt }
+        ],
+        temperature: 0.7,
+        max_tokens: 350
+      });
+
+      const content = completion.choices[0].message.content;
+      const description = extractSection(content, 'DESCRIPTION');
+      // Highlight stat = programmatic (never AI — it hallucinates numbers)
+      const shortBio = computedStat;
+      // Tools = programmatic merge of ALL project tools
+      const toolsList = mergedTools;
+
+      resultsContainer.innerHTML = `
+        ${description ? `
+          <div class="ai-result-card">
+            <div class="ai-result-card-header">
+              <span class="ai-result-label">Description</span>
+              <button class="btn btn-xs btn-secondary ai-apply-btn" data-target="service-desc" data-value="${encodeURIComponent(description)}">Apply</button>
+            </div>
+            <p class="ai-result-text">${description}</p>
+          </div>` : ''}
+        ${shortBio ? `
+          <div class="ai-result-card">
+            <div class="ai-result-card-header">
+              <span class="ai-result-label">Highlight Stat</span>
+              <button class="btn btn-xs btn-secondary ai-apply-btn" data-target="service-short-bio" data-value="${encodeURIComponent(shortBio)}">Apply</button>
+            </div>
+            <p class="ai-result-text">${shortBio}</p>
+          </div>` : ''}
+        ${toolsList ? `
+          <div class="ai-result-card">
+            <div class="ai-result-card-header">
+              <span class="ai-result-label">Tools (merged from all projects)</span>
+              <button class="btn btn-xs btn-secondary ai-apply-btn" data-target="service-tools" data-value="${encodeURIComponent(toolsList)}">Apply</button>
+            </div>
+            <p class="ai-result-text">${toolsList}</p>
+          </div>` : ''}
+        <button class="btn btn-primary btn-sm" id="service-ai-apply-all-btn" style="width:100%;margin-top:0.5rem;">
+          ✓ Apply All
+        </button>
+      `;
+
+      // Wire apply buttons
+      resultsContainer.querySelectorAll('.ai-apply-btn').forEach(applyBtn => {
+        applyBtn.addEventListener('click', () => {
+          const targetId = applyBtn.dataset.target;
+          const value = decodeURIComponent(applyBtn.dataset.value);
+          const el = document.getElementById(targetId);
+          if (el) el.value = value;
+          applyBtn.textContent = '✓';
+          applyBtn.disabled = true;
+        });
+      });
+
+      const applyAllBtn = document.getElementById('service-ai-apply-all-btn');
+      if (applyAllBtn) {
+        applyAllBtn.addEventListener('click', () => {
+          if (description) { const el = document.getElementById('service-desc'); if(el) el.value = description; }
+          if (shortBio) { const el = document.getElementById('service-short-bio'); if(el) el.value = shortBio; }
+          if (toolsList) { const el = document.getElementById('service-tools'); if(el) el.value = toolsList; }
+          applyAllBtn.textContent = '✓ Applied!';
+          applyAllBtn.disabled = true;
+        });
+      }
+
+    } catch (err) {
+      console.error('Service AI error:', err);
+      resultsContainer.innerHTML = `<p style="color:var(--error);font-size:0.85rem;">Error: ${err.message}</p>`;
+    } finally {
+      btn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width:14px;height:14px"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg> Scan Projects & Generate`;
+      btn.disabled = false;
+    }
+  });
 }
 
 async function handleAIGenerate() {
@@ -2098,15 +2273,25 @@ function openServiceModal(id = null) {
     document.getElementById('service-title').value = service.title;
     document.getElementById('service-image').value = service.image_url || '';
     document.getElementById('service-order').value = service.display_order;
+    document.getElementById('service-desc').value = service.description || '';
+    document.getElementById('service-short-bio').value = service.short_bio || '';
+    document.getElementById('service-tools').value = service.tools || '';
   } else {
     titleEl.textContent = 'Add New Service';
     document.getElementById('service-db-id').value = '';
     keyInput.value = '';
-    keyInput.readOnly = false; // Allow key entry for new service
+    keyInput.readOnly = false;
     document.getElementById('service-title').value = '';
     document.getElementById('service-image').value = '';
     document.getElementById('service-order').value = services.length + 1;
+    document.getElementById('service-desc').value = '';
+    document.getElementById('service-short-bio').value = '';
+    document.getElementById('service-tools').value = '';
   }
+
+  // Reset AI results panel
+  const aiResults = document.getElementById('service-ai-results');
+  if (aiResults) { aiResults.innerHTML = ''; aiResults.classList.add('hidden'); }
 
   modal.classList.add('is-open');
 }
@@ -2118,39 +2303,54 @@ async function handleServiceSubmit(e) {
   const title = document.getElementById('service-title').value.trim();
   const imageUrl = document.getElementById('service-image').value.trim();
   const order = parseInt(document.getElementById('service-order').value) || 0;
+  const description = document.getElementById('service-desc').value.trim();
+  const shortBio = document.getElementById('service-short-bio').value.trim();
+  const tools = document.getElementById('service-tools').value.trim();
 
-  const payload = {
+  const fullPayload = {
     title,
     image_url: imageUrl || null,
-    display_order: order
+    display_order: order,
+    description: description || null,
+    short_bio: shortBio || null,
+    tools: tools || null
   };
 
-  try {
+  const basePayload = { title, image_url: imageUrl || null, display_order: order };
+
+  async function doSave(payload) {
     if (id) {
-      // Update existing service
-      const { error } = await supabase
-        .from('portfolio_services')
-        .update(payload)
-        .eq('id', parseInt(id));
-
+      const { error } = await supabase.from('portfolio_services').update(payload).eq('id', parseInt(id));
       if (error) throw error;
-      showToast('Success', 'Service updated successfully.', 'success');
     } else {
-      // Create new service
       payload.key = key;
-      const { error } = await supabase
-        .from('portfolio_services')
-        .insert(payload);
-
+      const { error } = await supabase.from('portfolio_services').insert(payload);
       if (error) throw error;
-      showToast('Success', 'Service created successfully.', 'success');
     }
+  }
 
+  try {
+    // Try with all new fields first
+    await doSave({ ...fullPayload });
+    showToast('Success', 'Service updated successfully.', 'success');
     closeModal('service-modal');
     loadServices();
   } catch (err) {
-    console.error('Save service error:', err);
-    showToast('Save Failed', err.message, 'error');
+    // If the error is about missing columns, retry with base fields only
+    if (err.message && (err.message.includes('column') || err.message.includes('schema'))) {
+      try {
+        await doSave({ ...basePayload });
+        showToast('Saved (partial)', 'Service saved — but Description/Bio/Tools were not saved. Run the migration SQL in Supabase to enable these fields.', 'warning');
+        closeModal('service-modal');
+        loadServices();
+      } catch (fallbackErr) {
+        console.error('Save service fallback error:', fallbackErr);
+        showToast('Save Failed', fallbackErr.message, 'error');
+      }
+    } else {
+      console.error('Save service error:', err);
+      showToast('Save Failed', err.message, 'error');
+    }
   }
 }
 
@@ -3087,6 +3287,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   initModalCloseHandlers();
   wireInlineFileUploads(document);
   initAIWriter();
+  initServiceAIWriter();
 
   // Gallery add button wiring
   const addGalleryBtn = document.getElementById('add-gallery-img-btn');
@@ -3135,8 +3336,470 @@ document.addEventListener('DOMContentLoaded', async () => {
   document.getElementById('brand-form').addEventListener('submit', handleBrandSubmit);
   document.getElementById('community-card-form').addEventListener('submit', handleCommunityCardSubmit);
 
+  // Initialize Thumbnail Generator
+  initThumbnailGenerator();
+
   // Trigger loading initial project grid list
   loadProjects();
 });
 
+// ==========================================
+// THUMBNAIL GENERATOR LOGIC
+// ==========================================
+function initThumbnailGenerator() {
+  const toggleBtn = document.getElementById('btn-toggle-bento');
+  const section = document.getElementById('bento-generator-section');
+  if (toggleBtn && section) {
+    toggleBtn.addEventListener('click', () => {
+      if (section.style.display === 'none') {
+        section.style.display = 'block';
+        toggleBtn.innerHTML = `
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 14px; height: 14px; margin-right: 4px;"><polyline points="18 15 12 9 6 15"/></svg>
+          Close Bento
+        `;
+      } else {
+        section.style.display = 'none';
+        toggleBtn.innerHTML = `
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 14px; height: 14px; margin-right: 4px;"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+          Generate Bento
+        `;
+      }
+    });
+  }
 
+  const canvasElement = document.getElementById('thumbnail-canvas');
+  const wrapperElement = document.querySelector('.thumbnail-scale-wrapper');
+  const renderBtn = document.getElementById('btn-render-apply-bento');
+  const autofillBtn = document.getElementById('btn-autofill-bento');
+
+  // Always-current gradient string — written by applyAutoGradient, read by renderer
+  let _bentoGradient = 'linear-gradient(to bottom, #1a1a2e 0%, #16213e 100%)';
+
+  // Dynamic Scale Calculation for Preview
+  function updateCanvasScale() {
+    if (wrapperElement && canvasElement) {
+      const scale = wrapperElement.clientWidth / 1600;
+      canvasElement.style.transform = `scale(${scale})`;
+    }
+  }
+  
+  if (wrapperElement) {
+    window.addEventListener('resize', updateCanvasScale);
+    // Observe the wrapper in case it un-hides
+    const ro = new ResizeObserver(updateCanvasScale);
+    ro.observe(wrapperElement);
+  }
+
+  // ---- Dominant Color Extraction ----
+  // Draws image to a tiny canvas, samples pixels, finds the dominant color,
+  // then creates a smooth light-to-saturated gradient like a Canva background.
+  function extractDominantColor(imgSrc) {
+    return new Promise((resolve) => {
+      const img = new Image();
+      img.crossOrigin = 'anonymous';
+      img.onload = () => {
+        try {
+          const sampleCanvas = document.createElement('canvas');
+          const ctx = sampleCanvas.getContext('2d');
+          const size = 50;
+          sampleCanvas.width = size;
+          sampleCanvas.height = size;
+          ctx.drawImage(img, 0, 0, size, size);
+          // getImageData throws SecurityError if the image is CORS-blocked
+          const imageData = ctx.getImageData(0, 0, size, size).data;
+
+          const colorMap = {};
+          for (let i = 0; i < imageData.length; i += 16) {
+            const r = Math.round(imageData[i] / 10) * 10;
+            const g = Math.round(imageData[i + 1] / 10) * 10;
+            const b = Math.round(imageData[i + 2] / 10) * 10;
+            const a = imageData[i + 3];
+            if (a < 128) continue;
+            const brightness = (r + g + b) / 3;
+            if (brightness < 25 || brightness > 240) continue;
+            const key = `${r},${g},${b}`;
+            colorMap[key] = (colorMap[key] || 0) + 1;
+          }
+
+          let maxCount = 0;
+          let dominant = null;
+          for (const [key, count] of Object.entries(colorMap)) {
+            if (count > maxCount) { maxCount = count; dominant = key.split(',').map(Number); }
+          }
+          resolve(dominant || [80, 60, 160]);
+        } catch (e) {
+          // CORS tainted canvas — derive a color from URL string hash as fallback
+          let hash = 0;
+          for (let i = 0; i < imgSrc.length; i++) hash = (hash * 31 + imgSrc.charCodeAt(i)) & 0xffffff;
+          const r = (hash >> 16) & 0xff;
+          const g = (hash >> 8) & 0xff;
+          const b = hash & 0xff;
+          resolve([r, g, b]);
+        }
+      };
+      img.onerror = () => resolve([80, 60, 160]);
+      img.src = imgSrc;
+    });
+  }
+
+  // Convert RGB to HSL
+  function rgbToHsl(r, g, b) {
+    r /= 255; g /= 255; b /= 255;
+    const max = Math.max(r, g, b), min = Math.min(r, g, b);
+    let h, s, l = (max + min) / 2;
+    if (max === min) { h = s = 0; }
+    else {
+      const d = max - min;
+      s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+      switch (max) {
+        case r: h = ((g - b) / d + (g < b ? 6 : 0)) / 6; break;
+        case g: h = ((b - r) / d + 2) / 6; break;
+        case b: h = ((r - g) / d + 4) / 6; break;
+      }
+    }
+    return [Math.round(h * 360), Math.round(s * 100), Math.round(l * 100)];
+  }
+
+  // Generate gradient from dominant color — soft, faded, muted style
+  function applyAutoGradient(dominant) {
+    if (!canvasElement) return;
+    const [h, s, l] = rgbToHsl(dominant[0], dominant[1], dominant[2]);
+    const fadedSat = Math.min(s * 0.4, 35);
+    const lightColor = `hsl(${h}, ${fadedSat}%, ${Math.min(l + 35, 88)}%)`;
+    const deepColor = `hsl(${h}, ${Math.min(fadedSat + 10, 45)}%, ${Math.max(l - 15, 20)}%)`;
+    const gradientStr = `linear-gradient(to bottom, ${lightColor} 0%, ${deepColor} 100%)`;
+    canvasElement.style.background = gradientStr;
+    _bentoGradient = gradientStr; // Always keep renderer in sync
+  }
+
+  // Try extracting color from whatever is in box-main right now
+  async function autoExtractAndApply() {
+    const mainBox = document.getElementById('box-main');
+    if (!mainBox) return;
+    const bgImage = mainBox.style.backgroundImage;
+    if (bgImage && bgImage !== 'none') {
+      // Pull the URL from url(...)
+      const match = bgImage.match(/url\(["']?(.+?)["']?\)/);
+      if (match && match[1]) {
+        const dominant = await extractDominantColor(match[1]);
+        applyAutoGradient(dominant);
+      }
+    }
+  }
+
+  // Handle Main Image
+  const mainInput = document.getElementById('thumb-img-main');
+  const mainBox = document.getElementById('box-main');
+  if (mainInput && mainBox) {
+    mainInput.addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = async (event) => {
+          mainBox.style.backgroundImage = `url(${event.target.result})`;
+          mainBox.innerHTML = '';
+          // Auto-extract dominant color from uploaded image
+          const dominant = await extractDominantColor(event.target.result);
+          applyAutoGradient(dominant);
+        };
+        reader.readAsDataURL(file);
+      }
+    });
+  }
+
+  // Handle Multiple Grid Images
+  const gridMultiInput = document.getElementById('thumb-img-grid-multi');
+  if (gridMultiInput) {
+    gridMultiInput.addEventListener('change', (e) => {
+      const files = Array.from(e.target.files).slice(0, 4); // Take up to 4
+      files.forEach((file, index) => {
+        const box = document.getElementById(`box-${index + 1}`);
+        if (box && file) {
+          const reader = new FileReader();
+          reader.onload = (event) => {
+            box.style.backgroundImage = `url(${event.target.result})`;
+            box.innerHTML = '';
+          };
+          reader.readAsDataURL(file);
+        }
+      });
+    });
+  }
+
+  // Handle Auto-fill from Gallery
+  if (autofillBtn) {
+    autofillBtn.addEventListener('click', async () => {
+      const projectKey = document.getElementById('proj-key').value.trim();
+      if (!projectKey) {
+        showToast('Info', 'Please enter a Project Key first or save the project.', 'info');
+        return;
+      }
+      
+      const originalText = autofillBtn.innerHTML;
+      autofillBtn.innerHTML = 'Loading...';
+      autofillBtn.disabled = true;
+
+      try {
+        const { data, error } = await supabase
+          .from('portfolio_project_images')
+          .select('image_url')
+          .eq('project_key', projectKey)
+          .order('display_order', { ascending: true })
+          .limit(5);
+
+        if (error) throw error;
+
+        if (data && data.length > 0) {
+          // Fill main
+          if(data[0] && data[0].image_url) {
+            const mainBox = document.getElementById('box-main');
+            if(mainBox) {
+              mainBox.style.backgroundImage = `url(${data[0].image_url})`;
+              mainBox.innerHTML = '';
+            }
+          }
+          // Fill grids 1-4
+          for(let i = 1; i < 5; i++) {
+            if(data[i] && data[i].image_url) {
+              const box = document.getElementById(`box-${i}`);
+              if(box) {
+                box.style.backgroundImage = `url(${data[i].image_url})`;
+                box.innerHTML = '';
+              }
+            }
+          }
+          // Auto-extract gradient from first image
+          if (data[0] && data[0].image_url) {
+            const dominant = await extractDominantColor(data[0].image_url);
+            applyAutoGradient(dominant);
+          }
+          showToast('Success', 'Bento auto-filled with matching gradient!', 'success');
+        } else {
+          showToast('Empty', 'No gallery images found for this project.', 'warning');
+        }
+      } catch (err) {
+        console.error('Auto-fill error:', err);
+        showToast('Error', 'Failed to load gallery images.', 'error');
+      } finally {
+        autofillBtn.innerHTML = originalText;
+        autofillBtn.disabled = false;
+      }
+    });
+  }
+
+  // Helper to convert DataURL to Blob
+  function dataURLtoBlob(dataurl) {
+    var arr = dataurl.split(','), mime = arr[0].match(/:(.*?);/)[1],
+        bstr = atob(arr[1]), n = bstr.length, u8arr = new Uint8Array(n);
+    while(n--){
+        u8arr[n] = bstr.charCodeAt(n);
+    }
+    return new Blob([u8arr], {type:mime});
+  }
+
+  // ---- Native Canvas 2D Renderer (replaces unreliable html2canvas) ----
+  // Draws the bento layout directly onto a real <canvas> element at 1600x900
+  async function renderBentoToCanvas() {
+    const W = 1600, H = 900;
+    const outputCanvas = document.createElement('canvas');
+    outputCanvas.width = W;
+    outputCanvas.height = H;
+    const ctx = outputCanvas.getContext('2d');
+
+    // 1. Draw background gradient using the stored _bentoGradient string
+    // _bentoGradient is always kept up-to-date by applyAutoGradient()
+    const colorMatches = _bentoGradient.match(/hsl\([^)]+\)|#[0-9a-fA-F]{3,8}/g);
+    if (colorMatches && colorMatches.length >= 2) {
+      const grad = ctx.createLinearGradient(0, 0, 0, H);
+      grad.addColorStop(0, colorMatches[0]);
+      grad.addColorStop(1, colorMatches[colorMatches.length - 1]);
+      ctx.fillStyle = grad;
+    } else {
+      // Hard fallback: dark-to-slightly-lighter
+      const grad = ctx.createLinearGradient(0, 0, 0, H);
+      grad.addColorStop(0, '#2a2a3e');
+      grad.addColorStop(1, '#0f0f1a');
+      ctx.fillStyle = grad;
+    }
+    ctx.fillRect(0, 0, W, H);
+
+    // 2. Layout math (mirrors the CSS grid)
+    const PAD = 80, GAP = 40;
+    const innerW = W - PAD * 2;
+    const innerH = H - PAD * 2;
+    const mainW = (innerW - GAP) / 2;
+    const mainH = innerH;
+    const gridCellW = (mainW - GAP) / 2;
+    const gridCellH = (mainH - GAP) / 2;
+    const RADIUS = 30;
+
+    // Helper: draw rounded image box
+    function drawBox(x, y, w, h, imgEl) {
+      ctx.save();
+      // Rounded rect clip
+      ctx.beginPath();
+      ctx.moveTo(x + RADIUS, y);
+      ctx.lineTo(x + w - RADIUS, y);
+      ctx.quadraticCurveTo(x + w, y, x + w, y + RADIUS);
+      ctx.lineTo(x + w, y + h - RADIUS);
+      ctx.quadraticCurveTo(x + w, y + h, x + w - RADIUS, y + h);
+      ctx.lineTo(x + RADIUS, y + h);
+      ctx.quadraticCurveTo(x, y + h, x, y + h - RADIUS);
+      ctx.lineTo(x, y + RADIUS);
+      ctx.quadraticCurveTo(x, y, x + RADIUS, y);
+      ctx.closePath();
+      ctx.clip();
+
+      if (imgEl) {
+        // Cover-fit the image into the box
+        const imgAspect = imgEl.naturalWidth / imgEl.naturalHeight;
+        const boxAspect = w / h;
+        let sx, sy, sw, sh;
+        if (imgAspect > boxAspect) {
+          sh = imgEl.naturalHeight;
+          sw = sh * boxAspect;
+          sx = (imgEl.naturalWidth - sw) / 2;
+          sy = 0;
+        } else {
+          sw = imgEl.naturalWidth;
+          sh = sw / boxAspect;
+          sx = 0;
+          sy = (imgEl.naturalHeight - sh) / 2;
+        }
+        ctx.drawImage(imgEl, sx, sy, sw, sh, x, y, w, h);
+      } else {
+        // Empty placeholder
+        ctx.fillStyle = 'rgba(255,255,255,0.05)';
+        ctx.fillRect(x, y, w, h);
+      }
+
+      ctx.restore();
+
+      // Subtle border overlay
+      ctx.save();
+      ctx.beginPath();
+      ctx.moveTo(x + RADIUS, y);
+      ctx.lineTo(x + w - RADIUS, y);
+      ctx.quadraticCurveTo(x + w, y, x + w, y + RADIUS);
+      ctx.lineTo(x + w, y + h - RADIUS);
+      ctx.quadraticCurveTo(x + w, y + h, x + w - RADIUS, y + h);
+      ctx.lineTo(x + RADIUS, y + h);
+      ctx.quadraticCurveTo(x, y + h, x, y + h - RADIUS);
+      ctx.lineTo(x, y + RADIUS);
+      ctx.quadraticCurveTo(x, y, x + RADIUS, y);
+      ctx.closePath();
+      ctx.strokeStyle = 'rgba(255,255,255,0.12)';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    // Helper: load an image from a URL/dataURL into an HTMLImageElement
+    function loadImg(src) {
+      return new Promise((resolve) => {
+        const img = new Image();
+        img.crossOrigin = 'anonymous';
+        img.onload = () => resolve(img);
+        img.onerror = () => resolve(null); // If CORS fails, skip
+        img.src = src;
+      });
+    }
+
+    // Helper: get image src from a box element's background-image
+    function getSrcFromBox(boxId) {
+      const box = document.getElementById(boxId);
+      if (!box) return null;
+      const bg = box.style.backgroundImage;
+      if (!bg || bg === 'none') return null;
+      const match = bg.match(/url\(["']?(.+?)["']?\)/);
+      return match ? match[1] : null;
+    }
+
+    // Load all images
+    const mainSrc = getSrcFromBox('box-main');
+    const grid1Src = getSrcFromBox('box-1');
+    const grid2Src = getSrcFromBox('box-2');
+    const grid3Src = getSrcFromBox('box-3');
+    const grid4Src = getSrcFromBox('box-4');
+
+    const [mainImg, g1Img, g2Img, g3Img, g4Img] = await Promise.all([
+      mainSrc ? loadImg(mainSrc) : Promise.resolve(null),
+      grid1Src ? loadImg(grid1Src) : Promise.resolve(null),
+      grid2Src ? loadImg(grid2Src) : Promise.resolve(null),
+      grid3Src ? loadImg(grid3Src) : Promise.resolve(null),
+      grid4Src ? loadImg(grid4Src) : Promise.resolve(null),
+    ]);
+
+    // 3. Draw boxes
+    // Main (left column)
+    const mainX = PAD, mainY = PAD;
+    drawBox(mainX, mainY, mainW, mainH, mainImg);
+
+    // Grid (right column — 2x2)
+    const gridStartX = PAD + mainW + GAP;
+    drawBox(gridStartX,          PAD,                           gridCellW, gridCellH, g1Img);
+    drawBox(gridStartX + gridCellW + GAP, PAD,                  gridCellW, gridCellH, g2Img);
+    drawBox(gridStartX,          PAD + gridCellH + GAP,         gridCellW, gridCellH, g3Img);
+    drawBox(gridStartX + gridCellW + GAP, PAD + gridCellH + GAP, gridCellW, gridCellH, g4Img);
+
+    return outputCanvas;
+  }
+
+  // Handle Render and Upload
+  if (renderBtn && canvasElement) {
+    renderBtn.addEventListener('click', async () => {
+      const originalText = renderBtn.innerHTML;
+      renderBtn.innerHTML = 'Rendering & Uploading...';
+      renderBtn.disabled = true;
+
+      try {
+        const outputCanvas = await renderBentoToCanvas();
+
+        const dataUrl = outputCanvas.toDataURL('image/webp', 0.95);
+        const blob = dataURLtoBlob(dataUrl);
+
+        const projectKey = document.getElementById('proj-key').value.trim() || 'draft';
+        const fileName = `bento-${projectKey}-${Date.now()}.webp`;
+        const bucketName = 'portfolio';
+
+        if (!supabase) throw new Error('Database not connected.');
+
+        // Upload to Supabase Storage
+        const { data, error } = await supabase.storage
+          .from(bucketName)
+          .upload(fileName, blob, {
+            cacheControl: '3600',
+            upsert: false,
+            contentType: 'image/webp'
+          });
+
+        if (error) throw error;
+
+        const { data: publicUrlData } = supabase.storage
+          .from(bucketName)
+          .getPublicUrl(fileName);
+
+        const publicUrl = publicUrlData.publicUrl;
+
+        // Apply URL to input
+        const coverInput = document.getElementById('proj-image');
+        if (coverInput) {
+          coverInput.value = publicUrl;
+          coverInput.dispatchEvent(new Event('change'));
+        }
+
+        showToast('Success', 'Bento Cover generated and applied!', 'success');
+        
+        // Auto-close section
+        if (toggleBtn) toggleBtn.click();
+
+      } catch (err) {
+        console.error('Error generating/uploading bento cover:', err);
+        showToast('Error', err.message || 'Failed to generate cover.', 'error');
+      } finally {
+        renderBtn.innerHTML = originalText;
+        renderBtn.disabled = false;
+      }
+    });
+  }
+}

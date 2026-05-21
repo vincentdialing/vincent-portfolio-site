@@ -188,7 +188,7 @@ function renderServiceCards(data) {
         const badgeHtml = isCaseStudy ? `<span class="case-study-badge">${badgeText}</span>` : '';
 
         const card = document.createElement('div');
-        card.className = `project-card ${isCaseStudy ? 'is-case-study' : ''}`;
+        card.className = 'project-card';
         card.setAttribute('data-service', key);
         card.style.cursor = 'pointer';
 
@@ -197,7 +197,7 @@ function renderServiceCards(data) {
                 ${badgeHtml}
             </div>
             <div class="project-details">
-                <span class="project-category">${isCaseStudy ? (key === 'social-media-content' ? 'Branding Showcase' : 'Case Study') : svc.title}</span>
+                <span class="project-category">${key === 'social-media-content' ? 'Branding Showcase' : svc.title}</span>
                 <h3>${svc.title}</h3>
                 ${svc.description ? `<p>${svc.description}</p>` : ''}
                 ${highlightHtml}

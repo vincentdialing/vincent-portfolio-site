@@ -5110,3 +5110,176 @@ body {
   -webkit-user-select: none;
   border-radius: inherit;
 }
+
+/* ==========================================
+   Creative Workflow — Bento Grid
+   (all cards use .service-card — zero visual divergence)
+   ========================================== */
+.workflow-section {
+  padding: var(--spacing-xl) 0;
+}
+
+/* 3-column bento: left | featured-center | right */
+.workflow-bento {
+  display: grid;
+  grid-template-columns: 1fr 1.5fr 1fr;
+  grid-auto-rows: auto;
+  gap: 1rem;
+}
+
+/* The center featured card spans both rows */
+.workflow-featured {
+  grid-column: 2;
+  grid-row: 1 / 3;
+  justify-content: flex-start;
+}
+
+/* Bigger icon for the featured card */
+.workflow-featured-icon {
+  transform: scale(1.35);
+  transform-origin: top left;
+  margin-bottom: 0.5rem;
+}
+
+/* CTA / label card — slightly muted */
+.workflow-label-card {
+  justify-content: flex-end;
+}
+
+.workflow-label-card .bento-normal-state {
+  justify-content: flex-end;
+}
+
+/* Premium CTA button */
+.workflow-cta-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 0.8rem;
+  background: rgba(59, 130, 246, 0.15);
+  border: 1px solid rgba(59, 130, 246, 0.35);
+  padding: 0.4rem 1rem;
+  border-radius: 50px;
+  color: #fff;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-decoration: none;
+  transition: all 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+  width: fit-content;
+}
+
+.workflow-cta-btn:hover {
+  background: rgba(59, 130, 246, 0.3);
+  border-color: rgba(59, 130, 246, 0.6);
+  box-shadow: 0 0 12px rgba(59, 130, 246, 0.25);
+  transform: translateY(-1px);
+}
+
+.workflow-cta-btn svg {
+  transition: transform 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.workflow-cta-btn:hover svg {
+  transform: translateX(2px);
+}
+
+
+/* Step number badge — top-right corner of each card */
+.workflow-step-badge {
+  position: absolute;
+  top: 0.9rem;
+  right: 0.9rem;
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.3);
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 50px;
+  padding: 0.28rem 0.6rem;
+  z-index: 3;
+  transition: color 0.3s ease, background 0.3s ease, border-color 0.3s ease;
+  pointer-events: none;
+}
+
+.service-card:hover .workflow-step-badge {
+  color: rgba(96, 165, 250, 0.9);
+  background: rgba(59, 130, 246, 0.1);
+  border-color: rgba(59, 130, 246, 0.25);
+}
+
+/* Featured card badge is slightly more prominent at rest */
+.workflow-step-badge--featured {
+  color: rgba(96, 165, 250, 0.6);
+  background: rgba(59, 130, 246, 0.08);
+  border-color: rgba(59, 130, 246, 0.2);
+}
+
+.workflow-step-label {
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--color-accent);
+  margin-bottom: 0.4rem;
+}
+
+/* ── Big number reveal (hover state fill) ── */
+.workflow-num-reveal {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: inherit;
+  overflow: hidden;
+}
+
+/* The giant gradient number */
+.workflow-num-big {
+  font-family: 'Outfit', 'Inter', sans-serif;
+  font-size: clamp(5rem, 10vw, 8rem);
+  font-weight: 900;
+  line-height: 1;
+  letter-spacing: -6px;
+  display: block;
+
+  /* Entry animation: scale up from slightly smaller */
+  transform: scale(0.7);
+  opacity: 0;
+  transition:
+    transform 0.5s cubic-bezier(0.22, 1, 0.36, 1) 0.08s,
+    opacity   0.4s cubic-bezier(0.22, 1, 0.36, 1) 0.08s;
+}
+
+/* Larger number for the featured tall card */
+.workflow-num-big--xl {
+  font-size: clamp(6rem, 14vw, 11rem);
+  letter-spacing: -8px;
+}
+
+/* Trigger the reveal when the bento-hover-state becomes visible */
+.bento-hover-transform:hover .workflow-num-big {
+  transform: scale(1);
+  opacity: 1;
+}
+
+/* Responsive — stack to 2 col on tablet */
+@media (max-width: 900px) {
+  .workflow-bento {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .workflow-featured {
+    grid-column: 1 / -1;
+    grid-row: auto;
+  }
+}
+
+/* Responsive — single column on mobile */
+@media (max-width: 640px) {
+  .workflow-bento {
+    grid-template-columns: 1fr;
+  }
+}

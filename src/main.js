@@ -681,7 +681,7 @@ initCommunityBentoRotation();
 
 // Glow Effect for Bento Cards
 // We update CSS variables --x and --y based on mouse position relative to the card
-const cards = document.querySelectorAll('.bento-card, .service-card');
+const cards = document.querySelectorAll('.bento-card, .service-card, .workflow-card');
 
 cards.forEach(card => {
   card.addEventListener('mousemove', (e) => {
@@ -693,6 +693,8 @@ cards.forEach(card => {
     card.style.setProperty('--y', `${y}px`);
   });
 });
+
+
 
 // Simple Entry Animation Observer
 const observerOptions = {

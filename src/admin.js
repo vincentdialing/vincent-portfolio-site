@@ -430,15 +430,19 @@ PROJECTS UNDER THIS SERVICE (${projects.length} total):
 ${projectSummaries}
 
 Write ONLY:
-1. DESCRIPTION: Exactly 2 sentences. Around 40-55 words total. Sentence 1 describes what the service covers and the types of deliverables (be specific — mention real content types, platforms, or audiences from the projects). Sentence 2 states the outcome or value for the client. Use one em dash (—) naturally. Do NOT use generic phrases like "leveraging expertise" or "driving engagement." Be vivid and specific.
+1. DESCRIPTION: Exactly 2 sentences. Around 40-55 words total. Sentence 1 describes what the service covers and the types of deliverables (be specific — mention real content types, platforms, or audiences from the projects). Sentence 2 states the outcome or value for the client. Use one em dash (—) naturally. Do NOT use generic phrases like "leveraging expertise" or "driving engagement." Be vivid and specific. 
+
+CRITICAL: Do NOT mention or repeat the service title "${serviceTitle}" anywhere in the DESCRIPTION text. Repeating the title is redundant because it is already displayed prominently on the card. Start the description directly describing the work itself (e.g., "A curated collection of...", "Vivid visual design spanning...", etc.).
 
 Good example: "A curated collection of social media content spanning event campaigns, chorale season launches, and branded community graphics — crafted to build recognition and keep audiences consistently engaged. Each project is built around a distinct visual direction tailored to the client's identity and goals."
 
-Bad example: "Social media content — for events and brands." (Too vague, no substance)
+2. BADGE: A short, punchy 2-3 word tag describing this service type (e.g. "Video Production", "Social Graphics", "Brand System", "UI/UX Design", "Merch Design"). Do NOT use "Case Study" — describe what it actually is based on the projects.
 
 Format EXACTLY:
 ---DESCRIPTION---
-[two sentences here]`;
+[two sentences here]
+---BADGE---
+[badge text here]`;
 
       const groq = new Groq({ apiKey, dangerouslyAllowBrowser: true });
       const completion = await groq.chat.completions.create({
@@ -453,12 +457,21 @@ Format EXACTLY:
 
       const content = completion.choices[0].message.content;
       const description = extractSection(content, 'DESCRIPTION');
+      const badgeText = extractSection(content, 'BADGE');
       // Highlight stat = programmatic (never AI — it hallucinates numbers)
       const shortBio = computedStat;
       // Tools = programmatic merge of ALL project tools
       const toolsList = mergedTools;
 
       resultsContainer.innerHTML = `
+        ${badgeText ? `
+          <div class="ai-result-card">
+            <div class="ai-result-card-header">
+              <span class="ai-result-label">Pill Badge Text (Suggested)</span>
+              <button class="btn btn-xs btn-secondary ai-apply-btn" data-target="service-badge" data-value="${encodeURIComponent(badgeText)}">Apply</button>
+            </div>
+            <p class="ai-result-text" style="font-weight:600;color:var(--accent-light);">${badgeText}</p>
+          </div>` : ''}
         ${description ? `
           <div class="ai-result-card">
             <div class="ai-result-card-header">
@@ -503,6 +516,7 @@ Format EXACTLY:
       const applyAllBtn = document.getElementById('service-ai-apply-all-btn');
       if (applyAllBtn) {
         applyAllBtn.addEventListener('click', () => {
+          if (badgeText) { const el = document.getElementById('service-badge'); if(el) el.value = badgeText; }
           if (description) { const el = document.getElementById('service-desc'); if(el) el.value = description; }
           if (shortBio) { const el = document.getElementById('service-short-bio'); if(el) el.value = shortBio; }
           if (toolsList) { const el = document.getElementById('service-tools'); if(el) el.value = toolsList; }
@@ -1697,16 +1711,26 @@ function renderGalleryEditList() {
   if (!listEl) return;
   const projectKey = document.getElementById('gallery-project-selector').value;
   listEl.innerHTML = galleryImages.map(img => `
-    <div class="edit-thumb-card" data-id="${img.id}" style="position:relative; border-radius:8px; overflow:hidden; background:var(--bg-tertiary); border:1px solid var(--border-color);">
+    <div class="edit-thumb-card" data-id="${img.id}" style="position:relative; border-radius:8px; overflow:hidden; background:var(--bg-tertiary); border:1px solid var(--border-color); display:flex; flex-direction:column;">
       <img src="${img.image_url}" style="width:100%; height:110px; object-fit:cover; display:block;" alt="">
       <div style="position:absolute; top:8px; right:8px; display:flex; gap:6px;">
         <button class="btn-icon gallery-edit-trash" data-id="${img.id}" title="Mark for delete" style="background: rgba(0,0,0,0.45); border: none; color: #fff; width:34px; height:34px; border-radius:8px; display:flex; align-items:center; justify-content:center;">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;color:var(--text-primary);"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
         </button>
       </div>
-      <div style="padding:0.5rem; font-size:0.85rem; color:var(--text-secondary); display:flex; justify-content:space-between; align-items:center;">
+      <div style="padding:0.4rem 0.5rem; font-size:0.8rem; color:var(--text-secondary); display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid rgba(255,255,255,0.05);">
         <span>Order: ${img.display_order}</span>
-        <span style="font-weight:600; color:var(--text-primary)">${img.id}</span>
+        <span style="font-weight:600; color:var(--text-primary)">ID: ${img.id}</span>
+      </div>
+      <div class="gallery-edit-inputs" style="padding: 0.5rem; display: flex; flex-direction: column; gap: 6px;">
+        <div style="display:flex; flex-direction:column; gap:2px;">
+          <label style="font-size:0.65rem; color:var(--text-secondary); text-transform:uppercase; font-weight:600;">Redirect URL</label>
+          <input class="gallery-redirect-url" data-id="${img.id}" type="text" placeholder="e.g. #works/graphic-design/smc-4" value="${img.redirect_url || ''}" style="width: 100%; font-size: 0.75rem; padding: 4px 6px; background: rgba(0,0,0,0.25); border: 1px solid var(--border-color); border-radius: 4px; color: var(--text-primary);">
+        </div>
+        <div style="display:flex; flex-direction:column; gap:2px;">
+          <label style="font-size:0.65rem; color:var(--text-secondary); text-transform:uppercase; font-weight:600;">Pill Label</label>
+          <input class="gallery-redirect-label" data-id="${img.id}" type="text" placeholder="e.g. View Branding" value="${img.redirect_label || ''}" style="width: 100%; font-size: 0.75rem; padding: 4px 6px; background: rgba(0,0,0,0.25); border: 1px solid var(--border-color); border-radius: 4px; color: var(--text-primary);">
+        </div>
       </div>
     </div>
   `).join('');
@@ -1736,7 +1760,7 @@ async function saveGalleryEdits() {
   try {
     showToast('Saving Changes...', 'Applying gallery updates...', 'info');
 
-    // First, update display_order based on current visual order in the edit modal
+    // First, update order and redirect values based on inputs
     const listEl = document.getElementById('gallery-edit-list');
     const children = Array.from(listEl.children);
     const updates = [];
@@ -1744,14 +1768,36 @@ async function saveGalleryEdits() {
     for (const child of children) {
       const id = parseInt(child.dataset.id);
       if (galleryMarkedForDeletion.has(id)) continue; // skip deleted
-      updates.push({ id, order: orderCounter });
+      
+      const redirectUrlEl = child.querySelector(`.gallery-redirect-url[data-id="${id}"]`);
+      const redirectLabelEl = child.querySelector(`.gallery-redirect-label[data-id="${id}"]`);
+      const redirect_url = redirectUrlEl ? redirectUrlEl.value.trim() : '';
+      const redirect_label = redirectLabelEl ? redirectLabelEl.value.trim() : '';
+
+      updates.push({ id, order: orderCounter, redirect_url, redirect_label });
       orderCounter++;
     }
 
-    // Apply order updates
+    // Apply updates (resilient to missing columns)
     for (const u of updates) {
-      const { error } = await supabase.from('portfolio_project_images').update({ display_order: u.order }).eq('id', u.id);
-      if (error) throw error;
+      try {
+        const { error } = await supabase.from('portfolio_project_images').update({
+          display_order: u.order,
+          redirect_url: u.redirect_url || null,
+          redirect_label: u.redirect_label || null
+        }).eq('id', u.id);
+        if (error) throw error;
+      } catch (err) {
+        if (err.message && (err.message.includes('column') || err.message.includes('schema'))) {
+          // Fallback to updating only display order
+          const { error } = await supabase.from('portfolio_project_images').update({
+            display_order: u.order
+          }).eq('id', u.id);
+          if (error) throw error;
+        } else {
+          throw err;
+        }
+      }
     }
 
     // Now delete marked items
@@ -1765,7 +1811,7 @@ async function saveGalleryEdits() {
     fetchGalleryImages(projectKey);
     closeModal('gallery-edit-modal');
   } catch (err) {
-    console.error('Error deleting gallery images:', err);
+    console.error('Error saving gallery updates:', err);
     showToast('Save Failed', err.message || 'Failed to apply gallery changes.', 'error');
   }
 }
@@ -2275,6 +2321,7 @@ function openServiceModal(id = null) {
     document.getElementById('service-order').value = service.display_order;
     document.getElementById('service-desc').value = service.description || '';
     document.getElementById('service-short-bio').value = service.short_bio || '';
+    document.getElementById('service-badge').value = service.badge || '';
     document.getElementById('service-tools').value = service.tools || '';
   } else {
     titleEl.textContent = 'Add New Service';
@@ -2286,6 +2333,7 @@ function openServiceModal(id = null) {
     document.getElementById('service-order').value = services.length + 1;
     document.getElementById('service-desc').value = '';
     document.getElementById('service-short-bio').value = '';
+    document.getElementById('service-badge').value = '';
     document.getElementById('service-tools').value = '';
   }
 
@@ -2305,6 +2353,7 @@ async function handleServiceSubmit(e) {
   const order = parseInt(document.getElementById('service-order').value) || 0;
   const description = document.getElementById('service-desc').value.trim();
   const shortBio = document.getElementById('service-short-bio').value.trim();
+  const badge = document.getElementById('service-badge').value.trim();
   const tools = document.getElementById('service-tools').value.trim();
 
   const fullPayload = {
@@ -2313,6 +2362,7 @@ async function handleServiceSubmit(e) {
     display_order: order,
     description: description || null,
     short_bio: shortBio || null,
+    badge: badge || null,
     tools: tools || null
   };
 
@@ -2336,16 +2386,32 @@ async function handleServiceSubmit(e) {
     closeModal('service-modal');
     loadServices();
   } catch (err) {
-    // If the error is about missing columns, retry with base fields only
+    // If the error is about missing columns, check if we can save without the badge column
     if (err.message && (err.message.includes('column') || err.message.includes('schema'))) {
       try {
-        await doSave({ ...basePayload });
-        showToast('Saved (partial)', 'Service saved — but Description/Bio/Tools were not saved. Run the migration SQL in Supabase to enable these fields.', 'warning');
+        const payloadWithoutBadge = {
+          title,
+          image_url: imageUrl || null,
+          display_order: order,
+          description: description || null,
+          short_bio: shortBio || null,
+          tools: tools || null
+        };
+        await doSave(payloadWithoutBadge);
+        showToast('Success (No Badge)', 'Service saved successfully (description, bio, and tools). Note: Custom badge was not saved because the column is missing in Supabase.', 'warning');
         closeModal('service-modal');
         loadServices();
       } catch (fallbackErr) {
-        console.error('Save service fallback error:', fallbackErr);
-        showToast('Save Failed', fallbackErr.message, 'error');
+        // If it still fails, it means description/short_bio/tools are also missing, so do base payload
+        try {
+          await doSave({ ...basePayload });
+          showToast('Saved (partial)', 'Service saved — but Description/Bio/Tools/Badge were not saved. Run the migration SQL in Supabase to enable these fields.', 'warning');
+          closeModal('service-modal');
+          loadServices();
+        } catch (finalErr) {
+          console.error('Save service final fallback error:', finalErr);
+          showToast('Save Failed', finalErr.message, 'error');
+        }
       }
     } else {
       console.error('Save service error:', err);

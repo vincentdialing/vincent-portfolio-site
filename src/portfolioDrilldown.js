@@ -13,13 +13,25 @@ let portfolioData = {};
 // ==========================================
 async function fetchPortfolioData() {
     try {
-        // Fetch services
-        const { data: services, error: sErr } = await supabase
+        // Fetch services (resilient to missing badge column)
+        let services;
+        const resWithBadge = await supabase
             .from('portfolio_services')
-            .select('key, title, display_order, image_url, description, short_bio, tools')
+            .select('key, title, display_order, image_url, description, short_bio, tools, badge')
             .order('display_order', { ascending: true });
 
-        if (sErr) throw sErr;
+        if (resWithBadge.error) {
+            console.warn('badge column not found in portfolio_services, falling back:', resWithBadge.error.message);
+            const resWithoutBadge = await supabase
+                .from('portfolio_services')
+                .select('key, title, display_order, image_url, description, short_bio, tools')
+                .order('display_order', { ascending: true });
+
+            if (resWithoutBadge.error) throw resWithoutBadge.error;
+            services = resWithoutBadge.data;
+        } else {
+            services = resWithBadge.data;
+        }
 
         // Fetch all projects
         const { data: projects, error: pErr } = await supabase
@@ -29,14 +41,23 @@ async function fetchPortfolioData() {
 
         if (pErr) throw pErr;
 
-        // Fetch all project images
-        const { data: projectImages, error: imgErr } = await supabase
+        // Fetch all project images (resilient to missing redirect columns)
+        let projectImages;
+        const resWithRedirect = await supabase
             .from('portfolio_project_images')
-            .select('project_key, image_url, alt, caption, display_order')
+            .select('project_key, image_url, alt, caption, display_order, redirect_url, redirect_label')
             .order('display_order', { ascending: true });
 
-        if (imgErr) {
-            console.warn('portfolio_project_images table not found or empty, skipping:', imgErr.message);
+        if (resWithRedirect.error) {
+            console.warn('redirect columns not found in portfolio_project_images, falling back:', resWithRedirect.error.message);
+            const resWithoutRedirect = await supabase
+                .from('portfolio_project_images')
+                .select('project_key, image_url, alt, caption, display_order')
+                .order('display_order', { ascending: true });
+            
+            projectImages = resWithoutRedirect.data || [];
+        } else {
+            projectImages = resWithRedirect.data || [];
         }
 
         // Group images by project_key
@@ -49,7 +70,9 @@ async function fetchPortfolioData() {
                 type: 'image',
                 url: img.image_url,
                 alt: img.alt || '',
-                caption: img.caption || ''
+                caption: img.caption || '',
+                redirect_url: img.redirect_url || '',
+                redirect_label: img.redirect_label || ''
             });
         });
 
@@ -62,6 +85,7 @@ async function fetchPortfolioData() {
                 description: svc.description || null,
                 shortBio: svc.short_bio || null,
                 tools: svc.tools || null,
+                badge: svc.badge || null,
                 items: []
             };
         });
@@ -184,7 +208,7 @@ function renderServiceCards(data) {
             : '';
 
         const isCaseStudy = !!svc.shortBio;
-        const badgeText = key === 'social-media-content' ? 'Social Media Graphics' : 'Case Study';
+        const badgeText = svc.badge || (key === 'social-media-content' ? 'Social Media Graphics' : 'Case Study');
         const badgeHtml = isCaseStudy ? `<span class="case-study-badge">${badgeText}</span>` : '';
 
         const card = document.createElement('div');
@@ -905,16 +929,29 @@ function renderLevel3(project) {
                   </div>`;
 
             case 'link':
-                return `
-                  <a href="${block.url}" target="_blank" rel="noopener noreferrer" class="detail-external-link">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
-                      stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                      <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
-                      <polyline points="15 3 21 3 21 9"></polyline>
-                      <line x1="10" y1="14" x2="21" y2="3"></line>
-                    </svg>
-                    <span>${block.label || 'View Full Project'}</span>
-                  </a>`;
+                const isInternal = block.url && block.url.startsWith('#');
+                if (isInternal) {
+                    return `
+                      <a href="${block.url}" class="detail-internal-link-pill">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
+                          stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                          <line x1="5" y1="12" x2="19" y2="12"></line>
+                          <polyline points="12 5 19 12 12 19"></polyline>
+                        </svg>
+                        <span>${block.label || 'View Related Project'}</span>
+                      </a>`;
+                } else {
+                    return `
+                      <a href="${block.url}" target="_blank" rel="noopener noreferrer" class="detail-external-link">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
+                          stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                          <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+                          <polyline points="15 3 21 3 21 9"></polyline>
+                          <line x1="10" y1="14" x2="21" y2="3"></line>
+                        </svg>
+                        <span>${block.label || 'View Full Project'}</span>
+                      </a>`;
+                }
 
             case 'certificate':
                 return `
@@ -936,12 +973,24 @@ function renderLevel3(project) {
     // Build image gallery (bottom section)
     const imageGalleryHtml = imageBlocks.length > 0
         ? `<div class="detail-placeholder-gallery detail-image-gallery">
-            ${imageBlocks.map(block => `
-              <div class="gallery-item detail-gallery-image-item is-loading watermark-overlay" style="background: ${project.gradient};">
+            ${imageBlocks.map(block => {
+              const redirectUrl = block.redirect_url || '';
+              const redirectLabel = block.redirect_label || 'View Related Project';
+              return `
+              <div class="gallery-item detail-gallery-image-item is-loading watermark-overlay" style="background: ${project.gradient}; position: relative;">
                 <div class="portfolio-tile-image-loading"></div>
                 <img src="${block.url}" alt="${block.alt || project.title}" loading="lazy" onload="this.parentElement.classList.remove('is-loading'); this.parentElement.classList.add('is-loaded');" />
-              </div>
-            `).join('')}
+                ${redirectUrl ? `
+                  <a href="${redirectUrl}" class="image-redirect-overlay-pill" onclick="event.stopPropagation();">
+                    <span>${redirectLabel}</span>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none"
+                      stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                      <line x1="5" y1="12" x2="19" y2="12"></line>
+                      <polyline points="12 5 19 12 12 19"></polyline>
+                    </svg>
+                  </a>` : ''}
+              </div>`;
+            }).join('')}
            </div>`
         : `<div class="detail-placeholder-gallery">
             <div class="gallery-item" style="background: ${project.gradient}; opacity: 0.6;">

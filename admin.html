@@ -365,7 +365,10 @@
                   <span>Enable Write Policies (SQL)</span>
                   <button class="btn-copy-code" data-copy-target="sql-code-block">Copy</button>
                 </div>
-                <pre class="code-block" id="sql-code-block"><code>-- 1. Enable insert/update/delete for Anon Key on all tables
+                <pre class="code-block" id="sql-code-block"><code>-- 1. Add Custom Pill Badge support to Services
+ALTER TABLE portfolio_services ADD COLUMN IF NOT EXISTS badge TEXT;
+
+-- 2. Enable insert/update/delete for Anon Key on all tables
 -- portfolio_services
 CREATE POLICY "Allow anon insert" ON portfolio_services FOR INSERT WITH CHECK (true);
 CREATE POLICY "Allow anon update" ON portfolio_services FOR UPDATE USING (true) WITH CHECK (true);
@@ -761,6 +764,10 @@ CREATE POLICY "Allow anon delete" ON brands FOR DELETE USING (true);
         <div class="form-group">
           <label for="service-short-bio">Short Bio / Highlight Stat</label>
           <input type="text" id="service-short-bio" placeholder="e.g. 12 brands reached across 3 countries">
+        </div>
+        <div class="form-group">
+          <label for="service-badge">Pill Badge Text (Custom Label)</label>
+          <input type="text" id="service-badge" placeholder="e.g. Video Production, Social Graphics (defaults to Case Study)">
         </div>
         <div class="form-group">
           <label for="service-tools">Tools Used (comma separated)</label>

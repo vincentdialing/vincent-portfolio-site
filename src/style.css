@@ -3032,6 +3032,51 @@ nav.floating-nav {
   transform: scale(1);
 }
 
+/* Image Redirect Overlay Pill */
+.image-redirect-overlay-pill {
+  position: absolute;
+  bottom: 12px;
+  right: 12px;
+  z-index: 50;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.5rem 0.9rem;
+  background: rgba(15, 23, 42, 0.65);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  color: #fff;
+  font-family: 'Inter', sans-serif;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  text-decoration: none;
+  border-radius: 100px;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  opacity: 0.9;
+}
+
+.image-redirect-overlay-pill:hover {
+  background: #3b82f6;
+  border-color: #60a5fa;
+  color: #fff;
+  opacity: 1;
+  transform: translateY(-2px) scale(1.03);
+  box-shadow: 0 6px 18px rgba(59, 130, 246, 0.4);
+}
+
+.image-redirect-overlay-pill svg {
+  transition: transform 0.25s ease;
+  flex-shrink: 0;
+}
+
+.image-redirect-overlay-pill:hover svg {
+  transform: translateX(2px);
+}
+
 /* Lightbox / Image Viewer Modal */
 .image-lightbox-overlay {
   position: fixed;
@@ -3264,6 +3309,54 @@ nav.floating-nav {
 
 .detail-certificate-link:hover svg {
   transform: translateY(-1px);
+}
+
+/* ==========================================
+   Internal Link Pill Button
+   ========================================== */
+
+.detail-internal-link-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.9rem 1.55rem;
+  margin: 1.25rem 0 0;
+  background: rgba(59, 130, 246, 0.1);
+  border: 1px solid rgba(59, 130, 246, 0.25);
+  border-radius: 100px;
+  color: #60a5fa;
+  font-family: 'Inter', sans-serif;
+  font-size: 0.94rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  text-decoration: none;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+.detail-internal-link-pill:hover {
+  background: rgba(59, 130, 246, 0.2);
+  border-color: rgba(59, 130, 246, 0.5);
+  color: #fff;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(59, 130, 246, 0.15);
+}
+
+.detail-internal-link-pill svg {
+  transition: transform 0.25s ease;
+  flex-shrink: 0;
+}
+
+.detail-internal-link-pill:hover svg {
+  transform: translateX(4px);
+}
+
+.detail-internal-link-pill+.detail-internal-link-pill,
+.detail-external-link+.detail-internal-link-pill,
+.detail-internal-link-pill+.detail-external-link {
+  margin-left: 0.9rem;
 }
 
 /* ==========================================

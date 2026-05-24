@@ -310,7 +310,11 @@ STYLE RULES:
 `;
 
 function getGroqApiKey() {
-  return localStorage.getItem('admin_groq_api_key') || '';
+  const localKey = localStorage.getItem('admin_groq_api_key')?.trim();
+  if (localKey) return localKey;
+  
+  // Fallback to Vite environment variable configured in Vercel/local env
+  return import.meta.env.VITE_GROQ_API_KEY || '';
 }
 
 function initAIWriter() {
@@ -339,6 +343,16 @@ function initAIWriter() {
     const savedKey = getGroqApiKey();
     const keyInput = document.getElementById('config-gemini-key') || document.getElementById('config-groq-key');
     if (savedKey && keyInput) keyInput.value = savedKey;
+
+    // Show/hide no key warning on load
+    const noKeyMsg = document.getElementById('ai-no-key-msg');
+    if (noKeyMsg) {
+      if (savedKey) {
+        noKeyMsg.classList.add('hidden');
+      } else {
+        noKeyMsg.classList.remove('hidden');
+      }
+    }
   }
 
   // Toggle key visibility

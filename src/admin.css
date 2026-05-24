@@ -1921,43 +1921,201 @@ body {
   animation: aiPulse 1.5s ease-in-out infinite;
 }
 
+/* Mobile Header styles */
+.admin-mobile-header {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 60px;
+  background-color: var(--bg-secondary);
+  border-bottom: 1px solid var(--border-color);
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 1.25rem;
+  z-index: 1010;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+.mobile-menu-btn {
+  background: none;
+  border: none;
+  color: var(--text-primary);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px;
+  border-radius: 6px;
+  transition: background-color 0.2s;
+}
+
+.mobile-menu-btn:hover {
+  background-color: var(--bg-tertiary);
+}
+
+.mobile-menu-btn svg {
+  width: 22px;
+  height: 22px;
+}
+
+.mobile-logo-group {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.mobile-logo-group .logo-title {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 1.05rem;
+  letter-spacing: -0.02em;
+  color: var(--text-primary);
+}
+
+.mobile-logo-group .logo-subtitle {
+  font-size: 0.65rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-top: -2px;
+}
+
+.mobile-status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: var(--text-muted);
+  box-shadow: 0 0 8px rgba(255,255,255,0.1);
+  transition: all 0.2s;
+}
+
+.mobile-status-dot.connected {
+  background-color: var(--success);
+  box-shadow: 0 0 8px var(--success);
+}
+
+.mobile-status-dot.error {
+  background-color: var(--error);
+  box-shadow: 0 0 8px var(--error);
+}
+
+/* Sidebar backdrop */
+.sidebar-backdrop {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background-color: rgba(9, 9, 11, 0.65);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  z-index: 990;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.sidebar-backdrop.active {
+  display: block;
+  opacity: 1;
+}
+
 /* ==========================================================================
    MOBILE RESPONSIVENESS
    ========================================================================== */
 
-@media (max-width: 768px) {
+@media (max-width: 991px) {
+  .admin-mobile-header {
+    display: flex;
+  }
+  
   .admin-sidebar {
-    width: 68px;
-    padding: 1rem 0.5rem;
+    width: var(--sidebar-width);
+    position: fixed;
+    top: 60px;
+    bottom: 0;
+    left: 0;
+    height: calc(100vh - 60px);
+    z-index: 1000;
+    transform: translateX(-100%);
+    transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    box-shadow: 20px 0 40px rgba(0, 0, 0, 0.4);
+    border-right: 1px solid var(--border-color);
   }
-  .sidebar-header .logo-text,
-  .db-status-card,
-  .nav-tab-btn {
-    font-size: 0;
-    justify-content: center;
+  
+  .admin-sidebar.open {
+    transform: translateX(0);
   }
-  .nav-tab-btn {
-    padding: 0.75rem;
-  }
-  .nav-icon {
-    width: 20px;
-    height: 20px;
-  }
-  .sidebar-footer .view-site-link {
-    font-size: 0;
-    justify-content: center;
-  }
-  .footer-icon {
-    width: 18px;
-    height: 18px;
-  }
+  
   .admin-main {
-    margin-left: 68px;
-    padding: 1.5rem;
+    margin-left: 0;
+    padding: 1.5rem 1.25rem;
+    padding-top: calc(60px + 1.5rem);
   }
+  
   .main-header {
     flex-direction: column;
+    align-items: stretch;
     gap: 1rem;
+  }
+  
+  .header-actions {
+    display: flex;
+    width: 100%;
+  }
+  
+  .header-actions .btn {
+    width: 100%;
+  }
+
+  .filter-bar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.75rem;
+  }
+
+  .filter-bar > * {
+    margin-left: 0 !important;
+    width: 100% !important;
+  }
+}
+
+@media (max-width: 768px) {
+  .form-row-two {
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+  }
+}
+
+@media (max-width: 580px) {
+  .modal-card {
+    width: 95%;
+    max-height: 90vh;
+  }
+
+  #projects-edit-list,
+  #gallery-edit-list,
+  #services-edit-list,
+  #brands-edit-list,
+  #community-edit-list {
+    grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)) !important;
+    gap: 0.5rem !important;
+  }
+  
+  .bento-card-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.75rem;
+  }
+  
+  .bento-card-header div {
+    width: 100%;
+    display: flex;
+    gap: 0.5rem;
+  }
+  
+  .bento-card-header div .btn {
+    flex: 1;
   }
 }
 

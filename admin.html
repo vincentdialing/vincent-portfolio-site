@@ -49,6 +49,25 @@
   </div>
 
   <div class="admin-layout">
+    <!-- Mobile top bar header -->
+    <div class="admin-mobile-header">
+      <button id="sidebar-toggle" class="mobile-menu-btn" aria-label="Toggle Navigation">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="3" y1="12" x2="21" y2="12"></line>
+          <line x1="3" y1="6" x2="21" y2="6"></line>
+          <line x1="3" y1="18" x2="21" y2="18"></line>
+        </svg>
+      </button>
+      <div class="mobile-logo-group">
+        <span class="logo-title">Vincent Dialing</span>
+        <span class="logo-subtitle">Admin Control</span>
+      </div>
+      <div class="mobile-status-dot connected" id="mobile-status-dot"></div>
+    </div>
+
+    <!-- Sidebar Backdrop for overlay -->
+    <div class="sidebar-backdrop" id="sidebar-backdrop"></div>
+
     <!-- Sidebar Navigation -->
     <aside class="admin-sidebar">
       <div class="sidebar-header">

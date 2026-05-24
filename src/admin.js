@@ -67,13 +67,16 @@ function initSupabase() {
 
 function updateStatusBadge(status, label) {
   const badge = document.getElementById('status-badge');
-  if (!badge) return;
+  if (badge) {
+    badge.className = `status-indicator ${status}`;
+    const labelEl = badge.querySelector('.status-label');
+    if (labelEl) labelEl.textContent = label;
+  }
 
-  badge.className = `status-indicator ${status}`;
-  const dot = badge.querySelector('.status-dot');
-  const labelEl = badge.querySelector('.status-label');
-  
-  if (labelEl) labelEl.textContent = label;
+  const mobileDot = document.getElementById('mobile-status-dot');
+  if (mobileDot) {
+    mobileDot.className = `mobile-status-dot ${status}`;
+  }
 }
 
 async function testConnection() {
@@ -3350,6 +3353,9 @@ document.addEventListener('DOMContentLoaded', async () => {
   // Initialize login gating
   initLoginControl();
 
+  // Initialize mobile responsive menu
+  initMobileMenu();
+
   // Reveal page
   document.body.classList.add('loaded');
   const loader = document.getElementById('page-loader');
@@ -3890,4 +3896,45 @@ function initThumbnailGenerator() {
       }
     });
   }
+}
+
+function initMobileMenu() {
+  const toggleBtn = document.getElementById('sidebar-toggle');
+  const sidebar = document.querySelector('.admin-sidebar');
+  const backdrop = document.getElementById('sidebar-backdrop');
+
+  if (!toggleBtn || !sidebar || !backdrop) return;
+
+  function openSidebar() {
+    sidebar.classList.add('open');
+    backdrop.classList.add('active');
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closeSidebar() {
+    sidebar.classList.remove('open');
+    backdrop.classList.remove('active');
+    document.body.style.overflow = '';
+  }
+
+  toggleBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    if (sidebar.classList.contains('open')) {
+      closeSidebar();
+    } else {
+      openSidebar();
+    }
+  });
+
+  backdrop.addEventListener('click', closeSidebar);
+
+  // Close sidebar when clicking navigation buttons on mobile viewport
+  const navBtns = sidebar.querySelectorAll('.nav-tab-btn, .view-site-link, #logout-btn');
+  navBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      if (window.innerWidth <= 991) {
+        closeSidebar();
+      }
+    });
+  });
 }

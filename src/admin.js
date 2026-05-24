@@ -1113,6 +1113,34 @@ function renderDetailBlocks() {
           </div>
         </div>
       `;
+    } else if (block.type === 'image') {
+      formFieldsHtml = `
+        <div class="block-field-group">
+          <label>Image Source (URL or Upload)</label>
+          <div class="input-with-upload">
+            <input type="text" class="block-input-url" value="${block.url || ''}" placeholder="https://..." required>
+            <button type="button" class="btn btn-secondary btn-sm block-image-upload-btn btn-with-icon" style="padding: 0.5rem 0.8rem;">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"/></svg>
+              Upload
+            </button>
+            <input type="file" class="block-image-file-input hidden" accept="image/*" style="display:none;">
+          </div>
+        </div>
+        <div class="block-field-row">
+          <div class="block-field-group">
+            <label>Alt Text / Caption (Optional)</label>
+            <input type="text" class="block-input-alt" value="${block.alt || ''}" placeholder="Image description">
+          </div>
+          <div class="block-field-group">
+            <label>Redirect URL (Optional - click image to open link)</label>
+            <input type="text" class="block-input-redirect-url" value="${block.redirect_url || ''}" placeholder="https://...">
+          </div>
+          <div class="block-field-group">
+            <label>Redirect Label (Optional)</label>
+            <input type="text" class="block-input-redirect-label" value="${block.redirect_label || ''}" placeholder="View Related Project">
+          </div>
+        </div>
+      `;
     }
 
     return `
@@ -1171,6 +1199,48 @@ function renderDetailBlocks() {
     });
   });
 
+  // Wire upload buttons inside image blocks
+  container.querySelectorAll('.block-image-upload-btn').forEach(btn => {
+    const fileInput = btn.nextElementSibling;
+    btn.addEventListener('click', () => {
+      fileInput.click();
+    });
+
+    fileInput.addEventListener('change', async (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      const originalText = btn.innerHTML;
+      btn.innerHTML = '<span class="spinner-small" style="width:12px;height:12px;margin-right:0;"></span>...';
+      btn.disabled = true;
+
+      try {
+        const bucketName = document.getElementById('upload-bucket-name')?.value.trim() || 'portfolio';
+        const uploadedUrl = await uploadFileToSupabase(file, bucketName);
+        
+        // Update input and block state
+        const blockEl = btn.closest('.detail-editor-block');
+        const idx = parseInt(blockEl.dataset.index);
+        
+        currentDetailBlocks[idx].url = uploadedUrl;
+        
+        // Update input field on UI
+        const urlInput = blockEl.querySelector('.block-input-url');
+        if (urlInput) {
+          urlInput.value = uploadedUrl;
+        }
+        
+        showToast('Uploaded', 'Image uploaded and converted successfully!', 'success');
+      } catch (err) {
+        console.error('Content image upload failed:', err);
+        showToast('Upload Failed', err.message || 'Could not upload image.', 'error');
+      } finally {
+        btn.innerHTML = originalText;
+        btn.disabled = false;
+      }
+    });
+  });
+
   // Track live changes back to state when editing
   container.querySelectorAll('input, textarea').forEach(input => {
     input.addEventListener('change', saveBlockInputs);
@@ -1202,6 +1272,11 @@ function saveBlockInputs() {
     } else if (block.type === 'certificate') {
       block.certificateId = blockEl.querySelector('.block-input-cert-id').value;
       block.label = blockEl.querySelector('.block-input-label').value;
+    } else if (block.type === 'image') {
+      block.url = blockEl.querySelector('.block-input-url').value;
+      block.alt = blockEl.querySelector('.block-input-alt').value;
+      block.redirect_url = blockEl.querySelector('.block-input-redirect-url').value;
+      block.redirect_label = blockEl.querySelector('.block-input-redirect-label').value;
     }
   });
 }
@@ -1227,6 +1302,64 @@ function initJsonBlockBuilder() {
     currentDetailBlocks.push({ type: 'video', url: '', thumbnail: '', caption: '', duration: '' });
     renderDetailBlocks();
   });
+
+  const addImgBtn = document.getElementById('add-image-block-btn');
+  if (addImgBtn) {
+    addImgBtn.addEventListener('click', () => {
+      saveBlockInputs();
+      currentDetailBlocks.push({ type: 'image', url: '', alt: '', redirect_url: '', redirect_label: '' });
+      renderDetailBlocks();
+    });
+  }
+
+  const addBatchBtn = document.getElementById('add-batch-images-btn');
+  const batchInput = document.getElementById('project-batch-images-input');
+  if (addBatchBtn && batchInput) {
+    addBatchBtn.addEventListener('click', () => {
+      batchInput.click();
+    });
+
+    batchInput.addEventListener('change', async (e) => {
+      const files = Array.from(e.target.files);
+      if (files.length === 0) return;
+
+      const originalText = addBatchBtn.innerHTML;
+      addBatchBtn.disabled = true;
+      addBatchBtn.innerHTML = `Uploading 0/${files.length}...`;
+
+      saveBlockInputs();
+
+      const bucketName = document.getElementById('upload-bucket-name')?.value.trim() || 'portfolio';
+      let uploadedCount = 0;
+
+      for (const file of files) {
+        try {
+          addBatchBtn.innerHTML = `Uploading ${uploadedCount + 1}/${files.length}...`;
+          const url = await uploadFileToSupabase(file, bucketName);
+          
+          currentDetailBlocks.push({
+            type: 'image',
+            url: url,
+            alt: file.name.replace(/\.[^/.]+$/, '').replace(/[-_]/g, ' '), // Clean name for Alt text
+            redirect_url: '',
+            redirect_label: ''
+          });
+          
+          uploadedCount++;
+        } catch (err) {
+          console.error(`Batch upload failed for ${file.name}:`, err);
+          showToast('Upload Error', `Failed to upload ${file.name}`, 'error');
+        }
+      }
+
+      addBatchBtn.innerHTML = originalText;
+      addBatchBtn.disabled = false;
+      batchInput.value = '';
+
+      renderDetailBlocks();
+      showToast('Batch Complete', `Successfully uploaded ${uploadedCount} of ${files.length} images!`, 'success');
+    });
+  }
 
   document.getElementById('add-link-block-btn').addEventListener('click', () => {
     saveBlockInputs();

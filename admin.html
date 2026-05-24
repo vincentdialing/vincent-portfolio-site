@@ -598,9 +598,12 @@ CREATE POLICY "Allow anon delete" ON brands FOR DELETE USING (true);
             <div class="detail-block-actions">
               <button type="button" class="btn btn-secondary btn-xs" id="add-text-block-btn">+ Text Block</button>
               <button type="button" class="btn btn-secondary btn-xs" id="add-list-block-btn">+ List Block</button>
+              <button type="button" class="btn btn-secondary btn-xs" id="add-image-block-btn">+ Image Block</button>
+              <button type="button" class="btn btn-secondary btn-xs" id="add-batch-images-btn" style="border-color: var(--accent-color); color: var(--accent-light);">+ Batch Upload Images</button>
               <button type="button" class="btn btn-secondary btn-xs" id="add-video-block-btn">+ Video Block</button>
               <button type="button" class="btn btn-secondary btn-xs" id="add-link-block-btn">+ Link Block</button>
               <button type="button" class="btn btn-secondary btn-xs" id="add-cert-block-btn">+ Certificate Block</button>
+              <input type="file" id="project-batch-images-input" accept="image/*" multiple style="display: none;">
             </div>
           </div>
           <div class="detail-blocks-list" id="project-detail-blocks-container">

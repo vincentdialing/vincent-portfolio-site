@@ -5251,7 +5251,7 @@ body {
   overflow: hidden;
   pointer-events: none;
   z-index: 2;
-  opacity: 0.05;
+  opacity: 0.15;
   /* Visible at rest but subtle and intriguing */
   transition: opacity 0.45s cubic-bezier(0.22, 1, 0.36, 1);
 }
@@ -5271,6 +5271,10 @@ body {
   display: block;
   transform: scale(0.92);
   transition: transform 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+  background: linear-gradient(135deg, #2563eb, #60a5fa);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
 }
 
 /* Larger number for the featured tall card */

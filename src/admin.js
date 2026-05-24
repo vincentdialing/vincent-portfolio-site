@@ -1858,11 +1858,17 @@ function wireModalTrashButtons(listEl, markedSet, selector = '.entity-edit-trash
       const card = btn.closest('.edit-thumb-card');
       if (markedSet.has(id)) {
         markedSet.delete(id);
-        if (card) card.style.opacity = '1';
+        if (card) {
+          card.classList.remove('marked-delete');
+          card.style.opacity = '1';
+        }
         btn.style.background = 'rgba(0,0,0,0.45)';
       } else {
         markedSet.add(id);
-        if (card) card.style.opacity = '0.45';
+        if (card) {
+          card.classList.add('marked-delete');
+          card.style.opacity = '0.5';
+        }
         btn.style.background = 'linear-gradient(90deg,#ef4444,#f97316)';
       }
     });
@@ -1885,16 +1891,20 @@ async function openProjectsEditModal() {
   if (!listEl) return;
 
   listEl.innerHTML = allProjects.map(p => `
-    <div class="edit-thumb-card" data-id="${p.id}" style="position:relative; border-radius:8px; overflow:hidden; background:var(--bg-tertiary); border:1px solid var(--border-color);">
+    <div class="edit-thumb-card" data-id="${p.id}" style="position:relative; border-radius:8px; overflow:hidden; background:var(--bg-tertiary); border:1px solid var(--border-color); cursor:grab;">
       <img src="${p.image_url || 'https://placehold.co/600x380'}" style="width:100%; height:105px; object-fit:cover; display:block;" alt="${p.title}">
-      <div style="position:absolute; top:8px; right:8px; display:flex; gap:6px;">
-        <button class="entity-edit-trash" data-id="${p.id}" title="Mark for delete" style="background: rgba(0,0,0,0.45); border: none; color: #fff; width:34px; height:34px; border-radius:8px; display:flex; align-items:center; justify-content:center;">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;color:var(--text-primary);"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+      <!-- Drag handle indicator -->
+      <div class="drag-handle" style="position:absolute; top:8px; left:8px; background: rgba(0,0,0,0.65); color: #fff; padding: 4px; border-radius: 4px; z-index: 10; pointer-events: none; border: 1px solid rgba(255,255,255,0.15); display: flex; align-items: center; justify-content: center; width: 28px; height: 28px;">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width:12px;height:12px;"><circle cx="9" cy="5" r="1"/><circle cx="9" cy="12" r="1"/><circle cx="9" cy="19" r="1"/><circle cx="15" cy="5" r="1"/><circle cx="15" cy="12" r="1"/><circle cx="15" cy="19" r="1"/></svg>
+      </div>
+      <div style="position:absolute; top:8px; right:8px; display:flex; gap:6px; z-index:10;">
+        <button class="entity-edit-trash" data-id="${p.id}" title="Mark for delete" style="background: rgba(239, 68, 68, 0.9); border: none; color: #fff; width: 28px; height: 28px; border-radius: 4px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s; border: 1px solid rgba(255,255,255,0.15);">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width:13px;height:13px;color:#fff;"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
         </button>
       </div>
       <div style="padding:0.6rem;">
-        <div style="font-weight:600; font-size:0.86rem; color:var(--text-primary); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${p.title}</div>
-        <div style="font-size:0.78rem; color:var(--text-secondary);">Order: ${p.display_order}</div>
+        <div style="font-weight:600; font-size:0.86rem; color:var(--text-primary); line-height: 1.25; min-height: 2.2rem; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; white-space: normal;" title="${p.title}">${p.title}</div>
+        <div style="font-size:0.78rem; color:var(--text-secondary); margin-top: 0.15rem;">Order: ${p.display_order}</div>
       </div>
     </div>
   `).join('');
@@ -1938,16 +1948,20 @@ async function openServicesEditModal() {
   if (!listEl) return;
 
   listEl.innerHTML = services.map(s => `
-    <div class="edit-thumb-card" data-id="${s.id}" style="position:relative; border-radius:8px; overflow:hidden; background:var(--bg-tertiary); border:1px solid var(--border-color);">
+    <div class="edit-thumb-card" data-id="${s.id}" style="position:relative; border-radius:8px; overflow:hidden; background:var(--bg-tertiary); border:1px solid var(--border-color); cursor:grab;">
       <img src="${s.image_url || 'https://placehold.co/600x380'}" style="width:100%; height:105px; object-fit:cover; display:block;" alt="${s.title}">
-      <div style="position:absolute; top:8px; right:8px; display:flex; gap:6px;">
-        <button class="entity-edit-trash" data-id="${s.id}" title="Mark for delete" style="background: rgba(0,0,0,0.45); border: none; color: #fff; width:34px; height:34px; border-radius:8px; display:flex; align-items:center; justify-content:center;">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;color:var(--text-primary);"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+      <!-- Drag handle indicator -->
+      <div class="drag-handle" style="position:absolute; top:8px; left:8px; background: rgba(0,0,0,0.65); color: #fff; padding: 4px; border-radius: 4px; z-index: 10; pointer-events: none; border: 1px solid rgba(255,255,255,0.15); display: flex; align-items: center; justify-content: center; width: 28px; height: 28px;">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width:12px;height:12px;"><circle cx="9" cy="5" r="1"/><circle cx="9" cy="12" r="1"/><circle cx="9" cy="19" r="1"/><circle cx="15" cy="5" r="1"/><circle cx="15" cy="12" r="1"/><circle cx="15" cy="19" r="1"/></svg>
+      </div>
+      <div style="position:absolute; top:8px; right:8px; display:flex; gap:6px; z-index:10;">
+        <button class="entity-edit-trash" data-id="${s.id}" title="Mark for delete" style="background: rgba(239, 68, 68, 0.9); border: none; color: #fff; width: 28px; height: 28px; border-radius: 4px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s; border: 1px solid rgba(255,255,255,0.15);">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width:13px;height:13px;color:#fff;"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
         </button>
       </div>
       <div style="padding:0.6rem;">
-        <div style="font-weight:600; font-size:0.86rem; color:var(--text-primary); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${s.title}</div>
-        <div style="font-size:0.78rem; color:var(--text-secondary);">Order: ${s.display_order}</div>
+        <div style="font-weight:600; font-size:0.86rem; color:var(--text-primary); line-height: 1.25; min-height: 2.2rem; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; white-space: normal;" title="${s.title}">${s.title}</div>
+        <div style="font-size:0.78rem; color:var(--text-secondary); margin-top: 0.15rem;">Order: ${s.display_order}</div>
       </div>
     </div>
   `).join('');
@@ -1991,16 +2005,20 @@ async function openBrandsEditModal() {
   if (!listEl) return;
 
   listEl.innerHTML = brands.map((b, index) => `
-    <div class="edit-thumb-card" data-id="${b.id}" style="position:relative; border-radius:8px; overflow:hidden; background:var(--bg-tertiary); border:1px solid var(--border-color);">
+    <div class="edit-thumb-card" data-id="${b.id}" style="position:relative; border-radius:8px; overflow:hidden; background:var(--bg-tertiary); border:1px solid var(--border-color); cursor:grab;">
       <img src="${b.logo_url || 'https://placehold.co/600x380'}" style="width:100%; height:105px; object-fit:contain; background:#fff; display:block;" alt="${b.name}">
-      <div style="position:absolute; top:8px; right:8px; display:flex; gap:6px;">
-        <button class="entity-edit-trash" data-id="${b.id}" title="Mark for delete" style="background: rgba(0,0,0,0.45); border: none; color: #fff; width:34px; height:34px; border-radius:8px; display:flex; align-items:center; justify-content:center;">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;color:var(--text-primary);"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+      <!-- Drag handle indicator -->
+      <div class="drag-handle" style="position:absolute; top:8px; left:8px; background: rgba(0,0,0,0.65); color: #fff; padding: 4px; border-radius: 4px; z-index: 10; pointer-events: none; border: 1px solid rgba(255,255,255,0.15); display: flex; align-items: center; justify-content: center; width: 28px; height: 28px;">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width:12px;height:12px;"><circle cx="9" cy="5" r="1"/><circle cx="9" cy="12" r="1"/><circle cx="9" cy="19" r="1"/><circle cx="15" cy="5" r="1"/><circle cx="15" cy="12" r="1"/><circle cx="15" cy="19" r="1"/></svg>
+      </div>
+      <div style="position:absolute; top:8px; right:8px; display:flex; gap:6px; z-index:10;">
+        <button class="entity-edit-trash" data-id="${b.id}" title="Mark for delete" style="background: rgba(239, 68, 68, 0.9); border: none; color: #fff; width: 28px; height: 28px; border-radius: 4px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s; border: 1px solid rgba(255,255,255,0.15);">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width:13px;height:13px;color:#fff;"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2 2v2"/></svg>
         </button>
       </div>
       <div style="padding:0.6rem;">
-        <div style="font-weight:600; font-size:0.86rem; color:var(--text-primary); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${b.name}</div>
-        <div style="font-size:0.78rem; color:var(--text-secondary);">Position: ${index + 1}</div>
+        <div style="font-weight:600; font-size:0.86rem; color:var(--text-primary); line-height: 1.25; min-height: 2.2rem; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; white-space: normal;" title="${b.name}">${b.name}</div>
+        <div style="font-size:0.78rem; color:var(--text-secondary); margin-top: 0.15rem;">Position: ${index + 1}</div>
       </div>
     </div>
   `).join('');
@@ -2056,16 +2074,20 @@ async function openCommunityEditModal() {
   if (!listEl) return;
 
   listEl.innerHTML = communityCards.map(c => `
-    <div class="edit-thumb-card" data-id="${c.id}" style="position:relative; border-radius:8px; overflow:hidden; background:var(--bg-tertiary); border:1px solid var(--border-color);">
+    <div class="edit-thumb-card" data-id="${c.id}" style="position:relative; border-radius:8px; overflow:hidden; background:var(--bg-tertiary); border:1px solid var(--border-color); cursor:grab;">
       <img src="${c.image_url || 'https://placehold.co/600x380'}" style="width:100%; height:105px; object-fit:cover; display:block;" alt="${c.title}">
-      <div style="position:absolute; top:8px; right:8px; display:flex; gap:6px;">
-        <button class="entity-edit-trash" data-id="${c.id}" title="Mark for delete" style="background: rgba(0,0,0,0.45); border: none; color: #fff; width:34px; height:34px; border-radius:8px; display:flex; align-items:center; justify-content:center;">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;color:var(--text-primary);"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+      <!-- Drag handle indicator -->
+      <div class="drag-handle" style="position:absolute; top:8px; left:8px; background: rgba(0,0,0,0.65); color: #fff; padding: 4px; border-radius: 4px; z-index: 10; pointer-events: none; border: 1px solid rgba(255,255,255,0.15); display: flex; align-items: center; justify-content: center; width: 28px; height: 28px;">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width:12px;height:12px;"><circle cx="9" cy="5" r="1"/><circle cx="9" cy="12" r="1"/><circle cx="9" cy="19" r="1"/><circle cx="15" cy="5" r="1"/><circle cx="15" cy="12" r="1"/><circle cx="15" cy="19" r="1"/></svg>
+      </div>
+      <div style="position:absolute; top:8px; right:8px; display:flex; gap:6px; z-index:10;">
+        <button class="entity-edit-trash" data-id="${c.id}" title="Mark for delete" style="background: rgba(239, 68, 68, 0.9); border: none; color: #fff; width: 28px; height: 28px; border-radius: 4px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s; border: 1px solid rgba(255,255,255,0.15);">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width:13px;height:13px;color:#fff;"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
         </button>
       </div>
       <div style="padding:0.6rem;">
-        <div style="font-weight:600; font-size:0.86rem; color:var(--text-primary); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${c.title}</div>
-        <div style="font-size:0.78rem; color:var(--text-secondary);">Order: ${c.display_order}</div>
+        <div style="font-weight:600; font-size:0.86rem; color:var(--text-primary); line-height: 1.25; min-height: 2.2rem; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; white-space: normal;" title="${c.title}">${c.title}</div>
+        <div style="font-size:0.78rem; color:var(--text-secondary); margin-top: 0.15rem;">Order: ${c.display_order}</div>
       </div>
     </div>
   `).join('');

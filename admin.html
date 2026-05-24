@@ -655,15 +655,17 @@ CREATE POLICY "Allow anon delete" ON brands FOR DELETE USING (true);
 
   <!-- 2c. PROJECTS EDIT MODAL -->
   <div class="modal-backdrop" id="projects-edit-modal">
-    <div class="modal-card">
+    <div class="modal-card modal-large">
       <div class="modal-header">
         <h3>Edit Projects</h3>
         <button class="modal-close-btn">&times;</button>
       </div>
-      <div class="modal-body-padding" style="padding: 1rem;">
+      <div class="modal-body-padding" style="padding: 1.25rem; display: flex; flex-direction: column; overflow: hidden; height: 100%;">
         <p style="margin:0 0 0.75rem 0; color: var(--text-secondary);">Drag to reorder. Click trash to mark delete. Save to apply.</p>
-        <div id="projects-edit-list" style="display:grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 0.75rem;"></div>
-        <div class="modal-actions" style="margin-top: 1rem; display: flex; justify-content: flex-end; gap: 0.75rem;">
+        <div class="edit-list-scroll-wrap" style="flex: 1; overflow-y: auto; margin-bottom: 1rem; padding-right: 0.25rem; min-height: 0;">
+          <div id="projects-edit-list" style="display:grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 0.75rem;"></div>
+        </div>
+        <div class="modal-actions" style="margin-top: auto; display: flex; justify-content: flex-end; gap: 0.75rem;">
           <button type="button" class="btn btn-secondary modal-cancel-btn">Cancel</button>
           <button type="button" class="btn btn-primary" id="projects-edit-save">Save Changes</button>
         </div>
@@ -673,15 +675,17 @@ CREATE POLICY "Allow anon delete" ON brands FOR DELETE USING (true);
 
   <!-- 2d. SERVICES EDIT MODAL -->
   <div class="modal-backdrop" id="services-edit-modal">
-    <div class="modal-card">
+    <div class="modal-card modal-large">
       <div class="modal-header">
         <h3>Edit Services</h3>
         <button class="modal-close-btn">&times;</button>
       </div>
-      <div class="modal-body-padding" style="padding: 1rem;">
+      <div class="modal-body-padding" style="padding: 1.25rem; display: flex; flex-direction: column; overflow: hidden; height: 100%;">
         <p style="margin:0 0 0.75rem 0; color: var(--text-secondary);">Drag to reorder. Click trash to mark delete. Save to apply.</p>
-        <div id="services-edit-list" style="display:grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 0.75rem;"></div>
-        <div class="modal-actions" style="margin-top: 1rem; display: flex; justify-content: flex-end; gap: 0.75rem;">
+        <div class="edit-list-scroll-wrap" style="flex: 1; overflow-y: auto; margin-bottom: 1rem; padding-right: 0.25rem; min-height: 0;">
+          <div id="services-edit-list" style="display:grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 0.75rem;"></div>
+        </div>
+        <div class="modal-actions" style="margin-top: auto; display: flex; justify-content: flex-end; gap: 0.75rem;">
           <button type="button" class="btn btn-secondary modal-cancel-btn">Cancel</button>
           <button type="button" class="btn btn-primary" id="services-edit-save">Save Changes</button>
         </div>
@@ -691,15 +695,17 @@ CREATE POLICY "Allow anon delete" ON brands FOR DELETE USING (true);
 
   <!-- 2e. BRANDS EDIT MODAL -->
   <div class="modal-backdrop" id="brands-edit-modal">
-    <div class="modal-card">
+    <div class="modal-card modal-large">
       <div class="modal-header">
         <h3>Edit Brands</h3>
         <button class="modal-close-btn">&times;</button>
       </div>
-      <div class="modal-body-padding" style="padding: 1rem;">
+      <div class="modal-body-padding" style="padding: 1.25rem; display: flex; flex-direction: column; overflow: hidden; height: 100%;">
         <p style="margin:0 0 0.75rem 0; color: var(--text-secondary);">Drag to reorder if supported. Click trash to mark delete. Save to apply.</p>
-        <div id="brands-edit-list" style="display:grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 0.75rem;"></div>
-        <div class="modal-actions" style="margin-top: 1rem; display: flex; justify-content: flex-end; gap: 0.75rem;">
+        <div class="edit-list-scroll-wrap" style="flex: 1; overflow-y: auto; margin-bottom: 1rem; padding-right: 0.25rem; min-height: 0;">
+          <div id="brands-edit-list" style="display:grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 0.75rem;"></div>
+        </div>
+        <div class="modal-actions" style="margin-top: auto; display: flex; justify-content: flex-end; gap: 0.75rem;">
           <button type="button" class="btn btn-secondary modal-cancel-btn">Cancel</button>
           <button type="button" class="btn btn-primary" id="brands-edit-save">Save Changes</button>
         </div>
@@ -709,15 +715,17 @@ CREATE POLICY "Allow anon delete" ON brands FOR DELETE USING (true);
 
   <!-- 2f. COMMUNITY CARDS EDIT MODAL -->
   <div class="modal-backdrop" id="community-edit-modal">
-    <div class="modal-card">
+    <div class="modal-card modal-large">
       <div class="modal-header">
         <h3>Edit Community Cards</h3>
         <button class="modal-close-btn">&times;</button>
       </div>
-      <div class="modal-body-padding" style="padding: 1rem;">
+      <div class="modal-body-padding" style="padding: 1.25rem; display: flex; flex-direction: column; overflow: hidden; height: 100%;">
         <p style="margin:0 0 0.75rem 0; color: var(--text-secondary);">Drag to reorder. Click trash to mark delete. Save to apply.</p>
-        <div id="community-edit-list" style="display:grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 0.75rem;"></div>
-        <div class="modal-actions" style="margin-top: 1rem; display: flex; justify-content: flex-end; gap: 0.75rem;">
+        <div class="edit-list-scroll-wrap" style="flex: 1; overflow-y: auto; margin-bottom: 1rem; padding-right: 0.25rem; min-height: 0;">
+          <div id="community-edit-list" style="display:grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 0.75rem;"></div>
+        </div>
+        <div class="modal-actions" style="margin-top: auto; display: flex; justify-content: flex-end; gap: 0.75rem;">
           <button type="button" class="btn btn-secondary modal-cancel-btn">Cancel</button>
           <button type="button" class="btn btn-primary" id="community-edit-save">Save Changes</button>
         </div>

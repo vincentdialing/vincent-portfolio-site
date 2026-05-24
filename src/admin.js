@@ -3478,6 +3478,39 @@ function initLoginControl() {
   }
 }
 
+function initProjectKeyAutoFill() {
+  const serviceKeySelect = document.getElementById('proj-service-key');
+  const projectKeyInput = document.getElementById('proj-key');
+  const projectDbIdInput = document.getElementById('project-db-id');
+
+  if (serviceKeySelect && projectKeyInput && projectDbIdInput) {
+    serviceKeySelect.addEventListener('change', () => {
+      // Only auto-fill if we are creating a new project (not editing)
+      if (!projectDbIdInput.value) {
+        const selectedServiceKey = serviceKeySelect.value;
+        if (!selectedServiceKey) return;
+
+        // Find all projects with this service key
+        const matchingProjects = allProjects.filter(p => p.service_key === selectedServiceKey || p.project_key.startsWith(`${selectedServiceKey}-`));
+        
+        let maxNum = 0;
+        matchingProjects.forEach(p => {
+          const parts = p.project_key.split('-');
+          if (parts.length > 1) {
+            const num = parseInt(parts[parts.length - 1]);
+            if (!isNaN(num) && num > maxNum) {
+              maxNum = num;
+            }
+          }
+        });
+
+        const nextNum = maxNum + 1;
+        projectKeyInput.value = `${selectedServiceKey}-${nextNum}`;
+      }
+    });
+  }
+}
+
 // ==========================================
 // 12. RUNTIME STARTUP CODE
 // ==========================================
@@ -3485,6 +3518,9 @@ function initLoginControl() {
 document.addEventListener('DOMContentLoaded', async () => {
   // Initialize login gating
   initLoginControl();
+
+  // Initialize project key auto-generator
+  initProjectKeyAutoFill();
 
   // Initialize mobile responsive menu
   initMobileMenu();

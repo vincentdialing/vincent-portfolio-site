@@ -564,6 +564,11 @@ CREATE POLICY "Allow anon delete" ON brands FOR DELETE USING (true);
                   <input type="file" id="thumb-img-grid-multi" accept="image/*" multiple class="form-control" style="background: var(--bg-secondary); padding: 0.5rem; border-radius: var(--radius-sm);">
                   <p class="field-help">Upload multiple images at once to fill the grid automatically.</p>
                 </div>
+                
+                <button type="button" class="btn btn-primary" id="btn-render-apply-bento-bottom" style="width: 100%; margin-top: 1.25rem; justify-content: center; display: flex; align-items: center; gap: 0.5rem;">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 16px; height: 16px;"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                  Generate & Apply Bento
+                </button>
               </div>
 
               <div class="thumbnail-preview-area" style="padding: 1rem;">

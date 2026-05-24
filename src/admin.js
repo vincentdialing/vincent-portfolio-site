@@ -3983,60 +3983,70 @@ function initThumbnailGenerator() {
   }
 
   // Handle Render and Upload
-  if (renderBtn && canvasElement) {
-    renderBtn.addEventListener('click', async () => {
-      const originalText = renderBtn.innerHTML;
-      renderBtn.innerHTML = 'Rendering & Uploading...';
-      renderBtn.disabled = true;
-
-      try {
-        const outputCanvas = await renderBentoToCanvas();
-
-        const dataUrl = outputCanvas.toDataURL('image/webp', 0.95);
-        const blob = dataURLtoBlob(dataUrl);
-
-        const projectKey = document.getElementById('proj-key').value.trim() || 'draft';
-        const fileName = `bento-${projectKey}-${Date.now()}.webp`;
-        const bucketName = 'portfolio';
-
-        if (!supabase) throw new Error('Database not connected.');
-
-        // Upload to Supabase Storage
-        const { data, error } = await supabase.storage
-          .from(bucketName)
-          .upload(fileName, blob, {
-            cacheControl: '3600',
-            upsert: false,
-            contentType: 'image/webp'
-          });
-
-        if (error) throw error;
-
-        const { data: publicUrlData } = supabase.storage
-          .from(bucketName)
-          .getPublicUrl(fileName);
-
-        const publicUrl = publicUrlData.publicUrl;
-
-        // Apply URL to input
-        const coverInput = document.getElementById('proj-image');
-        if (coverInput) {
-          coverInput.value = publicUrl;
-          coverInput.dispatchEvent(new Event('change'));
-        }
-
-        showToast('Success', 'Bento Cover generated and applied!', 'success');
+  const actionButtons = document.querySelectorAll('#btn-render-apply-bento, #btn-render-apply-bento-bottom');
+  if (actionButtons.length > 0 && canvasElement) {
+    actionButtons.forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const originalTexts = Array.from(actionButtons).map(b => b.innerHTML);
         
-        // Auto-close section
-        if (toggleBtn) toggleBtn.click();
+        // Show loading state on all buttons
+        actionButtons.forEach(b => {
+          b.innerHTML = '<div class="spinner-small" style="display:inline-block; margin-right:4px;"></div> Rendering & Uploading...';
+          b.disabled = true;
+        });
 
-      } catch (err) {
-        console.error('Error generating/uploading bento cover:', err);
-        showToast('Error', err.message || 'Failed to generate cover.', 'error');
-      } finally {
-        renderBtn.innerHTML = originalText;
-        renderBtn.disabled = false;
-      }
+        try {
+          const outputCanvas = await renderBentoToCanvas();
+
+          const dataUrl = outputCanvas.toDataURL('image/webp', 0.95);
+          const blob = dataURLtoBlob(dataUrl);
+
+          const projectKey = document.getElementById('proj-key').value.trim() || 'draft';
+          const fileName = `bento-${projectKey}-${Date.now()}.webp`;
+          const bucketName = 'portfolio';
+
+          if (!supabase) throw new Error('Database not connected.');
+
+          // Upload to Supabase Storage
+          const { data, error } = await supabase.storage
+            .from(bucketName)
+            .upload(fileName, blob, {
+              cacheControl: '3600',
+              upsert: false,
+              contentType: 'image/webp'
+            });
+
+          if (error) throw error;
+
+          const { data: publicUrlData } = supabase.storage
+            .from(bucketName)
+            .getPublicUrl(fileName);
+
+          const publicUrl = publicUrlData.publicUrl;
+
+          // Apply URL to input
+          const coverInput = document.getElementById('proj-image');
+          if (coverInput) {
+            coverInput.value = publicUrl;
+            coverInput.dispatchEvent(new Event('change'));
+          }
+
+          showToast('Success', 'Bento Cover generated and applied!', 'success');
+          
+          // Auto-close section
+          if (toggleBtn) toggleBtn.click();
+
+        } catch (err) {
+          console.error('Error generating/uploading bento cover:', err);
+          showToast('Error', err.message || 'Failed to generate cover.', 'error');
+        } finally {
+          // Restore state on all buttons
+          actionButtons.forEach((b, i) => {
+            b.innerHTML = originalTexts[i];
+            b.disabled = false;
+          });
+        }
+      });
     });
   }
 }

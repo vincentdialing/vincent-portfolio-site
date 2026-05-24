@@ -733,89 +733,49 @@ Format your response exactly like this:
     const bulletPoints = extractSection(content, 'BULLET_POINTS');
     const subCategory = extractSection(content, 'SUB_CATEGORY');
 
-    // Render results
+    // Auto-apply fields
+    if (subCategory) {
+      const catInput = document.getElementById('proj-category');
+      if (catInput) {
+        catInput.value = subCategory;
+        catInput.dispatchEvent(new Event('input'));
+      }
+    }
+    if (shortDesc) {
+      const descInput = document.getElementById('proj-desc');
+      if (descInput) {
+        descInput.value = shortDesc;
+        descInput.dispatchEvent(new Event('input'));
+      }
+    }
+    if (detailedWriteup || bulletPoints) {
+      saveBlockInputs();
+      
+      if (detailedWriteup) {
+        const alreadyExists = currentDetailBlocks.some(b => b.type === 'text' && b.content === detailedWriteup);
+        if (!alreadyExists) {
+          currentDetailBlocks.push({ type: 'text', content: detailedWriteup });
+        }
+      }
+      if (bulletPoints) {
+        const items = bulletPoints.split('\n').map(l => l.replace(/^[-*•]\s*/, '').trim()).filter(l => l);
+        const alreadyExists = currentDetailBlocks.some(b => b.type === 'list' && JSON.stringify(b.items) === JSON.stringify(items));
+        if (!alreadyExists) {
+          currentDetailBlocks.push({ type: 'list', items: items });
+        }
+      }
+      renderDetailBlocks();
+    }
+
+    // Display a beautiful success card in the results container
     resultsContainer.innerHTML = `
-      ${subCategory ? `
-        <div class="ai-result-card">
-          <div class="ai-result-card-header">
-            <span class="ai-result-label">Sub-Category Label</span>
-            <button type="button" class="ai-apply-btn" data-target="proj-category" data-content="${escapeAttr(subCategory)}">Apply ↓</button>
-          </div>
-          <p class="ai-result-text" style="font-weight: 500; letter-spacing: 0.5px; text-transform: uppercase;">${subCategory}</p>
-        </div>
-      ` : ''}
-      ${shortDesc ? `
-        <div class="ai-result-card">
-          <div class="ai-result-card-header">
-            <span class="ai-result-label">Short Description</span>
-            <button type="button" class="ai-apply-btn" data-target="proj-desc" data-content="${escapeAttr(shortDesc)}">Apply ↓</button>
-          </div>
-          <p class="ai-result-text">${shortDesc}</p>
-        </div>
-      ` : ''}
-      ${detailedWriteup ? `
-        <div class="ai-result-card">
-          <div class="ai-result-card-header">
-            <span class="ai-result-label">Detailed Writeup</span>
-            <button type="button" class="ai-apply-btn" data-action="add-text-block" data-content="${escapeAttr(detailedWriteup)}">+ Add as Text Block</button>
-          </div>
-          <p class="ai-result-text">${detailedWriteup}</p>
-        </div>
-      ` : ''}
-      ${bulletPoints ? `
-        <div class="ai-result-card">
-          <div class="ai-result-card-header">
-            <span class="ai-result-label">Key Deliverables</span>
-            <button type="button" class="ai-apply-btn" data-action="add-list-block" data-content="${escapeAttr(bulletPoints)}">+ Add as List Block</button>
-          </div>
-          <p class="ai-result-text">${bulletPoints}</p>
-        </div>
-      ` : ''}
+      <div style="background: rgba(46, 213, 115, 0.1); border: 1px solid var(--success); border-radius: 8px; padding: 0.75rem 1rem; color: #2ed573; font-size: 0.85rem; display: flex; align-items: center; gap: 0.5rem; margin-top: 0.5rem;">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width:16px;height:16px;flex-shrink:0;"><polyline points="20 6 9 17 4 12"/></svg>
+        <span style="font-weight: 500;">AI content successfully generated and auto-filled!</span>
+      </div>
     `;
 
-    // Wire apply buttons
-    resultsContainer.querySelectorAll('.ai-apply-btn').forEach(btn => {
-      btn.addEventListener('click', () => {
-        const target = btn.dataset.target;
-        const action = btn.dataset.action;
-        const content = btn.dataset.content;
-
-        if (target) {
-          // Apply directly to a form field
-          const field = document.getElementById(target);
-          if (field) {
-            field.value = content;
-            field.dispatchEvent(new Event('input'));
-          }
-          btn.textContent = '✓ Applied';
-          btn.classList.add('applied');
-        } else if (action === 'add-text-block') {
-          // Add as a text block in the detail blocks
-          saveBlockInputs();
-          currentDetailBlocks.push({ type: 'text', content: content });
-          renderDetailBlocks();
-          btn.textContent = '✓ Added';
-          btn.classList.add('applied');
-        } else if (action === 'add-list-block') {
-          // Parse bullet points into an array
-          const items = content.split('\n').map(l => l.replace(/^[-*•]\s*/, '').trim()).filter(l => l);
-          saveBlockInputs();
-          currentDetailBlocks.push({ type: 'list', items: items });
-          renderDetailBlocks();
-          btn.textContent = '✓ Added';
-          btn.classList.add('applied');
-        } else if (action === 'copy-clipboard') {
-          navigator.clipboard.writeText(content).then(() => {
-            btn.textContent = '✓ Copied';
-            btn.classList.add('applied');
-            setTimeout(() => {
-              btn.textContent = 'Copy';
-              btn.classList.remove('applied');
-            }, 2000);
-          });
-        }
-      });
-    });
+    showToast('AI Content Generated', 'Project category, description, and page blocks have been automatically updated.', 'success');
 
   } catch (err) {
     console.error('AI Writer error:', err);
@@ -1416,7 +1376,7 @@ function openProjectModal(projectId = null) {
   } else {
     title.textContent = 'Add New Project';
     document.getElementById('project-db-id').value = '';
-    document.getElementById('proj-key').readOnly = false;
+    document.getElementById('proj-key').readOnly = true;
     if (gradientPreview) gradientPreview.style.background = 'linear-gradient(135deg, #007bff 0%, #00d2ff 100%)';
   }
 

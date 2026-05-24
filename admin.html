@@ -445,11 +445,32 @@ CREATE POLICY "Allow anon delete" ON brands FOR DELETE USING (true);
       <form id="project-form" class="modal-form">
         <input type="hidden" id="project-db-id">
 
+        <!-- AI Content Writer Section -->
+        <div class="ai-writer-section" id="ai-writer-section" style="border: 1px solid var(--accent-color); border-radius: 12px; background: rgba(37, 99, 235, 0.05); margin-bottom: 1.5rem; padding: 1rem;">
+          <div class="ai-writer-header" style="border-bottom: 1px solid rgba(255, 255, 255, 0.08); padding-bottom: 0.75rem;">
+            <div class="ai-writer-title-row">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 18px; height: 18px; color: var(--accent-light);"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+              <span style="font-weight: 600;">Generate Project with AI (Groq)</span>
+            </div>
+            <button type="button" id="ai-generate-btn" class="btn btn-primary btn-sm ai-generate-btn">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width: 14px; height: 14px;"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+              Write Copy
+            </button>
+          </div>
+          <div class="form-group" style="margin-top: 0.75rem;">
+            <textarea id="ai-extra-context" rows="2" placeholder="Optional: Add extra context — e.g. 'Focus on the warm color tones' or 'Created for a local cafe'..." style="font-size: 0.8rem;"></textarea>
+          </div>
+          <div id="ai-writer-results" class="ai-writer-results hidden">
+            <!-- AI results status populated here -->
+          </div>
+          <p class="ai-writer-no-key hidden" id="ai-no-key-msg" style="font-size: 0.8rem; color: var(--warning); margin-top: 0.5rem;">⚠ No Groq API key set. Go to <strong>Supabase Credentials</strong> tab to add your free key from <a href="https://console.groq.com/keys" target="_blank" style="color: var(--accent-light);">console.groq.com</a>.</p>
+        </div>
+
         <div class="form-row-two">
           <div class="form-group">
             <label for="proj-key">Project Key (Unique identifier)*</label>
-            <input type="text" id="proj-key" placeholder="e.g. smc-4" required>
-            <p class="field-help">Used to link project detail pages (e.g. 'smc-1', 've-1')</p>
+            <input type="text" id="proj-key" placeholder="Auto-generated" readonly required>
+            <p class="field-help">Automatically generated based on chosen Category (e.g. 'smc-1', 've-1')</p>
           </div>
           <div class="form-group">
             <label for="proj-service-key">Service Category*</label>
@@ -473,27 +494,6 @@ CREATE POLICY "Allow anon delete" ON brands FOR DELETE USING (true);
         <div class="form-group">
           <label for="proj-desc">Short Description (for grids)*</label>
           <textarea id="proj-desc" rows="3" placeholder="Explain the project in 1-2 sentences..." required></textarea>
-        </div>
-
-        <!-- AI Content Writer Section -->
-        <div class="ai-writer-section" id="ai-writer-section">
-          <div class="ai-writer-header">
-            <div class="ai-writer-title-row">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 18px; height: 18px; color: var(--accent-light);"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
-              <span>AI Content Writer</span>
-            </div>
-            <button type="button" id="ai-generate-btn" class="btn btn-primary btn-sm ai-generate-btn">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width: 14px; height: 14px;"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
-              Generate Copy
-            </button>
-          </div>
-          <div class="form-group" style="margin-top: 0.5rem;">
-            <textarea id="ai-extra-context" rows="2" placeholder="Optional: Add extra context — e.g. 'This was for a nonprofit event' or 'Focus on the motion graphics aspect'..." style="font-size: 0.8rem;"></textarea>
-          </div>
-          <div id="ai-writer-results" class="ai-writer-results hidden">
-            <!-- AI results will be populated here -->
-          </div>
-          <p class="ai-writer-no-key hidden" id="ai-no-key-msg" style="font-size: 0.8rem; color: var(--warning); margin-top: 0.5rem;">⚠ No Groq API key set. Go to <strong>Supabase Credentials</strong> tab to add your free key from <a href="https://console.groq.com/keys" target="_blank" style="color: var(--accent-light);">console.groq.com</a>.</p>
         </div>
 
         <div class="form-row-two">
@@ -520,9 +520,9 @@ CREATE POLICY "Allow anon delete" ON brands FOR DELETE USING (true);
 
         <div class="form-row-two">
           <div class="form-group">
-            <label for="proj-image">Cover Image URL*</label>
+            <label for="proj-image">Cover Image URL (Optional)</label>
             <div class="input-with-upload">
-              <input type="text" id="proj-image" placeholder="https://..." required>
+              <input type="text" id="proj-image" placeholder="https://...">
               <label class="btn-file-label">
                 <input type="file" class="file-uploader-inline" data-target-input="proj-image">
                 Upload

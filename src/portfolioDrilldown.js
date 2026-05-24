@@ -144,7 +144,7 @@ function scrollToSectionTop() {
     const scrollTarget = (currentLevel >= 2 && backButtonRow)
         ? backButtonRow
         : projectsSection;
-    const offset = scrollTarget.getBoundingClientRect().top + window.scrollY - 100;
+    const offset = scrollTarget.getBoundingClientRect().top + window.scrollY - 160;
     window.scrollTo({ top: offset, behavior: 'smooth' });
 }
 

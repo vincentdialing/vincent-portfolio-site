@@ -1316,6 +1316,17 @@ body {
 .form-group textarea {
   resize: vertical;
 }
+.form-group input[readonly] {
+  background-color: var(--bg-secondary) !important;
+  color: var(--text-muted) !important;
+  cursor: not-allowed;
+  opacity: 0.75;
+  border-color: rgba(255, 255, 255, 0.08) !important;
+}
+.form-group input[readonly]:focus {
+  border-color: rgba(255, 255, 255, 0.08) !important;
+  box-shadow: none !important;
+}
 .field-help {
   font-size: 0.75rem;
   color: var(--text-muted);

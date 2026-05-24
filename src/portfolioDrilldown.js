@@ -54,7 +54,7 @@ async function fetchPortfolioData() {
                 .from('portfolio_project_images')
                 .select('project_key, image_url, alt, caption, display_order')
                 .order('display_order', { ascending: true });
-            
+
             projectImages = resWithoutRedirect.data || [];
         } else {
             projectImages = resWithRedirect.data || [];
@@ -144,7 +144,7 @@ function scrollToSectionTop() {
     const scrollTarget = (currentLevel >= 2 && backButtonRow)
         ? backButtonRow
         : projectsSection;
-    const offset = scrollTarget.getBoundingClientRect().top + window.scrollY - 160;
+    const offset = scrollTarget.getBoundingClientRect().top + window.scrollY - 100;
     window.scrollTo({ top: offset, behavior: 'smooth' });
 }
 
@@ -152,9 +152,13 @@ function scrollToCard(index) {
     const cards = projectsGrid.querySelectorAll('.project-card');
     if (cards[index]) {
         setTimeout(() => {
-            const cardTop = cards[index].getBoundingClientRect().top + window.scrollY - 140;
-            window.scrollTo({ top: cardTop, behavior: 'smooth' });
-        }, 100);
+            const cardTop = cards[index].getBoundingClientRect().top + window.scrollY - 200;
+            const minScroll = (projectsSection)
+                ? projectsSection.getBoundingClientRect().top + window.scrollY - 180
+                : window.scrollY;
+            const finalScroll = Math.max(cardTop, minScroll);
+            window.scrollTo({ top: finalScroll, behavior: 'smooth' });
+        }, 120);
     }
 }
 
@@ -162,9 +166,13 @@ function scrollToTile(index) {
     const tiles = level2Container.querySelectorAll('.portfolio-tile');
     if (tiles[index]) {
         setTimeout(() => {
-            const tileTop = tiles[index].getBoundingClientRect().top + window.scrollY - 140;
-            window.scrollTo({ top: tileTop, behavior: 'smooth' });
-        }, 100);
+            const tileTop = tiles[index].getBoundingClientRect().top + window.scrollY - 200;
+            const minScroll = (backButtonRow)
+                ? backButtonRow.getBoundingClientRect().top + window.scrollY - 180
+                : window.scrollY;
+            const finalScroll = Math.max(tileTop, minScroll);
+            window.scrollTo({ top: finalScroll, behavior: 'smooth' });
+        }, 120);
     }
 }
 
@@ -789,14 +797,14 @@ function replayTileEntrance(tiles, stagger = 0.06) {
     tiles.forEach((tile, i) => {
         tile.classList.remove('drilldown-fade-out', 'drilldown-morph-out', 'drilldown-tile-enter', 'is-awaiting-load');
         tile.classList.add('is-content-visible');
-        
+
         // Set initial invisible/scaled-down state
         tile.style.opacity = '0';
         tile.style.transform = 'translateY(25px) scale(0.97)';
         tile.style.transition = 'none';
-        
+
         void tile.offsetWidth; // Trigger reflow
-        
+
         // Trigger staggered transition
         setTimeout(() => {
             tile.style.transition = 'opacity 0.45s cubic-bezier(0.22, 1, 0.36, 1), transform 0.45s cubic-bezier(0.22, 1, 0.36, 1)';
@@ -974,9 +982,9 @@ function renderLevel3(project) {
     const imageGalleryHtml = imageBlocks.length > 0
         ? `<div class="detail-placeholder-gallery detail-image-gallery">
             ${imageBlocks.map(block => {
-              const redirectUrl = block.redirect_url || '';
-              const redirectLabel = block.redirect_label || 'View Related Project';
-              return `
+            const redirectUrl = block.redirect_url || '';
+            const redirectLabel = block.redirect_label || 'View Related Project';
+            return `
               <div class="gallery-item detail-gallery-image-item is-loading watermark-overlay" style="background: ${project.gradient}; position: relative;">
                 <div class="portfolio-tile-image-loading"></div>
                 <img src="${block.url}" alt="${block.alt || project.title}" loading="lazy" onload="this.parentElement.classList.remove('is-loading'); this.parentElement.classList.add('is-loaded');" />
@@ -990,7 +998,7 @@ function renderLevel3(project) {
                     </svg>
                   </a>` : ''}
               </div>`;
-            }).join('')}
+        }).join('')}
            </div>`
         : `<div class="detail-placeholder-gallery">
             <div class="gallery-item" style="background: ${project.gradient}; opacity: 0.6;">

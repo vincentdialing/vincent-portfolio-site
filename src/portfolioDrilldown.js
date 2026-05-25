@@ -924,7 +924,7 @@ function renderLevel3(project) {
                   >
                     <div
                       class="video-thumbnail ${shouldAutoCapture ? 'video-thumbnail-autocapture' : ''}"
-                      style="background-image: url('${thumb}'); background: ${!thumb ? project.gradient : `url('${thumb}') center/cover no-repeat`};"
+                      style="background-image: ${thumb ? `url('${thumb}')` : project.gradient}; background-size: cover; background-position: center; background-repeat: no-repeat;"
                     >
                       <div class="video-play-btn">
                         <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="white">

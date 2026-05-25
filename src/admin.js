@@ -1199,7 +1199,8 @@ function renderDetailBlocks() {
 
       try {
         const bucketName = document.getElementById('upload-bucket-name')?.value.trim() || 'portfolio';
-        const uploadedUrl = await uploadFileToSupabase(file, bucketName);
+        const uploadRes = await uploadFileToSupabase(file, bucketName);
+        const uploadedUrl = uploadRes.url;
         
         // Update input and block state
         const blockEl = btn.closest('.detail-editor-block');
@@ -1241,7 +1242,8 @@ function renderDetailBlocks() {
 
       try {
         const bucketName = document.getElementById('upload-bucket-name')?.value.trim() || 'portfolio';
-        const uploadedUrl = await uploadFileToSupabase(file, bucketName);
+        const uploadRes = await uploadFileToSupabase(file, bucketName);
+        const uploadedUrl = uploadRes.url;
         
         // Update input and block state
         const blockEl = btn.closest('.detail-editor-block');
@@ -1360,7 +1362,8 @@ function initJsonBlockBuilder() {
       for (const file of files) {
         try {
           addBatchBtn.innerHTML = `Uploading ${uploadedCount + 1}/${files.length}...`;
-          const url = await uploadFileToSupabase(file, bucketName);
+          const uploadRes = await uploadFileToSupabase(file, bucketName);
+          const url = uploadRes.url;
           
           currentDetailBlocks.push({
             type: 'image',

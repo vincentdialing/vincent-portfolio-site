@@ -3149,6 +3149,7 @@ nav.floating-nav {
    ========================================== */
 
 .video-player-wrapper {
+  position: relative;
   margin: 2.2rem 0 1.5rem;
   border-radius: 28px;
   overflow: hidden;
@@ -3163,6 +3164,8 @@ nav.floating-nav {
   aspect-ratio: 16 / 9;
   cursor: pointer;
   overflow: hidden;
+  z-index: 2;
+  transition: opacity 0.4s cubic-bezier(0.25, 1, 0.5, 1), transform 0.4s cubic-bezier(0.25, 1, 0.5, 1), visibility 0.4s ease;
 }
 
 .video-thumbnail::after {
@@ -3183,7 +3186,7 @@ nav.floating-nav {
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  z-index: 2;
+  z-index: 3;
   width: 78px;
   height: 78px;
   border-radius: 50%;
@@ -3209,6 +3212,24 @@ nav.floating-nav {
   /* optical centering for play triangle */
 }
 
+.video-play-btn .video-spinner {
+  display: none;
+  margin-left: 0;
+}
+
+.video-play-btn.is-loading .video-spinner {
+  display: block;
+  animation: spinner-spin 0.8s linear infinite;
+}
+
+.video-play-btn.is-loading svg:not(.video-spinner) {
+  display: none;
+}
+
+@keyframes spinner-spin {
+  to { transform: rotate(360deg); }
+}
+
 .video-duration {
   position: absolute;
   bottom: 12px;
@@ -3232,10 +3253,13 @@ nav.floating-nav {
 }
 
 .video-iframe-container {
-  position: relative;
+  position: absolute;
+  top: 0;
+  left: 0;
   width: 100%;
-  aspect-ratio: 16 / 9;
+  height: 100%;
   background: #000;
+  z-index: 1;
 }
 
 .video-iframe-container iframe,

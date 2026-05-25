@@ -931,6 +931,10 @@ function renderLevel3(project) {
                         <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="white">
                           <path d="M8 5v14l11-7z"/>
                         </svg>
+                        <svg class="video-spinner" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" style="width:28px;height:28px;">
+                          <circle cx="12" cy="12" r="10" stroke="rgba(255,255,255,0.2)"/>
+                          <path d="M12 2a10 10 0 0 1 10 10" stroke="#fff" stroke-linecap="round"/>
+                        </svg>
                       </div>
                       <div class="video-duration">${block.duration || ''}</div>
                     </div>
@@ -1050,23 +1054,42 @@ function renderLevel3(project) {
         }
 
         thumbEl.addEventListener('click', () => {
+            const playBtn = thumbEl.querySelector('.video-play-btn');
+            if (playBtn) playBtn.classList.add('is-loading');
+
             if (embedSrc) {
-                iframeContainer.innerHTML = `
-                  <iframe
-                    src="${embedSrc}"
-                    frameborder="0"
-                    allow="autoplay; encrypted-media; picture-in-picture; fullscreen"
-                    allowfullscreen
-                  ></iframe>`;
+                const iframe = document.createElement('iframe');
+                iframe.src = embedSrc;
+                iframe.frameBorder = '0';
+                iframe.allow = 'autoplay; encrypted-media; picture-in-picture; fullscreen';
+                iframe.allowFullscreen = true;
+                
+                let transitioned = false;
+                const transitionToVideo = () => {
+                    if (transitioned) return;
+                    transitioned = true;
+                    thumbEl.style.opacity = '0';
+                    setTimeout(() => {
+                        thumbEl.style.display = 'none';
+                    }, 400);
+                };
+
+                iframe.onload = transitionToVideo;
+                // Safety fallback timeout
+                setTimeout(transitionToVideo, 3000);
+
+                iframeContainer.innerHTML = '';
+                iframeContainer.appendChild(iframe);
+                iframeContainer.style.display = 'block';
             } else if (videoProvider === 'file' && videoUrl) {
                 // Direct video file
                 iframeContainer.innerHTML = `
                   <video autoplay controls playsinline>
                     <source src="${videoUrl}" type="video/mp4">
                   </video>`;
+                thumbEl.style.display = 'none';
+                iframeContainer.style.display = 'block';
             }
-            thumbEl.style.display = 'none';
-            iframeContainer.style.display = 'block';
         });
     });
 

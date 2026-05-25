@@ -1216,18 +1216,17 @@ function getVideoMeta(url) {
 }
 
 function applyProjectOverrides(project) {
-    if (!project) {
-        return project;
-    }
+    if (!project) return project;
+
+    const base = { ...project };
 
     if (project.project_key === 'smc-1') {
-        return {
-            ...project,
-            title: 'Harmonia Polifonica Chorale Branding 2024',
-            category: 'Branding & Content Direction',
-            description: 'Full social media branding for an internationally competing university chorale — from website launch graphics and audition campaigns to competition achievement posts that reached thousands.',
-            tools: ['Canva', 'Adobe Photoshop', 'Adobe Illustrator', 'Figma', 'Affinity'],
-            details: [
+        if (!base.title) base.title = 'Harmonia Polifonica Chorale Branding 2024';
+        if (!base.category) base.category = 'Branding & Content Direction';
+        if (!base.description) base.description = 'Full social media branding for an internationally competing university chorale — from website launch graphics and audition campaigns to competition achievement posts that reached thousands.';
+        if (!base.tools || base.tools.length === 0) base.tools = ['Canva', 'Adobe Photoshop', 'Adobe Illustrator', 'Figma', 'Affinity'];
+        if (!base.details || base.details.length === 0) {
+            base.details = [
                 {
                     type: 'text',
                     content: 'Served as the sole graphic designer and content director for Harmonia Polifonica Chorale throughout the 2024 season, handling all visual branding and social media content from concept to final output.'
@@ -1242,18 +1241,17 @@ function applyProjectOverrides(project) {
                         'Balanced creative output across multiple content needs — from recruitment drives to milestone celebrations — while keeping brand consistency throughout'
                     ]
                 }
-            ]
-        };
+            ];
+        }
     }
 
     if (project.project_key === 'smc-2') {
-        return {
-            ...project,
-            title: 'Harmonia Polifonica Chorale World Choral Day 2024',
-            category: 'Event Campaign Content',
-            description: 'A targeted social media campaign for World Choral Day 2024 — designed to drive engagement, celebrate the choir\'s community, and boost visibility during one of the biggest dates in the choral calendar.',
-            tools: ['Canva', 'Adobe Photoshop', 'Adobe Illustrator', 'Figma'],
-            details: [
+        if (!base.title) base.title = 'Harmonia Polifonica Chorale World Choral Day 2024';
+        if (!base.category) base.category = 'Event Campaign Content';
+        if (!base.description) base.description = 'A targeted social media campaign for World Choral Day 2024 — designed to drive engagement, celebrate the choir\'s community, and boost visibility during one of the biggest dates in the choral calendar.';
+        if (!base.tools || base.tools.length === 0) base.tools = ['Canva', 'Adobe Photoshop', 'Adobe Illustrator', 'Figma'];
+        if (!base.details || base.details.length === 0) {
+            base.details = [
                 {
                     type: 'text',
                     content: 'Handled the end-to-end visual campaign for the choir\'s World Choral Day 2024 participation — from content strategy and visual direction to design execution and delivery.'
@@ -1267,18 +1265,17 @@ function applyProjectOverrides(project) {
                         'Coordinated content timing and sequencing for maximum reach and audience engagement across platforms'
                     ]
                 }
-            ]
-        };
+            ];
+        }
     }
 
     if (project.project_key === 'smc-3') {
-        return {
-            ...project,
-            title: 'Harmonia Polifonica Chorale Branding 2023',
-            category: 'Promotional Branding',
-            description: 'The foundation year — building a recognizable social media identity from the ground up that would later scale into international-level branding.',
-            tools: ['Canva', 'Adobe Photoshop', 'Adobe Illustrator', 'Figma'],
-            details: [
+        if (!base.title) base.title = 'Harmonia Polifonica Chorale Branding 2023';
+        if (!base.category) base.category = 'Promotional Branding';
+        if (!base.description) base.description = 'The foundation year — building a recognizable social media identity from the ground up that would later scale into international-level branding.';
+        if (!base.tools || base.tools.length === 0) base.tools = ['Canva', 'Adobe Photoshop', 'Adobe Illustrator', 'Figma'];
+        if (!base.details || base.details.length === 0) {
+            base.details = [
                 {
                     type: 'text',
                     content: 'Started as the choir\'s first dedicated graphic designer in 2023, tasked with building a visual identity from zero and establishing the design standards that would define their brand going forward.'
@@ -1292,46 +1289,45 @@ function applyProjectOverrides(project) {
                         'Built the visual foundation that the chorale still uses today, including the identity that carried them through international competitions'
                     ]
                 }
-            ]
-        };
+            ];
+        }
     }
 
-    if (project.project_key !== 'mg-3') {
-        return project;
+    if (project.project_key === 'mg-3') {
+        if (!base.service_key) base.service_key = 'video-editing';
+        if (!base.title) base.title = 'HUSAY 2026 Official Event Video';
+        if (!base.category) base.category = 'End-to-End Video Production';
+        if (!base.description) base.description = 'Executed the full post-production workflow for the HUSAY 2026 official event video, transforming a script-based direction into a polished Facebook-ready production published by Dr. Shirley C. Agrupis, Chairperson of the Commission on Higher Education in the Philippines.';
+        if (!base.gradient) base.gradient = 'linear-gradient(135deg, #7c3aed 0%, #4c1d95 100%)';
+        if (!base.tools || base.tools.length === 0) base.tools = ['Adobe Premiere Pro', 'Adobe After Effects', 'CapCut'];
+        if (!base.image_url) base.image_url = '/husay-2026-video-poster.svg';
+        if (!base.details || base.details.length === 0) {
+            base.details = [
+                {
+                    type: 'text',
+                    content: 'Handled the project end-to-end as the sole video editor, using the provided script as a creative starting point and personally managing clip selection, sequencing, audio pacing, sound effects, transitions, timing, and the overall emotional rhythm to turn the piece into a polished, high-retention event video from the ground up.'
+                },
+                {
+                    type: 'video',
+                    url: 'https://www.facebook.com/reel/950207200710625',
+                    caption: 'Official HUSAY 2026 event video published on Facebook',
+                    duration: ''
+                },
+                {
+                    type: 'link',
+                    url: 'https://www.facebook.com/reel/950207200710625',
+                    label: 'Watch the published official video'
+                },
+                {
+                    type: 'certificate',
+                    certificateId: 'husay-2026',
+                    label: 'View the supporting certificate'
+                }
+            ];
+        }
     }
 
-    return {
-        ...project,
-        service_key: 'video-editing',
-        title: 'HUSAY 2026 Official Event Video',
-        category: 'End-to-End Video Production',
-        description: 'Executed the full post-production workflow for the HUSAY 2026 official event video, transforming a script-based direction into a polished Facebook-ready production published by Dr. Shirley C. Agrupis, Chairperson of the Commission on Higher Education in the Philippines.',
-        gradient: 'linear-gradient(135deg, #7c3aed 0%, #4c1d95 100%)',
-        tools: ['Adobe Premiere Pro', 'Adobe After Effects', 'CapCut'],
-        image_url: '/husay-2026-video-poster.svg',
-        details: [
-            {
-                type: 'text',
-                content: 'Handled the project end-to-end as the sole video editor, using the provided script as a creative starting point and personally managing clip selection, sequencing, audio pacing, sound effects, transitions, timing, and the overall emotional rhythm to turn the piece into a polished, high-retention event video from the ground up.'
-            },
-            {
-                type: 'video',
-                url: 'https://www.facebook.com/reel/950207200710625',
-                caption: 'Official HUSAY 2026 event video published on Facebook',
-                duration: ''
-            },
-            {
-                type: 'link',
-                url: 'https://www.facebook.com/reel/950207200710625',
-                label: 'Watch the published official video'
-            },
-            {
-                type: 'certificate',
-                certificateId: 'husay-2026',
-                label: 'View the supporting certificate'
-            }
-        ]
-    };
+    return base;
 }
 
 function attemptVideoThumbnailCapture(thumbnailEl, videoUrl) {

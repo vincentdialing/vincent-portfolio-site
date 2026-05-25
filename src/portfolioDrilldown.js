@@ -914,6 +914,7 @@ function renderLevel3(project) {
                 const videoMeta = getVideoMeta(block.url);
                 let thumb = block.thumbnail || videoMeta.thumbnail || '';
                 if (thumb === '[object Object]') thumb = '';
+                console.log('VIDEO BLOCK RENDERED debug:', { block, videoMeta, thumb });
                 const shouldAutoCapture = !thumb && videoMeta.provider === 'file';
                 return `
                   <div

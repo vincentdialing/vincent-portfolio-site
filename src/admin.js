@@ -1047,15 +1047,22 @@ function renderDetailBlocks() {
           <input type="text" class="block-input-url" value="${block.url || ''}" required>
         </div>
         <div class="block-field-row">
-          <div class="block-field-group">
+          <div class="block-field-group" style="flex: 1.5;">
             <label>Thumbnail Image URL (Optional)</label>
-            <input type="text" class="block-input-thumbnail" value="${block.thumbnail || ''}">
+            <div class="input-with-upload">
+              <input type="text" class="block-input-thumbnail" value="${block.thumbnail || ''}" placeholder="https://...">
+              <button type="button" class="btn btn-secondary btn-sm block-video-thumb-upload-btn btn-with-icon" style="padding: 0.5rem 0.8rem;">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"/></svg>
+                Upload
+              </button>
+              <input type="file" class="block-video-thumb-file-input hidden" accept="image/*" style="display:none;">
+            </div>
           </div>
-          <div class="block-field-group">
+          <div class="block-field-group" style="flex: 1;">
             <label>Video Caption</label>
             <input type="text" class="block-input-caption" value="${block.caption || ''}">
           </div>
-          <div class="block-field-group">
+          <div class="block-field-group" style="flex: 0.7;">
             <label>Duration (e.g. 1:30)</label>
             <input type="text" class="block-input-duration" value="${block.duration || ''}">
           </div>
@@ -1208,6 +1215,48 @@ function renderDetailBlocks() {
       } catch (err) {
         console.error('Content image upload failed:', err);
         showToast('Upload Failed', err.message || 'Could not upload image.', 'error');
+      } finally {
+        btn.innerHTML = originalText;
+        btn.disabled = false;
+      }
+    });
+  });
+
+  // Wire upload buttons inside video blocks (thumbnails)
+  container.querySelectorAll('.block-video-thumb-upload-btn').forEach(btn => {
+    const fileInput = btn.nextElementSibling;
+    btn.addEventListener('click', () => {
+      fileInput.click();
+    });
+
+    fileInput.addEventListener('change', async (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      const originalText = btn.innerHTML;
+      btn.innerHTML = '<span class="spinner-small" style="width:12px;height:12px;margin-right:0;"></span>...';
+      btn.disabled = true;
+
+      try {
+        const bucketName = document.getElementById('upload-bucket-name')?.value.trim() || 'portfolio';
+        const uploadedUrl = await uploadFileToSupabase(file, bucketName);
+        
+        // Update input and block state
+        const blockEl = btn.closest('.detail-editor-block');
+        const idx = parseInt(blockEl.dataset.index);
+        
+        currentDetailBlocks[idx].thumbnail = uploadedUrl;
+        
+        // Update input field on UI
+        const thumbInput = blockEl.querySelector('.block-input-thumbnail');
+        if (thumbInput) {
+          thumbInput.value = uploadedUrl;
+        }
+        
+        showToast('Uploaded', 'Video thumbnail uploaded and converted successfully!', 'success');
+      } catch (err) {
+        console.error('Video thumbnail upload failed:', err);
+        showToast('Upload Failed', err.message || 'Could not upload thumbnail.', 'error');
       } finally {
         btn.innerHTML = originalText;
         btn.disabled = false;

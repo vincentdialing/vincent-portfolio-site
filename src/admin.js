@@ -1042,30 +1042,32 @@ function renderDetailBlocks() {
       `;
     } else if (block.type === 'video') {
       formFieldsHtml = `
-        <div class="block-field-group">
-          <label>Video URL (YouTube, Vimeo, Facebook Reel, etc.)</label>
-          <input type="text" class="block-input-url" value="${block.url || ''}" required>
-        </div>
         <div class="block-field-row">
-          <div class="block-field-group" style="flex: 1.5;">
-            <label>Thumbnail Image URL (Optional)</label>
-            <div class="input-with-upload">
-              <input type="text" class="block-input-thumbnail" value="${(block.thumbnail && block.thumbnail !== '[object Object]') ? block.thumbnail : ''}" placeholder="https://...">
-              <button type="button" class="btn btn-secondary btn-sm block-video-thumb-upload-btn btn-with-icon" style="padding: 0.5rem 0.8rem;">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"/></svg>
-                Upload
-              </button>
-              <input type="file" class="block-video-thumb-file-input hidden" accept="image/*" style="display:none;">
-            </div>
+          <div class="block-field-group">
+            <label>Video URL (YouTube, Vimeo, Facebook Reel, etc.)</label>
+            <input type="text" class="block-input-url" value="${block.url || ''}" required>
           </div>
-          <div class="block-field-group" style="flex: 1;">
-            <label>Video Caption</label>
-            <input type="text" class="block-input-caption" value="${block.caption || ''}">
-          </div>
-          <div class="block-field-group" style="flex: 0.7;">
+          <div class="block-field-group">
             <label>Duration (e.g. 1:30)</label>
             <input type="text" class="block-input-duration" value="${block.duration || ''}">
           </div>
+        </div>
+        
+        <div class="block-field-group">
+          <label>Thumbnail Image URL (Optional - or Upload below)</label>
+          <div class="input-with-upload">
+            <input type="text" class="block-input-thumbnail" value="${(block.thumbnail && block.thumbnail !== '[object Object]') ? block.thumbnail : ''}" placeholder="https://...">
+            <button type="button" class="btn btn-secondary btn-sm block-video-thumb-upload-btn btn-with-icon" style="padding: 0.5rem 0.8rem;">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"/></svg>
+              Upload
+            </button>
+            <input type="file" class="block-video-thumb-file-input hidden" accept="image/*" style="display:none;">
+          </div>
+        </div>
+
+        <div class="block-field-group">
+          <label>Video Caption</label>
+          <input type="text" class="block-input-caption" value="${block.caption || ''}">
         </div>
       `;
     } else if (block.type === 'link') {

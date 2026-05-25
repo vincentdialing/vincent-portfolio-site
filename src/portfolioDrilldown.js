@@ -1220,7 +1220,7 @@ function getVideoMeta(url) {
     if (isFacebookVideoUrl(url)) {
         return {
             provider: 'facebook',
-            embedSrc: `https://www.facebook.com/plugins/video.php?href=${encodeURIComponent(url)}&show_text=false&autoplay=true&mute=1`,
+            embedSrc: `https://www.facebook.com/plugins/video.php?href=${encodeURIComponent(url)}&show_text=false&autoplay=true&mute=true&muted=true`,
             thumbnail: ''
         };
     }

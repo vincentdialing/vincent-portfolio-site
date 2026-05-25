@@ -3150,6 +3150,8 @@ nav.floating-nav {
 
 .video-player-wrapper {
   position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 9;
   margin: 2.2rem 0 1.5rem;
   border-radius: 28px;
   overflow: hidden;
@@ -3159,9 +3161,11 @@ nav.floating-nav {
 }
 
 .video-thumbnail {
-  position: relative;
+  position: absolute;
+  top: 0;
+  left: 0;
   width: 100%;
-  aspect-ratio: 16 / 9;
+  height: 100%;
   cursor: pointer;
   overflow: hidden;
   z-index: 2;

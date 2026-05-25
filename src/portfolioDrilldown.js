@@ -912,8 +912,8 @@ function renderLevel3(project) {
             case 'video':
                 // Custom video player: thumbnail + play button → loads supported embeds on click
                 const videoMeta = getVideoMeta(block.url);
-                let thumb = block.thumbnail || videoMeta.thumbnail || '';
-                if (thumb === '[object Object]') thumb = '';
+                let thumb = (typeof block.thumbnail === 'string' && !block.thumbnail.startsWith('[object')) ? block.thumbnail : '';
+                if (!thumb && videoMeta.thumbnail) thumb = videoMeta.thumbnail;
                 console.log('VIDEO BLOCK RENDERED debug:', { block, videoMeta, thumb });
                 const shouldAutoCapture = !thumb && videoMeta.provider === 'file';
                 return `

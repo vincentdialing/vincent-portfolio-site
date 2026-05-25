@@ -1056,7 +1056,7 @@ function renderDetailBlocks() {
         <div class="block-field-group">
           <label>Thumbnail Image URL (Optional - or Upload below)</label>
           <div class="input-with-upload">
-            <input type="text" class="block-input-thumbnail" value="${(block.thumbnail && block.thumbnail !== '[object Object]') ? block.thumbnail : ''}" placeholder="https://...">
+            <input type="text" class="block-input-thumbnail" value="${(typeof block.thumbnail === 'string' && !block.thumbnail.startsWith('[object')) ? block.thumbnail : ''}" placeholder="https://...">
             <button type="button" class="btn btn-secondary btn-sm block-video-thumb-upload-btn btn-with-icon" style="padding: 0.5rem 0.8rem;">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"/></svg>
               Upload

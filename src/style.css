@@ -5139,6 +5139,12 @@ body {
   border-radius: inherit;
 }
 
+/* Stronger watermark specifically for the image lightbox
+   to make screenshots less useful while keeping tiles subtle */
+.image-lightbox-overlay .lightbox-image-wrapper.watermark-overlay::after {
+  opacity: 0.9; /* very bold watermark inside lightbox */
+}
+
 /* ==========================================
    Creative Workflow — Bento Grid
    (all cards use .service-card — zero visual divergence)

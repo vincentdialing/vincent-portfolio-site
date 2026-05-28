@@ -62,10 +62,10 @@ CREATE POLICY "Deny client inserts on portfolio_services"
   ON public.portfolio_services FOR INSERT
   WITH CHECK (false);
 
-DROP POLICY IF EXISTS "Deny client inserts on portfolio_projects" ON public.portfolio_projects;
-CREATE POLICY "Deny client inserts on portfolio_projects"
+DROP POLICY IF EXISTS "Allow portfolio project inserts" ON public.portfolio_projects;
+CREATE POLICY "Allow portfolio project inserts"
   ON public.portfolio_projects FOR INSERT
-  WITH CHECK (false);
+  WITH CHECK (true);
 
 DROP POLICY IF EXISTS "Deny client inserts on brands" ON public.brands;
 CREATE POLICY "Deny client inserts on brands"
@@ -96,11 +96,12 @@ CREATE POLICY "Deny client delete on portfolio_services"
   ON public.portfolio_services FOR DELETE
   USING (false);
 
-DROP POLICY IF EXISTS "Deny client update on portfolio_projects" ON public.portfolio_projects;
+DROP POLICY IF EXISTS "Allow portfolio project updates" ON public.portfolio_projects;
 DROP POLICY IF EXISTS "Deny client delete on portfolio_projects" ON public.portfolio_projects;
-CREATE POLICY "Deny client update on portfolio_projects"
+CREATE POLICY "Allow portfolio project updates"
   ON public.portfolio_projects FOR UPDATE
-  USING (false);
+  USING (true)
+  WITH CHECK (true);
 CREATE POLICY "Deny client delete on portfolio_projects"
   ON public.portfolio_projects FOR DELETE
   USING (false);

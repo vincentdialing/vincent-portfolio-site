@@ -21,42 +21,60 @@ function initSupabase() {
   const url = customUrl || envUrl;
   const key = customKey || envAnonKey;
 
-  const detectedServiceRole = key && (key.includes('service_role') || key.length > 150);
+  // Detect if the user pasted a service_role key (JWT with role claim or very long key)
+  let detectedServiceRole = false;
+  if (key) {
+    try {
+      // Standard Supabase JWTs: decode the payload to check the role claim
+      const parts = key.split('.');
+      if (parts.length === 3) {
+        const payload = JSON.parse(atob(parts[1]));
+        if (payload.role === 'service_role') detectedServiceRole = true;
+      }
+    } catch (_) {
+      // Not a JWT or can't decode — treat as anon key
+    }
+    // Fallback heuristic: if key literally contains the string
+    if (!detectedServiceRole && key.includes('service_role')) detectedServiceRole = true;
+  }
   isUsingServiceRole = detectedServiceRole;
+
+  // Debug: log which credential type was detected (do not print full key)
+  try {
+    console.info('Supabase init:', { url, keyIsServiceRole: Boolean(detectedServiceRole), keyLength: key ? key.length : 0 });
+  } catch (e) {
+    /* ignore */
+  }
 
   if (customUrl && customKey) {
     currentKeyType = 'custom';
-    document.getElementById('status-key-type').innerHTML = detectedServiceRole 
-      ? 'Using <strong>Service Role Key</strong> (Write Access)'
-      : 'Using Custom Anon Key (Read Only)';
+    if (detectedServiceRole) {
+      // Service role keys are blocked by Supabase in the browser — warn the user
+      document.getElementById('status-key-type').innerHTML = 
+        '<span style="color:var(--warning)">⚠ Service Role Key detected — using Anon Key instead (browser restriction)</span>';
+      console.warn('Service Role keys cannot be used in the browser. Falling back to the .env Anon Key for reads. Writes rely on RLS policies.');
+    } else {
+      document.getElementById('status-key-type').textContent = 'Using Custom Anon Key (Read Only)';
+    }
   } else {
     currentKeyType = 'env';
     document.getElementById('status-key-type').textContent = 'Using environment credentials';
   }
 
-  if (!url || !key) {
+  // Always use the anon key for the browser client.
+  // Service role keys are rejected by Supabase servers from browser origins.
+  const effectiveKey = detectedServiceRole ? envAnonKey : key;
+  const effectiveUrl = url;
+
+  if (!effectiveUrl || !effectiveKey) {
     updateStatusBadge('error', 'Missing credentials');
     return null;
   }
 
   try {
-    let client;
-    if (detectedServiceRole) {
-      // Bypass the browser check by passing the envAnonKey, but override headers for administrative database access
-      client = createClient(url, envAnonKey, {
-        auth: { persistSession: false },
-        global: {
-          headers: {
-            apikey: key,
-            Authorization: `Bearer ${key}`
-          }
-        }
-      });
-    } else {
-      client = createClient(url, key, {
-        auth: { persistSession: false }
-      });
-    }
+    const client = createClient(effectiveUrl, effectiveKey, {
+      auth: { persistSession: false }
+    });
     return client;
   } catch (err) {
     console.error('Supabase init error:', err);
@@ -105,6 +123,33 @@ async function testConnection() {
 
 // Instantiate on startup
 supabase = initSupabase();
+
+// -------------------------
+// Server proxy helpers
+// -------------------------
+async function serverDbCall(action, table, payload = null, id = null) {
+  try {
+    const res = await fetch('/api/db', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action, table, payload, id })
+    });
+    const json = await res.json();
+    if (!res.ok) throw json || new Error('Server DB error');
+    return json;
+  } catch (err) {
+    throw err;
+  }
+}
+
+async function serverUpload(file, bucketName = 'portfolio') {
+  // Send the file to the serverless upload endpoint which holds the service_role key
+  const headers = { 'x-file-name': file.name, 'x-file-type': file.type, 'x-bucket': bucketName };
+  const res = await fetch('/api/upload', { method: 'POST', headers, body: file });
+  const json = await res.json();
+  if (!res.ok) throw json || new Error('Upload failed');
+  return json;
+}
 
 // ==========================================
 // 2. TOAST FLOATING NOTIFICATIONS
@@ -840,8 +885,9 @@ async function fetchServices() {
     populateServiceSelects();
     return allServices;
   } catch (err) {
+    const msg = (err && (err.message || err.error || err.statusText)) || JSON.stringify(err) || String(err);
     console.error('Error loading services:', err);
-    showToast('Error', 'Failed to load services categories.', 'error');
+    showToast('Error', `Failed to load services categories: ${msg}`, 'error');
     return [];
   }
 }
@@ -1489,18 +1535,13 @@ async function handleProjectSubmit(e) {
     let resultError = null;
 
     if (id) {
-      // Update
-      const { error } = await supabase
-        .from('portfolio_projects')
-        .update(payload)
-        .eq('id', parseInt(id));
-      resultError = error;
+      // Update via server
+      const result = await serverDbCall('update', 'portfolio_projects', payload, parseInt(id));
+      resultError = result.error || null;
     } else {
-      // Insert
-      const { error } = await supabase
-        .from('portfolio_projects')
-        .insert(payload);
-      resultError = error;
+      // Insert via server
+      const result = await serverDbCall('insert', 'portfolio_projects', payload, null);
+      resultError = result.error || null;
     }
 
     if (resultError) throw resultError;
@@ -1523,12 +1564,8 @@ async function deleteProject(id, projectKey) {
   }
 
   try {
-    const { error } = await supabase
-      .from('portfolio_projects')
-      .delete()
-      .eq('id', id);
-
-    if (error) throw error;
+    const result = await serverDbCall('delete', 'portfolio_projects', null, id);
+    if (result.error) throw result.error;
 
     showToast('Deleted', `Project key "${projectKey}" deleted.`, 'success');
     loadProjects();
@@ -1945,29 +1982,23 @@ async function saveGalleryEdits() {
     // Apply updates (resilient to missing columns)
     for (const u of updates) {
       try {
-        const { error } = await supabase.from('portfolio_project_images').update({
+        const res = await serverDbCall('update', 'portfolio_project_images', {
           display_order: u.order,
           redirect_url: u.redirect_url || null,
           redirect_label: u.redirect_label || null
-        }).eq('id', u.id);
-        if (error) throw error;
+        }, u.id);
+        if (res.error) throw res.error;
       } catch (err) {
-        if (err.message && (err.message.includes('column') || err.message.includes('schema'))) {
-          // Fallback to updating only display order
-          const { error } = await supabase.from('portfolio_project_images').update({
-            display_order: u.order
-          }).eq('id', u.id);
-          if (error) throw error;
-        } else {
-          throw err;
-        }
+        // Fallback to updating only display order
+        const res2 = await serverDbCall('update', 'portfolio_project_images', { display_order: u.order }, u.id);
+        if (res2.error) throw res2.error;
       }
     }
 
     // Now delete marked items
     for (const id of toDelete) {
-      const { error } = await supabase.from('portfolio_project_images').delete().eq('id', id);
-      if (error) throw error;
+      const res = await serverDbCall('delete', 'portfolio_project_images', null, id);
+      if (res.error) throw res.error;
     }
 
     showToast('Saved', 'Gallery changes applied.', 'success');
@@ -2556,12 +2587,12 @@ async function handleServiceSubmit(e) {
 
   async function doSave(payload) {
     if (id) {
-      const { error } = await supabase.from('portfolio_services').update(payload).eq('id', parseInt(id));
-      if (error) throw error;
+      const result = await serverDbCall('update', 'portfolio_services', payload, parseInt(id));
+      if (result.error) throw result.error;
     } else {
       payload.key = key;
-      const { error } = await supabase.from('portfolio_services').insert(payload);
-      if (error) throw error;
+      const result = await serverDbCall('insert', 'portfolio_services', payload, null);
+      if (result.error) throw result.error;
     }
   }
 
@@ -2614,12 +2645,8 @@ async function deleteService(id) {
   if (!confirm(confirmMsg)) return;
 
   try {
-    const { error } = await supabase
-      .from('portfolio_services')
-      .delete()
-      .eq('id', id);
-
-    if (error) throw error;
+    const result = await serverDbCall('delete', 'portfolio_services', null, id);
+    if (result.error) throw result.error;
 
     showToast('Deleted', 'Service deleted successfully.', 'success');
     loadServices();
@@ -3114,13 +3141,13 @@ async function uploadFileToSupabase(file, bucketName = 'portfolio') {
   const filePath = `uploads/${timestamp}-${baseName}.${ext}`;
 
   // Upload directly via Supabase Storage REST API
-  const response = await fetch(`${url}/storage/v1/object/${bucketName}/${filePath}`, {
+  // Send file to our server endpoint which will forward to Supabase storage using the service role key
+  const response = await fetch('/api/upload', {
     method: 'POST',
     headers: {
-      'Authorization': `Bearer ${key}`,
-      'apikey': key,
-      'x-upsert': 'true',
-      'cache-control': 'max-age=3600'
+      'x-file-name': file.name,
+      'x-file-type': file.type,
+      'x-bucket': bucketName
     },
     body: uploadFile
   });
@@ -3130,8 +3157,9 @@ async function uploadFileToSupabase(file, bucketName = 'portfolio') {
     throw new Error(errorBody.message || errorBody.error || `Upload failed (HTTP ${response.status})`);
   }
 
-  // Build public URL
-  const publicUrl = `${url}/storage/v1/object/public/${bucketName}/${filePath}`;
+  // Build public URL from server response
+  const respJson = await response.json();
+  const publicUrl = respJson?.publicUrl || `${url}/storage/v1/object/public/${bucketName}/${filePath}`;
 
   const originalKB = (file.size / 1024).toFixed(1);
   const compressedKB = (uploadFile.size / 1024).toFixed(1);

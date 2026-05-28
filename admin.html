@@ -154,12 +154,18 @@
           </div>
           <div class="alert-banner-content">
             <h4>Row-Level Security (RLS) is blocking edits</h4>
-            <p>Your Supabase tables are public read-only. To perform uploads and edits from this UI, you must either enter your <strong>Service Role Key</strong> in the Credentials tab, or configure the database policies. <button class="alert-banner-link" id="goto-config-btn">Setup Guide</button></p>
+            <p>Your Supabase tables are public read-only. To perform edits from this UI, you must run the RLS write policies SQL in your Supabase SQL Editor. <button class="alert-banner-link" id="goto-config-btn">Setup Guide</button></p>
           </div>
           <button class="alert-banner-close" id="dismiss-rls-btn" style="background: none; border: none; color: var(--text-secondary); font-size: 1.5rem; cursor: pointer; padding: 0 0.5rem; line-height: 1; opacity: 0.7; transition: opacity 0.2s; align-self: flex-start;">&times;</button>
         </div>
 
         <!-- ================= PROJECTS TAB ================= -->
+        <!-- Quick Run Instructions -->
+        <div class="run-sql-instructions" style="padding:12px; margin:0 0 1rem 0; background: rgba(255,255,255,0.02); border: 1px dashed rgba(255,255,255,0.04); border-radius:6px;">
+          <strong>DB / Storage Hardening:</strong>
+          <p style="margin:0.25rem 0 0 0; font-size:0.95rem; color:var(--text-secondary);">Run the prepared SQL file <a href="/supabase-fix-rls.sql">supabase-fix-rls.sql</a> in your Supabase project's SQL editor to apply RLS policies. Storage bucket locking requires owner-level actions in the Supabase Dashboard — see the SQL file notes.</p>
+        </div>
+
         <section class="tab-panel active" id="panel-projects">
           <div class="filter-bar">
             <div class="search-input-group">
@@ -328,7 +334,7 @@
           <div class="config-layout">
             <div class="config-form-card">
               <h3>Supabase Connection Settings</h3>
-              <p class="card-desc">By default, the dashboard uses the environment variables from your <code>.env</code> file. You can override them here or paste a <strong>Service Role Key</strong> to bypass RLS policies during admin operations. These keys are only stored in your browser's local storage.</p>
+              <p class="card-desc">By default, the dashboard uses the environment variables from your <code>.env</code> file. You can override the Anon Key here if needed. <strong>Note:</strong> Service Role Keys are blocked by Supabase from browser origins — use the Anon Key and enable RLS write policies instead.</p>
 
               <form id="config-form">
                 <div class="form-group">
@@ -336,14 +342,14 @@
                   <input type="text" id="config-url" placeholder="https://your-project.supabase.co" required>
                 </div>
                 <div class="form-group">
-                  <label for="config-key">Supabase API Key (Anon Key or Service Role Key)</label>
+                  <label for="config-key">Supabase API Key (Anon Key)</label>
                   <div class="input-password-wrap">
                     <input type="password" id="config-key" placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..." required>
                     <button type="button" class="btn-toggle-password" id="toggle-config-key">
                       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
                     </button>
                   </div>
-                  <p class="field-help warning-text"><strong class="highlight-warn">Important:</strong> Use the <strong>Service Role Key</strong> (found in Supabase Settings > API) to insert/edit/delete records directly if you have not set up public insert policies.</p>
+                  <p class="field-help warning-text"><strong class="highlight-warn">Important:</strong> Service Role Keys are <strong>no longer supported</strong> in the browser. Use the <strong>Anon Key</strong> and run the write policies SQL below to enable edits.</p>
                 </div>
 
                 <div class="form-actions-row">

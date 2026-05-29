@@ -403,6 +403,50 @@ function initAIWriter() {
 
   generateBtn.addEventListener('click', handleAIGenerate);
 
+  // Tab switching setup
+  const tabCreator = document.getElementById('ai-tab-creator');
+  const tabCopywriter = document.getElementById('ai-tab-copywriter');
+  const creatorContainer = document.getElementById('ai-creator-container');
+  const copywriterContainer = document.getElementById('ai-copywriter-container');
+
+  if (tabCreator && tabCopywriter && creatorContainer && copywriterContainer) {
+    tabCreator.addEventListener('click', () => {
+      tabCreator.classList.add('active');
+      tabCreator.style.background = 'rgba(255, 255, 255, 0.08)';
+      tabCreator.style.color = 'var(--text-primary)';
+      tabCreator.style.borderColor = 'rgba(255, 255, 255, 0.08)';
+
+      tabCopywriter.classList.remove('active');
+      tabCopywriter.style.background = 'transparent';
+      tabCopywriter.style.color = 'var(--text-muted)';
+      tabCopywriter.style.borderColor = 'transparent';
+
+      creatorContainer.classList.remove('hidden');
+      copywriterContainer.classList.add('hidden');
+    });
+
+    tabCopywriter.addEventListener('click', () => {
+      tabCopywriter.classList.add('active');
+      tabCopywriter.style.background = 'rgba(255, 255, 255, 0.08)';
+      tabCopywriter.style.color = 'var(--text-primary)';
+      tabCopywriter.style.borderColor = 'rgba(255, 255, 255, 0.08)';
+
+      tabCreator.classList.remove('active');
+      tabCreator.style.background = 'transparent';
+      tabCreator.style.color = 'var(--text-muted)';
+      tabCreator.style.borderColor = 'transparent';
+
+      copywriterContainer.classList.remove('hidden');
+      creatorContainer.classList.add('hidden');
+    });
+  }
+
+  // AI Creator input listener
+  const aiImageInput = document.getElementById('ai-creator-image-input');
+  if (aiImageInput) {
+    aiImageInput.addEventListener('change', handleAICreateFromImage);
+  }
+
   // Groq key save button
   const saveGroqKeyBtn = document.getElementById('save-gemini-key-btn') || document.getElementById('save-groq-key-btn');
   if (saveGroqKeyBtn) {
@@ -889,6 +933,192 @@ Format your response exactly like this:
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width: 14px; height: 14px;"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
       Generate Copy
     `;
+  }
+}
+
+async function handleAICreateFromImage(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+
+  const apiKey = getGroqApiKey();
+  const loadingIndicator = document.getElementById('ai-creator-loading');
+  const loadingText = document.getElementById('ai-creator-loading-text');
+  const fileStatus = document.getElementById('ai-creator-file-status');
+  const resultsContainer = document.getElementById('ai-writer-results');
+  const noKeyMsg = document.getElementById('ai-no-key-msg');
+
+  if (!apiKey) {
+    if (noKeyMsg) noKeyMsg.classList.remove('hidden');
+    return;
+  }
+  if (noKeyMsg) noKeyMsg.classList.add('hidden');
+
+  // 1. Show loading state
+  fileStatus.textContent = `${file.name} (~${(file.size / 1024).toFixed(0)} KB)`;
+  if (loadingIndicator) loadingIndicator.classList.remove('hidden');
+  if (loadingText) loadingText.textContent = 'Compressing image & uploading to database...';
+  if (resultsContainer) resultsContainer.classList.add('hidden');
+
+  let uploadedUrl = '';
+  try {
+    // 2. Upload file to Supabase (automatically handles WebP conversion!)
+    const uploadResult = await uploadFileToSupabase(file, 'portfolio');
+    uploadedUrl = uploadResult.url;
+    console.log('AI Creator Image uploaded successfully:', uploadedUrl);
+
+    if (loadingText) loadingText.textContent = 'Analyzing image with Llama Vision model...';
+
+    // 3. Compress & convert file to Base64 WebP for Llama Vision API (max 800px width)
+    const base64Image = await new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = (event) => {
+        const img = new Image();
+        img.src = event.target.result;
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          const MAX_WIDTH = 800;
+          const scale = Math.min(MAX_WIDTH / img.width, 1);
+          canvas.width = img.width * scale;
+          canvas.height = img.height * scale;
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+          resolve(canvas.toDataURL('image/webp', 0.7));
+        };
+        img.onerror = reject;
+      };
+      reader.onerror = reject;
+    });
+
+    // 4. Gather available categories/services for the prompt
+    const categoriesList = allServices.map(s => ` - "${s.key}": ${s.title}`).join('\n');
+
+    // 5. Construct the Vision System & User Prompts
+    const promptText = `Analyze the uploaded image and identify what kind of graphic design/creative project it is.
+Select the most appropriate category key from the list below:
+${categoriesList}
+
+Write the portfolio details for this project. Format your response strictly as a JSON object with the following keys. Do not include any markdown fences or explanation; just return the JSON object:
+{
+  "title": "A short, creative and catchy title for this design project (2-5 words)",
+  "category_key": "the key matching one of the categories above",
+  "sub_category": "A 2-4 word sub-category label (e.g., 'Event Campaign Infographics', 'Brand Identity Design', 'Social Media Branding')",
+  "short_description": "A comprehensive 1-2 sentence description (25 to 40 words) connecting scope and purpose using an em dash —",
+  "detailed_writeup": "A professional paragraph (2-3 sentences) detailing the creative approach, aesthetic elements, and execution details",
+  "tools": "Photoshop, Illustrator, Figma (comma-separated list of 2-4 tools likely used for this style)",
+  "gradient": "linear-gradient(135deg, #color1 0%, #color2 100%) (suggest a beautiful dark glassmorphic-themed gradient matching the dominant colors of the image)",
+  "deliverables": [
+    "Deliverable/responsibility 1",
+    "Deliverable/responsibility 2",
+    "Deliverable/responsibility 3",
+    "Deliverable/responsibility 4"
+  ]
+}`;
+
+    // 6. Initialize Groq and Call Vision Model
+    const groq = new Groq({
+      apiKey: apiKey,
+      dangerouslyAllowBrowser: true
+    });
+
+    console.log('Sending vision request to Groq...');
+    const completion = await groq.chat.completions.create({
+      model: 'meta-llama/llama-4-scout-17b-16e-instruct',
+      messages: [
+        {
+          role: 'system',
+          content: 'You are an AI portfolio assistant that responds ONLY with a valid JSON object. Do not include ```json or other formatting.'
+        },
+        {
+          role: 'user',
+          content: [
+            { type: 'text', text: promptText },
+            { type: 'image_url', image_url: { url: base64Image } }
+          ]
+        }
+      ],
+      response_format: { type: 'json_object' },
+      temperature: 0.7,
+      max_tokens: 1024
+    });
+
+    const aiResponseText = completion.choices[0].message.content;
+    console.log('Groq Vision response:', aiResponseText);
+
+    // 7. Parse Response
+    const data = JSON.parse(aiResponseText);
+
+    // 8. Auto-fill form fields
+    if (data.title) {
+      document.getElementById('proj-title').value = data.title;
+      document.getElementById('proj-title').dispatchEvent(new Event('input'));
+    }
+    if (data.sub_category) {
+      document.getElementById('proj-category').value = data.sub_category;
+      document.getElementById('proj-category').dispatchEvent(new Event('input'));
+    }
+    if (data.short_description) {
+      document.getElementById('proj-desc').value = data.short_description;
+      document.getElementById('proj-desc').dispatchEvent(new Event('input'));
+    }
+    if (data.tools) {
+      document.getElementById('proj-tools').value = data.tools;
+      document.getElementById('proj-tools').dispatchEvent(new Event('input'));
+    }
+    if (data.gradient) {
+      document.getElementById('proj-gradient').value = data.gradient;
+      document.getElementById('proj-gradient').dispatchEvent(new Event('input'));
+      const previewSwatch = document.getElementById('gradient-preview');
+      if (previewSwatch) previewSwatch.style.background = data.gradient;
+    }
+    if (uploadedUrl) {
+      document.getElementById('proj-image').value = uploadedUrl;
+      document.getElementById('proj-image').dispatchEvent(new Event('input'));
+    }
+
+    if (data.category_key) {
+      const select = document.getElementById('proj-service-key');
+      if (select) {
+        select.value = data.category_key;
+        // Trigger change event to auto-generate the project key
+        select.dispatchEvent(new Event('change'));
+      }
+    }
+
+    // 9. Populate Detail page content blocks
+    currentDetailBlocks = [];
+    if (data.detailed_writeup) {
+      currentDetailBlocks.push({ type: 'text', content: data.detailed_writeup });
+    }
+    if (Array.isArray(data.deliverables) && data.deliverables.length > 0) {
+      currentDetailBlocks.push({ type: 'list', items: data.deliverables });
+    }
+    renderDetailBlocks();
+
+    // 10. Hide loading and show success toast
+    if (loadingIndicator) loadingIndicator.classList.add('hidden');
+    showToast('AI Auto-Fill Success', 'Project details auto-generated successfully!', 'success');
+
+    // Render results status cards
+    if (resultsContainer) {
+      resultsContainer.classList.remove('hidden');
+      resultsContainer.innerHTML = `
+        <div class="ai-result-card" style="border-color: var(--success); background: rgba(46, 213, 115, 0.05);">
+          <div class="ai-result-card-header" style="display: flex; align-items: center; gap: 0.5rem; color: var(--success); font-weight: 600; font-size: 0.85rem; margin-bottom: 0.5rem;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width:16px;height:16px;flex-shrink:0;"><polyline points="20 6 9 17 4 12"/></svg>
+            <span>AI Auto-Fill Success</span>
+          </div>
+          <div class="ai-result-text" style="font-size: 0.8rem; color: var(--text-secondary); line-height: 1.4;">
+            Successfully generated <strong>"${data.title || 'Untitled'}"</strong> under category <strong>"${data.category_key || 'Uncategorized'}"</strong>.<br>
+            All fields, including tools, gradient, and 2 detail blocks have been filled out below. Review them and save the project!
+          </div>
+        </div>
+      `;
+    }
+  } catch (err) {
+    console.error('AI creator scan failed:', err);
+    if (loadingIndicator) loadingIndicator.classList.add('hidden');
+    showToast('AI Creator Error', `Failed to generate project details: ${err.message}`, 'error');
   }
 }
 

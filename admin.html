@@ -454,21 +454,51 @@ CREATE POLICY "Allow anon delete" ON brands FOR DELETE USING (true);
       <form id="project-form" class="modal-form">
         <input type="hidden" id="project-db-id">
 
-        <!-- AI Content Writer Section -->
+        <!-- AI Project Assistant Section -->
         <div class="ai-writer-section" id="ai-writer-section" style="border: 1px solid var(--accent-color); border-radius: 12px; background: rgba(37, 99, 235, 0.05); margin-bottom: 1.5rem; padding: 1rem;">
-          <div class="ai-writer-header" style="border-bottom: 1px solid rgba(255, 255, 255, 0.08); padding-bottom: 0.75rem;">
-            <div class="ai-writer-title-row">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 18px; height: 18px; color: var(--accent-light);"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
-              <span style="font-weight: 600;">Generate Project with AI (Groq)</span>
-            </div>
-            <button type="button" id="ai-generate-btn" class="btn btn-primary btn-sm ai-generate-btn">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width: 14px; height: 14px;"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
-              Write Copy
+          <!-- AI Tabs Header -->
+          <div class="ai-tabs-header" style="display: flex; gap: 0.5rem; border-bottom: 1px solid rgba(255, 255, 255, 0.08); padding-bottom: 0.5rem; margin-bottom: 0.75rem;">
+            <button type="button" class="btn btn-xs ai-tab-btn active" id="ai-tab-creator" style="background: rgba(255, 255, 255, 0.08); color: var(--text-primary); border: 1px solid rgba(255, 255, 255, 0.08);">
+              ✨ AI Project Creator (Image Scan)
+            </button>
+            <button type="button" class="btn btn-xs ai-tab-btn" id="ai-tab-copywriter" style="background: transparent; color: var(--text-muted); border: 1px solid transparent;">
+              ✍ AI Copywriter (Write from Title)
             </button>
           </div>
-          <div class="form-group" style="margin-top: 0.75rem;">
-            <textarea id="ai-extra-context" rows="2" placeholder="Optional: Add extra context — e.g. 'Focus on the warm color tones' or 'Created for a local cafe'..." style="font-size: 0.8rem;"></textarea>
+
+          <!-- Mode 1: AI Project Creator -->
+          <div id="ai-creator-container" class="ai-tab-content">
+            <p style="font-size: 0.8rem; color: var(--text-secondary); margin: 0 0 0.75rem 0;">Upload a project image to let AI auto-generate the Title, Category (deciding where it belongs), Sub-category, Description, Tools, Gradient, and Detail Blocks!</p>
+            <div style="display: flex; gap: 0.75rem; align-items: center; flex-wrap: wrap;">
+              <label class="btn btn-primary btn-sm ai-generate-btn" style="cursor: pointer; display: inline-flex; align-items: center; margin: 0;">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 14px; height: 14px; margin-right: 4px;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"/></svg>
+                Upload & Scan Image
+                <input type="file" id="ai-creator-image-input" accept="image/*" style="display: none;">
+              </label>
+              <span id="ai-creator-file-status" style="font-size: 0.8rem; color: var(--text-muted);">No image uploaded</span>
+            </div>
+            
+            <div id="ai-creator-loading" class="ai-loading-indicator hidden" style="margin-top: 0.75rem;">
+              <div class="spinner-small"></div>
+              <span id="ai-creator-loading-text">Uploading image & analyzing...</span>
+            </div>
           </div>
+
+          <!-- Mode 2: AI Copywriter -->
+          <div id="ai-copywriter-container" class="ai-tab-content hidden">
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.5rem; flex-wrap: wrap; gap: 0.5rem;">
+              <span style="font-size: 0.8rem; color: var(--text-secondary);">Generates descriptive copy based on the already filled Title and Category above.</span>
+              <button type="button" id="ai-generate-btn" class="btn btn-primary btn-sm ai-generate-btn">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width: 14px; height: 14px;"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+                Write Copy
+              </button>
+            </div>
+            <div class="form-group">
+              <textarea id="ai-extra-context" rows="2" placeholder="Optional: Add extra context — e.g. 'Focus on the warm color tones' or 'Created for a local cafe'..." style="font-size: 0.8rem;"></textarea>
+            </div>
+          </div>
+
+          <!-- Results & Errors -->
           <div id="ai-writer-results" class="ai-writer-results hidden">
             <!-- AI results status populated here -->
           </div>

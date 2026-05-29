@@ -160,11 +160,8 @@
         </div>
 
         <!-- ================= PROJECTS TAB ================= -->
-        <!-- Quick Run Instructions -->
-        <div class="run-sql-instructions" style="padding:12px; margin:0 0 1rem 0; background: rgba(255,255,255,0.02); border: 1px dashed rgba(255,255,255,0.04); border-radius:6px;">
-          <strong>DB / Storage Hardening:</strong>
-          <p style="margin:0.25rem 0 0 0; font-size:0.95rem; color:var(--text-secondary);">Run the prepared SQL file <a href="/supabase-fix-rls.sql">supabase-fix-rls.sql</a> in your Supabase project's SQL editor to apply RLS policies. Storage bucket locking requires owner-level actions in the Supabase Dashboard — see the SQL file notes.</p>
-        </div>
+
+
 
         <section class="tab-panel active" id="panel-projects">
           <div class="filter-bar">
@@ -424,7 +421,13 @@ CREATE POLICY "Allow anon insert" ON brands FOR INSERT WITH CHECK (true);
 CREATE POLICY "Allow anon update" ON brands FOR UPDATE USING (true) WITH CHECK (true);
 CREATE POLICY "Allow anon delete" ON brands FOR DELETE USING (true);
 
--- 2. Alternatively, disable Row Level Security (RLS) entirely:
+-- 3. Enable Storage uploads/updates/deletes for the 'portfolio' bucket (run to allow files upload via client fallback)
+-- CREATE POLICY "Allow anon uploads to portfolio bucket" ON storage.objects FOR INSERT TO public WITH CHECK (bucket_id = 'portfolio');
+-- CREATE POLICY "Allow anon updates to portfolio bucket" ON storage.objects FOR UPDATE TO public USING (bucket_id = 'portfolio') WITH CHECK (bucket_id = 'portfolio');
+-- CREATE POLICY "Allow anon deletes from portfolio bucket" ON storage.objects FOR DELETE TO public USING (bucket_id = 'portfolio');
+-- CREATE POLICY "Allow public select from portfolio bucket" ON storage.objects FOR SELECT TO public USING (bucket_id = 'portfolio');
+
+-- 4. Alternatively, disable Row Level Security (RLS) entirely:
 -- ALTER TABLE portfolio_projects DISABLE ROW LEVEL SECURITY;
 -- ALTER TABLE portfolio_services DISABLE ROW LEVEL SECURITY;
 -- ALTER TABLE portfolio_project_images DISABLE ROW LEVEL SECURITY;

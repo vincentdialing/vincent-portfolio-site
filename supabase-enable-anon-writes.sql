@@ -113,3 +113,38 @@ SELECT schemaname, tablename, policyname, permissive, cmd
 FROM pg_policies
 WHERE tablename IN ('portfolio_services','portfolio_projects','brands','community_cards','location_card','portfolio_project_images')
 ORDER BY tablename, cmd;
+
+-- ==========================================
+-- 3. Enable Storage uploads/updates/deletes for the 'portfolio' bucket
+-- ==========================================
+-- Run this to allow direct client-side uploads using the Anon Key.
+-- (If the 'portfolio' bucket does not exist, create it in your Supabase Dashboard Storage first)
+
+-- Drop existing if any
+DROP POLICY IF EXISTS "Allow anon uploads to portfolio bucket" ON storage.objects;
+DROP POLICY IF EXISTS "Allow anon updates to portfolio bucket" ON storage.objects;
+DROP POLICY IF EXISTS "Allow anon deletes from portfolio bucket" ON storage.objects;
+DROP POLICY IF EXISTS "Allow public select from portfolio bucket" ON storage.objects;
+
+-- Create policies
+CREATE POLICY "Allow anon uploads to portfolio bucket"
+  ON storage.objects FOR INSERT
+  TO public
+  WITH CHECK (bucket_id = 'portfolio');
+
+CREATE POLICY "Allow anon updates to portfolio bucket"
+  ON storage.objects FOR UPDATE
+  TO public
+  USING (bucket_id = 'portfolio')
+  WITH CHECK (bucket_id = 'portfolio');
+
+CREATE POLICY "Allow anon deletes from portfolio bucket"
+  ON storage.objects FOR DELETE
+  TO public
+  USING (bucket_id = 'portfolio');
+
+CREATE POLICY "Allow public select from portfolio bucket"
+  ON storage.objects FOR SELECT
+  TO public
+  USING (bucket_id = 'portfolio');
+

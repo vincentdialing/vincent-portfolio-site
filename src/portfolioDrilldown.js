@@ -1131,12 +1131,15 @@ function openImageLightbox(src, alt) {
     overlay.className = 'image-lightbox-overlay';
     overlay.innerHTML = `
         <button class="lightbox-close-btn" aria-label="Close">✕</button>
-        <div class="lightbox-image-wrapper watermark-overlay">
-            <img src="${src}" alt="${alt || ''}" />
+        <div class="lightbox-scroll-container">
+            <div class="lightbox-image-wrapper watermark-overlay">
+                <img src="${src}" alt="${alt || ''}" />
+            </div>
         </div>
     `;
     document.body.appendChild(overlay);
     document.body.style.overflow = 'hidden';
+    document.documentElement.style.overflow = 'hidden'; // Hide root scrollbar to prevent double scrollbars
 
     // Animate in
     requestAnimationFrame(() => {
@@ -1149,6 +1152,7 @@ function openImageLightbox(src, alt) {
         setTimeout(() => {
             overlay.remove();
             document.body.style.overflow = '';
+            document.documentElement.style.overflow = ''; // Restore root scrollbar
         }, 300);
     };
 
@@ -1158,9 +1162,56 @@ function openImageLightbox(src, alt) {
         closeLightbox();
     });
 
-    // Close on clicking background (not the image)
+    // Toggle zoom on image click
+    const imgEl = overlay.querySelector('.lightbox-image-wrapper img');
+    if (imgEl) {
+        const wrapper = overlay.querySelector('.lightbox-image-wrapper');
+        const updateFormatClass = () => {
+            const ratio = imgEl.naturalHeight / imgEl.naturalWidth;
+            if (ratio > 1.2) {
+                wrapper.classList.remove('is-square-format');
+                wrapper.classList.add('is-tall-format');
+                overlay.classList.remove('lightbox-square');
+                overlay.classList.add('lightbox-tall');
+            } else {
+                wrapper.classList.remove('is-tall-format');
+                wrapper.classList.add('is-square-format');
+                overlay.classList.remove('lightbox-tall');
+                overlay.classList.add('lightbox-square');
+            }
+        };
+
+        if (imgEl.complete) {
+            updateFormatClass();
+        } else {
+            imgEl.addEventListener('load', updateFormatClass);
+        }
+
+        imgEl.addEventListener('click', (e) => {
+            e.stopPropagation();
+            // Only toggle zoom on tall format images
+            if (!wrapper.classList.contains('is-tall-format')) {
+                return;
+            }
+            const isZoomed = overlay.classList.toggle('lightbox-zoomed');
+            if (!isZoomed) {
+                const scrollContainer = overlay.querySelector('.lightbox-scroll-container');
+                if (scrollContainer) {
+                    scrollContainer.scrollTo({ top: 0, behavior: 'smooth' });
+                }
+            }
+        });
+    }
+
+    // Close on clicking background, scroll container, or wrapper (not the image)
     overlay.addEventListener('click', (e) => {
-        if (e.target === overlay) closeLightbox();
+        if (
+            e.target === overlay ||
+            e.target.classList.contains('lightbox-scroll-container') ||
+            e.target.classList.contains('lightbox-image-wrapper')
+        ) {
+            closeLightbox();
+        }
     });
 
     // Close on Escape key

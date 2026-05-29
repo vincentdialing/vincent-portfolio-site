@@ -127,18 +127,53 @@ supabase = initSupabase();
 // -------------------------
 // Server proxy helpers
 // -------------------------
+async function clientDbCall(action, table, payload = null, id = null) {
+  if (!supabase) {
+    throw new Error('Supabase client not initialized for fallback.');
+  }
+  let result;
+  if (action === 'insert') {
+    result = await supabase.from(table).insert(payload).select();
+  } else if (action === 'update') {
+    result = await supabase.from(table).update(payload).eq('id', id).select();
+  } else if (action === 'delete') {
+    result = await supabase.from(table).delete().eq('id', id).select();
+  } else {
+    throw new Error(`Invalid action: ${action}`);
+  }
+
+  if (result.error) {
+    throw result.error;
+  }
+  return { data: result.data || null };
+}
+
 async function serverDbCall(action, table, payload = null, id = null) {
+  let tryClientFallback = false;
   try {
     const res = await fetch('/api/db', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ action, table, payload, id })
     });
-    const json = await res.json();
-    if (!res.ok) throw json || new Error('Server DB error');
-    return json;
+    if (res.status === 404) {
+      tryClientFallback = true;
+    } else {
+      const json = await res.json();
+      if (!res.ok) throw json || new Error('Server DB error');
+      return json;
+    }
   } catch (err) {
-    throw err;
+    if (supabase) {
+      tryClientFallback = true;
+      console.warn('serverDbCall failed, falling back to client-side Supabase client:', err);
+    } else {
+      throw err;
+    }
+  }
+
+  if (tryClientFallback) {
+    return await clientDbCall(action, table, payload, id);
   }
 }
 
@@ -3140,26 +3175,50 @@ async function uploadFileToSupabase(file, bucketName = 'portfolio') {
   const ext = uploadFile === file ? file.name.split('.').pop() : 'webp';
   const filePath = `uploads/${timestamp}-${baseName}.${ext}`;
 
-  // Upload directly via Supabase Storage REST API
-  // Send file to our server endpoint which will forward to Supabase storage using the service role key
-  const response = await fetch('/api/upload', {
-    method: 'POST',
-    headers: {
-      'x-file-name': file.name,
-      'x-file-type': file.type,
-      'x-bucket': bucketName
-    },
-    body: uploadFile
-  });
+  let publicUrl;
+  let useFallback = false;
+  let response;
 
-  if (!response.ok) {
-    const errorBody = await response.json().catch(() => ({}));
-    throw new Error(errorBody.message || errorBody.error || `Upload failed (HTTP ${response.status})`);
+  try {
+    response = await fetch('/api/upload', {
+      method: 'POST',
+      headers: {
+        'x-file-name': file.name,
+        'x-file-type': file.type,
+        'x-bucket': bucketName
+      },
+      body: uploadFile
+    });
+    if (response.status === 404) {
+      useFallback = true;
+    }
+  } catch (err) {
+    if (supabase) {
+      useFallback = true;
+      console.warn('API upload failed, falling back to client-side storage upload:', err);
+    } else {
+      throw err;
+    }
   }
 
-  // Build public URL from server response
-  const respJson = await response.json();
-  const publicUrl = respJson?.publicUrl || `${url}/storage/v1/object/public/${bucketName}/${filePath}`;
+  if (useFallback) {
+    const { data, error } = await supabase.storage.from(bucketName).upload(filePath, uploadFile, {
+      contentType: uploadFile.type,
+      upsert: true
+    });
+    if (error) {
+      throw new Error(`Direct upload failed: ${error.message}`);
+    }
+    const { data: pubData } = supabase.storage.from(bucketName).getPublicUrl(filePath);
+    publicUrl = pubData.publicUrl;
+  } else {
+    if (!response.ok) {
+      const errorBody = await response.json().catch(() => ({}));
+      throw new Error(errorBody.message || errorBody.error || `Upload failed (HTTP ${response.status})`);
+    }
+    const respJson = await response.json();
+    publicUrl = respJson?.publicUrl || `${url}/storage/v1/object/public/${bucketName}/${filePath}`;
+  }
 
   const originalKB = (file.size / 1024).toFixed(1);
   const compressedKB = (uploadFile.size / 1024).toFixed(1);
@@ -3205,12 +3264,8 @@ function compressToWebP(file, quality = 0.82) {
           const webpName = file.name.replace(/\.[^.]+$/, '.webp');
           const webpFile = new File([blob], webpName, { type: 'image/webp' });
 
-          // Only use WebP if it's actually smaller
-          if (webpFile.size < file.size) {
-            resolve(webpFile);
-          } else {
-            resolve(file); // original was already smaller, keep it
-          }
+          // Always resolve the WebP file as requested by user
+          resolve(webpFile);
         },
         'image/webp',
         quality

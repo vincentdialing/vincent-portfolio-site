@@ -113,6 +113,14 @@
           <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"/></svg>
           File Manager
         </button>
+        <button class="nav-tab-btn" data-tab="certificates">
+          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+          Certificates
+        </button>
+        <button class="nav-tab-btn" data-tab="reviews">
+          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+          Client Reviews
+        </button>
         <button class="nav-tab-btn" data-tab="config">
           <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
           Supabase Credentials
@@ -281,6 +289,40 @@
                   <div class="loading-state"><div class="spinner-small"></div></div>
                 </div>
               </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ================= CERTIFICATES TAB ================= -->
+        <section class="tab-panel" id="panel-certificates">
+          <div class="filter-bar" style="margin-bottom: 1rem; justify-content: flex-end;">
+            <button id="edit-certificates-btn" class="btn btn-secondary btn-sm" style="background: transparent; border: 1px solid rgba(255,255,255,0.08);" type="button">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px; margin-right:6px;"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 1 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+              Edit Certificates
+            </button>
+          </div>
+          <div class="grid-layout certificates-grid-admin" id="certificates-list">
+            <!-- Dynamic certificate cards -->
+            <div class="loading-state">
+              <div class="spinner-small"></div>
+              <span>Fetching certificates...</span>
+            </div>
+          </div>
+        </section>
+
+        <!-- ================= REVIEWS TAB ================= -->
+        <section class="tab-panel" id="panel-reviews">
+          <div class="filter-bar" style="margin-bottom: 1rem; justify-content: flex-end;">
+            <button id="edit-reviews-btn" class="btn btn-secondary btn-sm" style="background: transparent; border: 1px solid rgba(255,255,255,0.08);" type="button">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px; margin-right:6px;"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 1 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+              Edit Reviews
+            </button>
+          </div>
+          <div class="grid-layout reviews-grid-admin" id="reviews-list">
+            <!-- Dynamic review cards -->
+            <div class="loading-state">
+              <div class="spinner-small"></div>
+              <span>Fetching reviews...</span>
             </div>
           </div>
         </section>
@@ -957,6 +999,104 @@ CREATE POLICY "Allow anon delete" ON brands FOR DELETE USING (true);
         <div class="modal-actions">
           <button type="button" class="btn btn-secondary modal-cancel-btn">Cancel</button>
           <button type="submit" class="btn btn-primary">Save Card</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- 6. CERTIFICATE EDIT MODAL -->
+  <div class="modal-backdrop" id="certificate-modal">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3 id="certificate-modal-title">Add Certificate</h3>
+        <button class="modal-close-btn">&times;</button>
+      </div>
+      <form id="certificate-form" class="modal-form">
+        <input type="hidden" id="certificate-db-id">
+        <div class="form-group">
+          <label for="cert-id">Certificate ID Reference (Unique key, e.g. husay-2026)*</label>
+          <input type="text" id="cert-id" placeholder="e.g. google-ux-design" required>
+        </div>
+        <div class="form-group">
+          <label for="cert-title">Title*</label>
+          <input type="text" id="cert-title" placeholder="e.g. Google UX Design Professional" required>
+        </div>
+        <div class="form-group">
+          <label for="cert-issuer">Issuer*</label>
+          <input type="text" id="cert-issuer" placeholder="e.g. Google" required>
+        </div>
+        <div class="form-group">
+          <label for="cert-date">Date Issued*</label>
+          <input type="text" id="cert-date" placeholder="e.g. Issued Jun 2024" required>
+        </div>
+        <div class="form-group">
+          <label for="cert-link">Credential Link (Verification URL)</label>
+          <input type="text" id="cert-link" placeholder="https://coursera.org/... or #">
+        </div>
+        <div class="form-group">
+          <label for="cert-image">Certificate Preview Image URL*</label>
+          <div class="input-with-upload">
+            <input type="text" id="cert-image" placeholder="https://..." required>
+            <label class="btn-file-label">
+              <input type="file" class="file-uploader-inline" data-target-input="cert-image">
+              Upload
+            </label>
+          </div>
+          <p class="field-help">Can be an SVG, PNG, JPG, or WebP. Monotone or high-quality previews work best.</p>
+        </div>
+        <div class="form-group">
+          <label for="cert-order">Display Order</label>
+          <input type="number" id="cert-order" value="1">
+        </div>
+
+        <div class="modal-actions">
+          <button type="button" class="btn btn-secondary modal-cancel-btn">Cancel</button>
+          <button type="submit" class="btn btn-primary">Save Certificate</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- 7. CLIENT REVIEW EDIT MODAL -->
+  <div class="modal-backdrop" id="review-modal">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3 id="review-modal-title">Add Review</h3>
+        <button class="modal-close-btn">&times;</button>
+      </div>
+      <form id="review-form" class="modal-form">
+        <input type="hidden" id="review-db-id">
+        <div class="form-group">
+          <label for="review-author-name">Client / Author Name*</label>
+          <input type="text" id="review-author-name" placeholder="e.g. David Park" required>
+        </div>
+        <div class="form-group">
+          <label for="review-author-title">Client Role / Title*</label>
+          <input type="text" id="review-author-title" placeholder="e.g. Small Business Owner, Project Manager" required>
+        </div>
+        <div class="form-group">
+          <label for="review-text">Review / Feedback Text*</label>
+          <textarea id="review-text" rows="5" placeholder="Write client's feedback here..." required></textarea>
+        </div>
+        <div class="form-group">
+          <label for="review-avatar">Client Avatar/Photo URL</label>
+          <div class="input-with-upload">
+            <input type="text" id="review-avatar" placeholder="https://...">
+            <label class="btn-file-label">
+              <input type="file" class="file-uploader-inline" data-target-input="review-avatar">
+              Upload
+            </label>
+          </div>
+          <p class="field-help">Upload a profile photo. If empty, the system will use a letter placeholder automatically.</p>
+        </div>
+        <div class="form-group">
+          <label for="review-order">Display Order</label>
+          <input type="number" id="review-order" value="1">
+        </div>
+
+        <div class="modal-actions">
+          <button type="button" class="btn btn-secondary modal-cancel-btn">Cancel</button>
+          <button type="submit" class="btn btn-primary">Save Review</button>
         </div>
       </form>
     </div>

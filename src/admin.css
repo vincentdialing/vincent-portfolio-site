@@ -844,7 +844,7 @@ body {
    SERVICES & BRANDS SECTION STYLES
    ========================================================================== */
 
-.services-grid-admin, .brands-grid-admin {
+.services-grid-admin, .brands-grid-admin, .certificates-grid-admin, .reviews-grid-admin {
   grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
 }
 

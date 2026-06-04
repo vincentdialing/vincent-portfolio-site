@@ -242,7 +242,8 @@ const TAB_CONFIGS = {
   brands: { title: 'Brand Logos', subtitle: 'Manage client and partner logos for the scrolling marquee.', button: 'Add Brand Logo' },
   bento: { title: 'Bento Hover Cards', subtitle: 'Manage bento layout interactive cards.', button: '' },
   uploads: { title: 'File Manager', subtitle: 'Upload static images directly to your Supabase Storage.', button: '' },
-  thumbnail: { title: 'Thumbnail Generator', subtitle: 'Create composite cover images.', button: '' },
+  certificates: { title: 'Certificates & Credentials', subtitle: 'Manage professional certificates and credentials.', button: 'Add Certificate' },
+  reviews: { title: 'Client Reviews', subtitle: 'Manage client feedback, ratings, and profile avatars.', button: 'Add Review' },
   config: { title: 'Supabase Credentials', subtitle: 'Configure credentials to authenticate your write sessions.', button: '' }
 };
 
@@ -314,6 +315,10 @@ function initTabs() {
         openBrandModal();
       } else if (activeTab === 'services') {
         openServiceModal();
+      } else if (activeTab === 'certificates') {
+        openCertificateModal();
+      } else if (activeTab === 'reviews') {
+        openReviewModal();
       }
     });
   }
@@ -348,6 +353,12 @@ function loadTabData(tab) {
     case 'uploads':
       // Setup dropzone events if not done
       initDropzone();
+      break;
+    case 'certificates':
+      loadCertificates();
+      break;
+    case 'reviews':
+      loadReviews();
       break;
     case 'config':
       loadConfigForm();
@@ -3853,6 +3864,360 @@ function initProjectKeyAutoFill() {
 }
 
 // ==========================================
+// 11b. CERTIFICATES MANAGEMENT
+// ==========================================
+
+let certificates = [];
+
+async function loadCertificates() {
+  const container = document.getElementById('certificates-list');
+  if (!container) return;
+
+  container.innerHTML = `
+    <div class="loading-state">
+      <div class="spinner-small"></div>
+      <span>Loading certificates data...</span>
+    </div>
+  `;
+
+  if (!supabase) {
+    container.innerHTML = '<div class="error-state"><p>Database is not connected.</p></div>';
+    return;
+  }
+
+  try {
+    const { data, error } = await supabase
+      .from('portfolio_certificates')
+      .select('*')
+      .order('display_order', { ascending: true })
+      .order('id', { ascending: true });
+
+    if (error) throw error;
+
+    certificates = data || [];
+    renderCertificates();
+  } catch (err) {
+    console.error('Load certificates error:', err);
+    container.innerHTML = `
+      <div class="error-state">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+        <h3>Failed to Fetch Certificates</h3>
+        <p>${err.message || 'An unexpected error occurred.'}</p>
+        <button class="btn btn-secondary btn-sm" id="btn-retry-certs">Retry</button>
+      </div>
+    `;
+    const retry = document.getElementById('btn-retry-certs');
+    if (retry) retry.addEventListener('click', loadCertificates);
+  }
+}
+
+function renderCertificates() {
+  const container = document.getElementById('certificates-list');
+  if (!container) return;
+
+  if (certificates.length === 0) {
+    container.innerHTML = `
+      <div class="no-assets-state">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><polyline points="21 15 16 10 5 21"/></svg>
+        <p>No certificates found.</p>
+      </div>
+    `;
+    return;
+  }
+
+  container.innerHTML = certificates.map(c => `
+    <div class="service-item-card" data-id="${c.id}">
+      <div class="service-img-preview">
+        <img src="${c.image_url}" alt="${c.title}" style="object-fit: contain; background: #111;">
+      </div>
+      <div class="service-info">
+        <h4>${c.title}</h4>
+        <p>Issuer: <span>${c.issuer}</span> | Date: ${c.date} | Order: ${c.display_order}</p>
+      </div>
+      <div class="control-btn-group">
+        <button class="action-icon-btn edit-cert-btn" data-id="${c.id}" title="Edit Certificate">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 1 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+        </button>
+        <button class="action-icon-btn delete delete-cert-btn" data-id="${c.id}" title="Delete Certificate">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+        </button>
+      </div>
+    </div>
+  `).join('');
+
+  // Wire events
+  container.querySelectorAll('.edit-cert-btn').forEach(btn => {
+    btn.addEventListener('click', () => openCertificateModal(parseInt(btn.dataset.id)));
+  });
+
+  container.querySelectorAll('.delete-cert-btn').forEach(btn => {
+    btn.addEventListener('click', () => deleteCertificate(parseInt(btn.dataset.id)));
+  });
+}
+
+function openCertificateModal(id = null) {
+  const modal = document.getElementById('certificate-modal');
+  const title = document.getElementById('certificate-modal-title');
+  const form = document.getElementById('certificate-form');
+  form.reset();
+
+  if (id) {
+    title.textContent = 'Edit Certificate';
+    const cert = certificates.find(c => c.id === id);
+    if (cert) {
+      document.getElementById('certificate-db-id').value = cert.id;
+      document.getElementById('cert-id').value = cert.certificate_id || '';
+      document.getElementById('cert-title').value = cert.title || '';
+      document.getElementById('cert-issuer').value = cert.issuer || '';
+      document.getElementById('cert-date').value = cert.date || '';
+      document.getElementById('cert-link').value = cert.link || '';
+      document.getElementById('cert-image').value = cert.image_url || '';
+      document.getElementById('cert-order').value = cert.display_order || 0;
+    }
+  } else {
+    title.textContent = 'Add Certificate';
+    document.getElementById('certificate-db-id').value = '';
+    document.getElementById('cert-order').value = certificates.length + 1;
+  }
+
+  modal.classList.add('is-open');
+}
+
+async function handleCertificateSubmit(e) {
+  e.preventDefault();
+  const id = document.getElementById('certificate-db-id').value;
+  const certId = document.getElementById('cert-id').value.trim();
+  const title = document.getElementById('cert-title').value.trim();
+  const issuer = document.getElementById('cert-issuer').value.trim();
+  const date = document.getElementById('cert-date').value.trim();
+  const link = document.getElementById('cert-link').value.trim() || '#';
+  const imageUrl = document.getElementById('cert-image').value.trim();
+  const displayOrder = parseInt(document.getElementById('cert-order').value) || 0;
+
+  const payload = {
+    certificate_id: certId || null,
+    title,
+    issuer,
+    date,
+    link,
+    image_url: imageUrl,
+    display_order: displayOrder
+  };
+
+  try {
+    if (id) {
+      const result = await serverDbCall('update', 'portfolio_certificates', payload, parseInt(id));
+      if (result.error) throw result.error;
+      showToast('Updated', 'Certificate updated successfully.', 'success');
+    } else {
+      const result = await serverDbCall('insert', 'portfolio_certificates', payload, null);
+      if (result.error) throw result.error;
+      showToast('Added', 'Certificate added successfully.', 'success');
+    }
+
+    closeModal('certificate-modal');
+    loadCertificates();
+  } catch (err) {
+    console.error('Certificate submit error:', err);
+    showToast('Save Failed', err.message || 'Could not save certificate.', 'error');
+  }
+}
+
+async function deleteCertificate(id) {
+  const cert = certificates.find(c => c.id === id);
+  if (!cert) return;
+
+  if (!confirm(`Are you sure you want to delete the certificate "${cert.title}"?`)) return;
+
+  try {
+    const result = await serverDbCall('delete', 'portfolio_certificates', null, id);
+    if (result.error) throw result.error;
+
+    showToast('Deleted', 'Certificate removed.', 'success');
+    loadCertificates();
+  } catch (err) {
+    console.error('Delete certificate error:', err);
+    showToast('Delete Failed', err.message || 'Could not delete certificate.', 'error');
+  }
+}
+
+// ==========================================
+// 11c. CLIENT REVIEWS MANAGEMENT
+// ==========================================
+
+let reviews = [];
+
+async function loadReviews() {
+  const container = document.getElementById('reviews-list');
+  if (!container) return;
+
+  container.innerHTML = `
+    <div class="loading-state">
+      <div class="spinner-small"></div>
+      <span>Loading reviews data...</span>
+    </div>
+  `;
+
+  if (!supabase) {
+    container.innerHTML = '<div class="error-state"><p>Database is not connected.</p></div>';
+    return;
+  }
+
+  try {
+    const { data, error } = await supabase
+      .from('portfolio_reviews')
+      .select('*')
+      .order('display_order', { ascending: true })
+      .order('id', { ascending: true });
+
+    if (error) throw error;
+
+    reviews = data || [];
+    renderReviews();
+  } catch (err) {
+    console.error('Load reviews error:', err);
+    container.innerHTML = `
+      <div class="error-state">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+        <h3>Failed to Fetch Reviews</h3>
+        <p>${err.message || 'An unexpected error occurred.'}</p>
+        <button class="btn btn-secondary btn-sm" id="btn-retry-reviews">Retry</button>
+      </div>
+    `;
+    const retry = document.getElementById('btn-retry-reviews');
+    if (retry) retry.addEventListener('click', loadReviews);
+  }
+}
+
+function renderReviews() {
+  const container = document.getElementById('reviews-list');
+  if (!container) return;
+
+  if (reviews.length === 0) {
+    container.innerHTML = `
+      <div class="no-assets-state">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><polyline points="21 15 16 10 5 21"/></svg>
+        <p>No client reviews found.</p>
+      </div>
+    `;
+    return;
+  }
+
+  container.innerHTML = reviews.map(r => `
+    <div class="service-item-card" data-id="${r.id}">
+      <div class="service-img-preview ${!r.avatar_url ? 'no-image' : ''}">
+        ${r.avatar_url 
+          ? `<img src="${r.avatar_url}" alt="${r.author_name}">` 
+          : `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>`
+        }
+      </div>
+      <div class="service-info">
+        <h4>${r.author_name}</h4>
+        <p>Title: <span>${r.author_title}</span> | Order: ${r.display_order}</p>
+        <p style="white-space:nowrap; text-overflow:ellipsis; overflow:hidden; font-size:0.75rem; color:var(--text-secondary); margin-top:0.25rem;">"${r.review_text}"</p>
+      </div>
+      <div class="control-btn-group">
+        <button class="action-icon-btn edit-review-btn" data-id="${r.id}" title="Edit Review">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 1 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+        </button>
+        <button class="action-icon-btn delete delete-review-btn" data-id="${r.id}" title="Delete Review">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+        </button>
+      </div>
+    </div>
+  `).join('');
+
+  // Wire events
+  container.querySelectorAll('.edit-review-btn').forEach(btn => {
+    btn.addEventListener('click', () => openReviewModal(parseInt(btn.dataset.id)));
+  });
+
+  container.querySelectorAll('.delete-review-btn').forEach(btn => {
+    btn.addEventListener('click', () => deleteReview(parseInt(btn.dataset.id)));
+  });
+}
+
+function openReviewModal(id = null) {
+  const modal = document.getElementById('review-modal');
+  const title = document.getElementById('review-modal-title');
+  const form = document.getElementById('review-form');
+  form.reset();
+
+  if (id) {
+    title.textContent = 'Edit Client Review';
+    const rev = reviews.find(r => r.id === id);
+    if (rev) {
+      document.getElementById('review-db-id').value = rev.id;
+      document.getElementById('review-author-name').value = rev.author_name || '';
+      document.getElementById('review-author-title').value = rev.author_title || '';
+      document.getElementById('review-text').value = rev.review_text || '';
+      document.getElementById('review-avatar').value = rev.avatar_url || '';
+      document.getElementById('review-order').value = rev.display_order || 0;
+    }
+  } else {
+    title.textContent = 'Add Client Review';
+    document.getElementById('review-db-id').value = '';
+    document.getElementById('review-order').value = reviews.length + 1;
+  }
+
+  modal.classList.add('is-open');
+}
+
+async function handleReviewSubmit(e) {
+  e.preventDefault();
+  const id = document.getElementById('review-db-id').value;
+  const authorName = document.getElementById('review-author-name').value.trim();
+  const authorTitle = document.getElementById('review-author-title').value.trim();
+  const reviewText = document.getElementById('review-text').value.trim();
+  const avatarUrl = document.getElementById('review-avatar').value.trim();
+  const displayOrder = parseInt(document.getElementById('review-order').value) || 0;
+
+  const payload = {
+    author_name: authorName,
+    author_title: authorTitle,
+    review_text: reviewText,
+    avatar_url: avatarUrl || null,
+    display_order: displayOrder
+  };
+
+  try {
+    if (id) {
+      const result = await serverDbCall('update', 'portfolio_reviews', payload, parseInt(id));
+      if (result.error) throw result.error;
+      showToast('Updated', 'Review updated successfully.', 'success');
+    } else {
+      const result = await serverDbCall('insert', 'portfolio_reviews', payload, null);
+      if (result.error) throw result.error;
+      showToast('Added', 'Review added successfully.', 'success');
+    }
+
+    closeModal('review-modal');
+    loadReviews();
+  } catch (err) {
+    console.error('Review submit error:', err);
+    showToast('Save Failed', err.message || 'Could not save review.', 'error');
+  }
+}
+
+async function deleteReview(id) {
+  const rev = reviews.find(r => r.id === id);
+  if (!rev) return;
+
+  if (!confirm(`Are you sure you want to delete the review from "${rev.author_name}"?`)) return;
+
+  try {
+    const result = await serverDbCall('delete', 'portfolio_reviews', null, id);
+    if (result.error) throw result.error;
+
+    showToast('Deleted', 'Review removed.', 'success');
+    loadReviews();
+  } catch (err) {
+    console.error('Delete review error:', err);
+    showToast('Delete Failed', err.message || 'Could not delete review.', 'error');
+  }
+}
+
+// ==========================================
 // 12. RUNTIME STARTUP CODE
 // ==========================================
 
@@ -3939,6 +4304,28 @@ document.addEventListener('DOMContentLoaded', async () => {
   document.getElementById('service-form').addEventListener('submit', handleServiceSubmit);
   document.getElementById('brand-form').addEventListener('submit', handleBrandSubmit);
   document.getElementById('community-card-form').addEventListener('submit', handleCommunityCardSubmit);
+  document.getElementById('certificate-form').addEventListener('submit', handleCertificateSubmit);
+  document.getElementById('review-form').addEventListener('submit', handleReviewSubmit);
+
+  // Edit/Add buttons inside tab filter bars
+  const editCertificatesBtn = document.getElementById('edit-certificates-btn');
+  if (editCertificatesBtn) {
+    editCertificatesBtn.addEventListener('click', () => openCertificateModal());
+    // Visual improvement: change text to "+ Add Certificate"
+    editCertificatesBtn.innerHTML = `
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px; margin-right:6px;"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      Add Certificate
+    `;
+  }
+  const editReviewsBtn = document.getElementById('edit-reviews-btn');
+  if (editReviewsBtn) {
+    editReviewsBtn.addEventListener('click', () => openReviewModal());
+    // Visual improvement: change text to "+ Add Review"
+    editReviewsBtn.innerHTML = `
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px; margin-right:6px;"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      Add Review
+    `;
+  }
 
   // Initialize Thumbnail Generator
   initThumbnailGenerator();

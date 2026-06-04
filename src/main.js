@@ -265,8 +265,94 @@ async function fetchBrands() {
   }
 }
 
+// Dynamic Content: Fetch Certificates
+async function fetchCertificates() {
+  const grid = document.getElementById('certificates-grid');
+  if (!grid) return;
+
+  try {
+    const { data: certs, error } = await supabase
+      .from('portfolio_certificates')
+      .select('*')
+      .order('display_order', { ascending: true });
+
+    if (error) throw error;
+
+    if (certs && certs.length > 0) {
+      grid.innerHTML = certs.map((cert, index) => `
+        <button
+          class="certificate-tile animate-up"
+          style="animation-delay: ${0.1 + index * 0.05}s;"
+          ${cert.certificate_id ? `data-certificate-id="${cert.certificate_id}"` : ''}
+          data-title="${cert.title || ''}"
+          data-issuer="${cert.issuer || ''}"
+          data-date="${cert.date || ''}"
+          data-link="${cert.link || '#'}"
+          data-image="${cert.image_url}">
+          <img src="${cert.image_url}" alt="${cert.title} preview" loading="lazy">
+        </button>
+      `).join('');
+
+      // Re-observe animate-up elements
+      document.querySelectorAll('#certificates-grid .animate-up').forEach((el) => {
+        observer.observe(el);
+      });
+    } else {
+      grid.innerHTML = '<div class="no-assets-state"><p>No certificates found.</p></div>';
+    }
+  } catch (err) {
+    console.error('Error fetching certificates:', err);
+    grid.innerHTML = '<div class="error-state"><p>Error loading certificates data.</p></div>';
+  }
+}
+
+// Dynamic Content: Fetch Client Reviews
+async function fetchReviews() {
+  const grid = document.getElementById('testimonials-grid');
+  if (!grid) return;
+
+  try {
+    const { data: reviews, error } = await supabase
+      .from('portfolio_reviews')
+      .select('*')
+      .order('display_order', { ascending: true });
+
+    if (error) throw error;
+
+    if (reviews && reviews.length > 0) {
+      grid.innerHTML = reviews.map((rev, index) => `
+        <div class="testimonial-card animate-up" style="animation-delay: ${0.1 + (index * 0.05)}s;">
+          <div class="testimonial-header">
+            ${rev.avatar_url 
+              ? `<img src="${rev.avatar_url}" alt="${rev.author_name}" class="testimonial-avatar" loading="lazy">` 
+              : `<div class="testimonial-avatar no-avatar" style="display: flex; align-items: center; justify-content: center; background: rgba(255, 255, 255, 0.05); border: 2px solid rgba(180, 180, 220, 0.25); color: var(--color-accent); font-weight: 700; width: 56px; height: 56px; border-radius: 50%; font-size: 1.25rem;">
+                  ${rev.author_name ? rev.author_name.charAt(0).toUpperCase() : '?'}
+                 </div>`
+            }
+            <h4 class="testimonial-author-name">${rev.author_name}</h4>
+            <span class="testimonial-author-title">${rev.author_title}</span>
+          </div>
+          <p class="testimonial-text">${rev.review_text}</p>
+        </div>
+      `).join('');
+
+      // Re-observe animate-up elements
+      document.querySelectorAll('#testimonials-grid .animate-up').forEach((el) => {
+        observer.observe(el);
+      });
+    } else {
+      grid.innerHTML = '<div class="no-assets-state"><p>No client reviews found.</p></div>';
+    }
+  } catch (err) {
+    console.error('Error fetching reviews:', err);
+    grid.innerHTML = '<div class="error-state"><p>Error loading reviews data.</p></div>';
+  }
+}
+
 // Call on load
 fetchBrands();
+fetchCertificates();
+fetchReviews();
 
 // ==========================================
 // Dynamic Content: Fetch Location Card (Bento Hover Transform)
@@ -721,7 +807,6 @@ document.querySelectorAll('.animate-up').forEach((element) => {
 // ==========================================
 // Certificates: tile click -> modal preview
 // ==========================================
-const certificateTiles = document.querySelectorAll('.certificate-tile');
 const certificateModal = document.getElementById('certificate-modal');
 const certificateModalImage = document.getElementById('certificate-modal-image');
 const certificateModalTitle = document.getElementById('certificate-modal-title');
@@ -763,20 +848,29 @@ function closeCertificateModal() {
   certificateModal.setAttribute('aria-hidden', 'true');
 
   if (lastFocusedTile) {
-    lastFocusedTile.focus();
+    try {
+      lastFocusedTile.focus();
+    } catch (err) {}
     lastFocusedTile = null;
   }
 }
 
-if (certificateTiles.length && certificateModal) {
-  certificateTiles.forEach(tile => {
-    tile.addEventListener('click', () => openCertificateModal(tile));
-    tile.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter' || e.key === ' ') {
-        e.preventDefault();
-        openCertificateModal(tile);
-      }
-    });
+if (certificateModal) {
+  // Use event delegation for dynamic certificate tiles
+  document.addEventListener('click', (e) => {
+    const tile = e.target.closest('.certificate-tile');
+    if (tile) {
+      e.preventDefault();
+      openCertificateModal(tile);
+    }
+  });
+
+  document.addEventListener('keydown', (e) => {
+    const tile = e.target.closest('.certificate-tile');
+    if (tile && (e.key === 'Enter' || e.key === ' ')) {
+      e.preventDefault();
+      openCertificateModal(tile);
+    }
   });
 
   if (certificateModalClose) {

@@ -3509,7 +3509,7 @@ async function uploadFileToSupabase(file, bucketName = 'portfolio') {
       },
       body: uploadFile
     });
-    if (response.status === 404) {
+    if (response.status === 404 || (!response.ok && supabase)) {
       useFallback = true;
     }
   } catch (err) {

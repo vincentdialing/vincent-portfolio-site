@@ -1115,9 +1115,10 @@ function renderLevel3(project) {
     });
 
     // Bind lightbox on gallery images
-    detail.querySelectorAll('.detail-gallery-image-item img').forEach(img => {
+    const galleryImgElements = Array.from(detail.querySelectorAll('.detail-gallery-image-item img'));
+    galleryImgElements.forEach((img, idx) => {
         img.addEventListener('click', () => {
-            openImageLightbox(img.src, img.alt);
+            openImageLightbox(galleryImgElements, idx);
         });
     });
 }
@@ -1125,18 +1126,62 @@ function renderLevel3(project) {
 // ==========================================
 // Image Lightbox
 // ==========================================
-function openImageLightbox(src, alt) {
+function openImageLightbox(imagesInput, startIndex = 0) {
+    let images = [];
+    if (Array.isArray(imagesInput)) {
+        images = imagesInput.map(img => ({
+            src: img.src || img.getAttribute('src'),
+            alt: img.alt || img.getAttribute('alt') || ''
+        }));
+    } else if (typeof imagesInput === 'string') {
+        images = [{ src: imagesInput, alt: arguments[1] || '' }];
+    } else if (imagesInput && imagesInput.src) {
+        images = [{ src: imagesInput.src, alt: imagesInput.alt || '' }];
+    } else {
+        return;
+    }
+
+    let currentIndex = startIndex;
+    const hasMultipleImages = images.length > 1;
+
     // Create overlay
     const overlay = document.createElement('div');
     overlay.className = 'image-lightbox-overlay';
+
+    let prevBtnHtml = '';
+    let nextBtnHtml = '';
+    let dotsHtml = '';
+
+    if (hasMultipleImages) {
+        prevBtnHtml = `
+            <button class="lightbox-nav-btn lightbox-prev-btn" aria-label="Previous image">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+            </button>
+        `;
+        nextBtnHtml = `
+            <button class="lightbox-nav-btn lightbox-next-btn" aria-label="Next image">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+            </button>
+        `;
+        dotsHtml = `
+            <div class="lightbox-dots-indicator">
+                ${images.map((_, idx) => `<div class="lightbox-dot${idx === currentIndex ? ' active' : ''}" data-idx="${idx}"></div>`).join('')}
+            </div>
+        `;
+    }
+
     overlay.innerHTML = `
         <button class="lightbox-close-btn" aria-label="Close">✕</button>
+        ${prevBtnHtml}
         <div class="lightbox-scroll-container">
             <div class="lightbox-image-wrapper watermark-overlay">
-                <img src="${src}" alt="${alt || ''}" />
+                <img src="${images[currentIndex].src}" alt="${images[currentIndex].alt || ''}" />
             </div>
         </div>
+        ${nextBtnHtml}
+        ${dotsHtml}
     `;
+
     document.body.appendChild(overlay);
     document.body.style.overflow = 'hidden';
     document.documentElement.style.overflow = 'hidden'; // Hide root scrollbar to prevent double scrollbars
@@ -1146,9 +1191,106 @@ function openImageLightbox(src, alt) {
         overlay.classList.add('lightbox-visible');
     });
 
+    const wrapper = overlay.querySelector('.lightbox-image-wrapper');
+    const imgEl = overlay.querySelector('.lightbox-image-wrapper img');
+
+    const updateFormatClass = () => {
+        if (!imgEl) return;
+        const ratio = imgEl.naturalHeight / imgEl.naturalWidth;
+        if (ratio > 1.2) {
+            wrapper.classList.remove('is-square-format');
+            wrapper.classList.add('is-tall-format');
+            overlay.classList.remove('lightbox-square');
+            overlay.classList.add('lightbox-tall');
+        } else {
+            wrapper.classList.remove('is-tall-format');
+            wrapper.classList.add('is-square-format');
+            overlay.classList.remove('lightbox-tall');
+            overlay.classList.add('lightbox-square');
+        }
+    };
+
+    const setupImageEvents = () => {
+        if (!imgEl) return;
+        if (imgEl.complete) {
+            updateFormatClass();
+        } else {
+            imgEl.addEventListener('load', updateFormatClass);
+        }
+
+        imgEl.addEventListener('click', (e) => {
+            e.stopPropagation();
+            if (!wrapper.classList.contains('is-tall-format')) return;
+            const isZoomed = overlay.classList.toggle('lightbox-zoomed');
+            if (!isZoomed) {
+                const scrollContainer = overlay.querySelector('.lightbox-scroll-container');
+                if (scrollContainer) {
+                    scrollContainer.scrollTo({ top: 0, behavior: 'smooth' });
+                }
+            }
+        });
+    };
+
+    setupImageEvents();
+
+    const showImage = (index) => {
+        if (index < 0 || index >= images.length) return;
+        currentIndex = index;
+
+        // Reset zoomed state when changing images
+        overlay.classList.remove('lightbox-zoomed');
+        const scrollContainer = overlay.querySelector('.lightbox-scroll-container');
+        if (scrollContainer) {
+            scrollContainer.scrollTo({ top: 0 });
+        }
+
+        imgEl.style.opacity = '0';
+        imgEl.style.transform = 'scale(0.96)';
+        imgEl.style.transition = 'opacity 0.25s ease, transform 0.25s ease';
+
+        setTimeout(() => {
+            imgEl.src = images[currentIndex].src;
+            imgEl.alt = images[currentIndex].alt || '';
+
+            const onImageLoad = () => {
+                updateFormatClass();
+                imgEl.style.opacity = '1';
+                imgEl.style.transform = 'scale(1)';
+                imgEl.removeEventListener('load', onImageLoad);
+            };
+
+            if (imgEl.complete) {
+                onImageLoad();
+            } else {
+                imgEl.addEventListener('load', onImageLoad);
+            }
+        }, 250);
+
+        // Update dots active class
+        const dots = overlay.querySelectorAll('.lightbox-dot');
+        dots.forEach((dot, idx) => {
+            if (idx === currentIndex) {
+                dot.classList.add('active');
+            } else {
+                dot.classList.remove('active');
+            }
+        });
+    };
+
+    const prevImage = () => {
+        const newIndex = (currentIndex - 1 + images.length) % images.length;
+        showImage(newIndex);
+    };
+
+    const nextImage = () => {
+        const newIndex = (currentIndex + 1) % images.length;
+        showImage(newIndex);
+    };
+
     // Close function
     const closeLightbox = () => {
         overlay.classList.remove('lightbox-visible');
+        window.removeEventListener('keydown', keyHandler);
         setTimeout(() => {
             overlay.remove();
             document.body.style.overflow = '';
@@ -1162,44 +1304,24 @@ function openImageLightbox(src, alt) {
         closeLightbox();
     });
 
-    // Toggle zoom on image click
-    const imgEl = overlay.querySelector('.lightbox-image-wrapper img');
-    if (imgEl) {
-        const wrapper = overlay.querySelector('.lightbox-image-wrapper');
-        const updateFormatClass = () => {
-            const ratio = imgEl.naturalHeight / imgEl.naturalWidth;
-            if (ratio > 1.2) {
-                wrapper.classList.remove('is-square-format');
-                wrapper.classList.add('is-tall-format');
-                overlay.classList.remove('lightbox-square');
-                overlay.classList.add('lightbox-tall');
-            } else {
-                wrapper.classList.remove('is-tall-format');
-                wrapper.classList.add('is-square-format');
-                overlay.classList.remove('lightbox-tall');
-                overlay.classList.add('lightbox-square');
-            }
-        };
-
-        if (imgEl.complete) {
-            updateFormatClass();
-        } else {
-            imgEl.addEventListener('load', updateFormatClass);
-        }
-
-        imgEl.addEventListener('click', (e) => {
+    // Bind Navigation Buttons
+    if (hasMultipleImages) {
+        overlay.querySelector('.lightbox-prev-btn').addEventListener('click', (e) => {
             e.stopPropagation();
-            // Only toggle zoom on tall format images
-            if (!wrapper.classList.contains('is-tall-format')) {
-                return;
-            }
-            const isZoomed = overlay.classList.toggle('lightbox-zoomed');
-            if (!isZoomed) {
-                const scrollContainer = overlay.querySelector('.lightbox-scroll-container');
-                if (scrollContainer) {
-                    scrollContainer.scrollTo({ top: 0, behavior: 'smooth' });
-                }
-            }
+            prevImage();
+        });
+        overlay.querySelector('.lightbox-next-btn').addEventListener('click', (e) => {
+            e.stopPropagation();
+            nextImage();
+        });
+
+        // Bind Dot clicks
+        overlay.querySelectorAll('.lightbox-dot').forEach(dot => {
+            dot.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const idx = parseInt(dot.dataset.idx);
+                showImage(idx);
+            });
         });
     }
 
@@ -1214,14 +1336,17 @@ function openImageLightbox(src, alt) {
         }
     });
 
-    // Close on Escape key
-    const escHandler = (e) => {
+    // Keyboard controls handler
+    const keyHandler = (e) => {
         if (e.key === 'Escape') {
             closeLightbox();
-            window.removeEventListener('keydown', escHandler);
+        } else if (e.key === 'ArrowRight' || e.key === 'Right') {
+            if (hasMultipleImages) nextImage();
+        } else if (e.key === 'ArrowLeft' || e.key === 'Left') {
+            if (hasMultipleImages) prevImage();
         }
     };
-    window.addEventListener('keydown', escHandler);
+    window.addEventListener('keydown', keyHandler);
 }
 
 // ==========================================

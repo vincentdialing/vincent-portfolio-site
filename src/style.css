@@ -3252,6 +3252,98 @@ nav.floating-nav {
   transform: scale(1.1);
 }
 
+/* Lightbox Navigation Buttons */
+.lightbox-nav-btn {
+  position: fixed;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  background: rgba(0, 0, 0, 0.4);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background 0.2s ease, transform 0.2s ease, opacity 0.2s ease;
+  z-index: 10001;
+  opacity: 0.7;
+}
+
+.lightbox-nav-btn:hover {
+  background: rgba(255, 255, 255, 0.15);
+  transform: translateY(-50%) scale(1.1);
+  opacity: 1;
+}
+
+.lightbox-nav-btn svg {
+  width: 24px;
+  height: 24px;
+}
+
+.lightbox-prev-btn {
+  left: 1.5rem;
+}
+
+.lightbox-next-btn {
+  right: 1.5rem;
+}
+
+/* Lightbox Dots Indicator */
+.lightbox-dots-indicator {
+  position: fixed;
+  bottom: 2rem;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 0.6rem;
+  z-index: 10001;
+  background: rgba(0, 0, 0, 0.4);
+  padding: 0.5rem 1rem;
+  border-radius: 100px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+.lightbox-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.35);
+  cursor: pointer;
+  transition: background 0.25s ease, transform 0.25s ease;
+}
+
+.lightbox-dot:hover {
+  background: rgba(255, 255, 255, 0.7);
+  transform: scale(1.2);
+}
+
+.lightbox-dot.active {
+  background: #3b82f6; /* Modern accent blue */
+  transform: scale(1.2);
+  box-shadow: 0 0 8px rgba(59, 130, 246, 0.6);
+}
+
+@media (max-width: 768px) {
+  .lightbox-nav-btn {
+    width: 40px;
+    height: 40px;
+  }
+  .lightbox-prev-btn {
+    left: 0.75rem;
+  }
+  .lightbox-next-btn {
+    right: 0.75rem;
+  }
+  .lightbox-dots-indicator {
+    bottom: 1.5rem;
+  }
+}
+
 /* ==========================================
    Custom Video Player
    ========================================== */

@@ -3,14 +3,21 @@ import { createClient } from '@supabase/supabase-js';
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_SERVICE_ROLE = process.env.SUPABASE_SERVICE_ROLE;
 
+let supabase = null;
 if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE) {
   console.warn('Missing SUPABASE_URL or SUPABASE_SERVICE_ROLE in environment for /api/db');
+} else {
+  supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE);
 }
-
-const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE);
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
+
+  if (!supabase) {
+    return res.status(500).json({
+      error: 'Supabase server client is not initialized. Make sure you set SUPABASE_URL and SUPABASE_SERVICE_ROLE environment variables.'
+    });
+  }
 
   const { action, table, payload, id } = req.body || {};
 

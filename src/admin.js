@@ -454,8 +454,37 @@ function initAIWriter() {
 
   // AI Creator input listener
   const aiImageInput = document.getElementById('ai-creator-image-input');
-  if (aiImageInput) {
-    aiImageInput.addEventListener('change', handleAICreateFromImage);
+  const aiCreatorSubmitBtn = document.getElementById('ai-creator-submit-btn');
+  const aiCreatorFileStatus = document.getElementById('ai-creator-file-status');
+  const projectForm = document.getElementById('project-form');
+  
+  let selectedAIFiles = [];
+
+  if (aiImageInput && aiCreatorSubmitBtn && aiCreatorFileStatus) {
+    aiImageInput.addEventListener('change', (e) => {
+      selectedAIFiles = Array.from(e.target.files);
+      if (selectedAIFiles.length > 0) {
+        aiCreatorFileStatus.textContent = `${selectedAIFiles.length} image(s) selected`;
+        aiCreatorSubmitBtn.style.display = 'inline-flex';
+      } else {
+        aiCreatorFileStatus.textContent = 'No images selected';
+        aiCreatorSubmitBtn.style.display = 'none';
+      }
+    });
+
+    aiCreatorSubmitBtn.addEventListener('click', () => {
+      if (selectedAIFiles.length > 0) {
+        handleAICreateFromImage(selectedAIFiles);
+      }
+    });
+
+    if (projectForm) {
+      projectForm.addEventListener('reset', () => {
+        selectedAIFiles = [];
+        aiCreatorFileStatus.textContent = 'No images selected';
+        aiCreatorSubmitBtn.style.display = 'none';
+      });
+    }
   }
 
   // Groq key save button
@@ -947,9 +976,8 @@ Format your response exactly like this:
   }
 }
 
-async function handleAICreateFromImage(e) {
-  const file = e.target.files[0];
-  if (!file) return;
+async function handleAICreateFromImage(files) {
+  if (!files || files.length === 0) return;
 
   const apiKey = getGroqApiKey();
   const loadingIndicator = document.getElementById('ai-creator-loading');
@@ -957,6 +985,8 @@ async function handleAICreateFromImage(e) {
   const fileStatus = document.getElementById('ai-creator-file-status');
   const resultsContainer = document.getElementById('ai-writer-results');
   const noKeyMsg = document.getElementById('ai-no-key-msg');
+  const extraContext = document.getElementById('ai-creator-extra-context')?.value?.trim() || '';
+  const submitBtn = document.getElementById('ai-creator-submit-btn');
 
   if (!apiKey) {
     if (noKeyMsg) noKeyMsg.classList.remove('hidden');
@@ -965,51 +995,72 @@ async function handleAICreateFromImage(e) {
   if (noKeyMsg) noKeyMsg.classList.add('hidden');
 
   // 1. Show loading state
-  fileStatus.textContent = `${file.name} (~${(file.size / 1024).toFixed(0)} KB)`;
+  fileStatus.textContent = `${files.length} image(s) selected`;
   if (loadingIndicator) loadingIndicator.classList.remove('hidden');
-  if (loadingText) loadingText.textContent = 'Compressing image & uploading to database...';
+  if (loadingText) loadingText.textContent = `Uploading ${files.length} image(s)...`;
   if (resultsContainer) resultsContainer.classList.add('hidden');
+  
+  if (submitBtn) {
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = `<div class="spinner-small" style="margin-right: 6px;"></div> Generating...`;
+  }
 
-  let uploadedUrl = '';
+  const uploadedUrls = [];
   try {
-    // 2. Upload file to Supabase (automatically handles WebP conversion!)
-    const uploadResult = await uploadFileToSupabase(file, 'portfolio');
-    uploadedUrl = uploadResult.url;
-    console.log('AI Creator Image uploaded successfully:', uploadedUrl);
+    // 2. Upload files to Supabase (automatically handles WebP conversion!)
+    for (let i = 0; i < files.length; i++) {
+      if (loadingText) loadingText.textContent = `Uploading image ${i + 1} of ${files.length}...`;
+      const uploadResult = await uploadFileToSupabase(files[i], 'portfolio');
+      uploadedUrls.push(uploadResult.url);
+      console.log(`Image ${i + 1} uploaded successfully:`, uploadResult.url);
+    }
 
-    if (loadingText) loadingText.textContent = 'Analyzing image with Llama Vision model...';
+    if (loadingText) loadingText.textContent = 'Preparing images for AI vision...';
 
-    // 3. Compress & convert file to Base64 WebP for Llama Vision API (max 800px width)
-    const base64Image = await new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.readAsDataURL(file);
-      reader.onload = (event) => {
-        const img = new Image();
-        img.src = event.target.result;
-        img.onload = () => {
-          const canvas = document.createElement('canvas');
-          const MAX_WIDTH = 800;
-          const scale = Math.min(MAX_WIDTH / img.width, 1);
-          canvas.width = img.width * scale;
-          canvas.height = img.height * scale;
-          const ctx = canvas.getContext('2d');
-          ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-          resolve(canvas.toDataURL('image/webp', 0.7));
+    // 3. Compress & convert files to Base64 WebP for Llama Vision API (max 800px width)
+    const base64Images = [];
+    const numImagesForAI = Math.min(files.length, 4);
+    for (let i = 0; i < numImagesForAI; i++) {
+      if (loadingText) loadingText.textContent = `Processing image ${i + 1} of ${numImagesForAI}...`;
+      const base64Image = await new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.readAsDataURL(files[i]);
+        reader.onload = (event) => {
+          const img = new Image();
+          img.src = event.target.result;
+          img.onload = () => {
+            const canvas = document.createElement('canvas');
+            const MAX_WIDTH = 800;
+            const scale = Math.min(MAX_WIDTH / img.width, 1);
+            canvas.width = img.width * scale;
+            canvas.height = img.height * scale;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+            resolve(canvas.toDataURL('image/webp', 0.7));
+          };
+          img.onerror = reject;
         };
-        img.onerror = reject;
-      };
-      reader.onerror = reject;
-    });
+        reader.onerror = reject;
+      });
+      base64Images.push(base64Image);
+    }
+
+    if (loadingText) loadingText.textContent = 'Analyzing image(s) with Llama Vision model...';
 
     // 4. Gather available categories/services for the prompt
     const categoriesList = allServices.map(s => ` - "${s.key}": ${s.title}`).join('\n');
 
     // 5. Construct the Vision System & User Prompts
-    const promptText = `Analyze the uploaded image and identify what kind of graphic design/creative project it is.
+    let promptText = `Analyze the uploaded image(s) and identify what kind of graphic design/creative project it is.
 Select the most appropriate category key from the list below:
 ${categoriesList}
+`;
 
-Write the portfolio details for this project. Format your response strictly as a JSON object with the following keys. Do not include any markdown fences or explanation; just return the JSON object:
+    if (extraContext) {
+      promptText += `\nADDITIONAL CONTEXT & GUIDELINES FROM USER: ${extraContext}\n`;
+    }
+
+    promptText += `\nWrite the portfolio details for this project. Format your response strictly as a JSON object with the following keys. Do not include any markdown fences or explanation; just return the JSON object:
 {
   "title": "A short, creative and catchy title for this design project (2-5 words)",
   "category_key": "the key matching one of the categories above",
@@ -1033,6 +1084,13 @@ Write the portfolio details for this project. Format your response strictly as a
     });
 
     console.log('Sending vision request to Groq...');
+    const userContent = [
+      { type: 'text', text: promptText }
+    ];
+    base64Images.forEach(base64Image => {
+      userContent.push({ type: 'image_url', image_url: { url: base64Image } });
+    });
+
     const completion = await groq.chat.completions.create({
       model: 'meta-llama/llama-4-scout-17b-16e-instruct',
       messages: [
@@ -1042,10 +1100,7 @@ Write the portfolio details for this project. Format your response strictly as a
         },
         {
           role: 'user',
-          content: [
-            { type: 'text', text: promptText },
-            { type: 'image_url', image_url: { url: base64Image } }
-          ]
+          content: userContent
         }
       ],
       response_format: { type: 'json_object' },
@@ -1082,8 +1137,8 @@ Write the portfolio details for this project. Format your response strictly as a
       const previewSwatch = document.getElementById('gradient-preview');
       if (previewSwatch) previewSwatch.style.background = data.gradient;
     }
-    if (uploadedUrl) {
-      document.getElementById('proj-image').value = uploadedUrl;
+    if (uploadedUrls[0]) {
+      document.getElementById('proj-image').value = uploadedUrls[0];
       document.getElementById('proj-image').dispatchEvent(new Event('input'));
     }
 
@@ -1101,6 +1156,20 @@ Write the portfolio details for this project. Format your response strictly as a
     if (data.detailed_writeup) {
       currentDetailBlocks.push({ type: 'text', content: data.detailed_writeup });
     }
+    
+    // Auto-append subsequent images as Image Blocks
+    if (uploadedUrls.length > 1) {
+      for (let i = 1; i < uploadedUrls.length; i++) {
+        currentDetailBlocks.push({
+          type: 'image',
+          url: uploadedUrls[i],
+          alt: `${data.title || 'Project'} detail image ${i + 1}`,
+          redirect_url: '',
+          redirect_label: ''
+        });
+      }
+    }
+
     if (Array.isArray(data.deliverables) && data.deliverables.length > 0) {
       currentDetailBlocks.push({ type: 'list', items: data.deliverables });
     }
@@ -1121,17 +1190,27 @@ Write the portfolio details for this project. Format your response strictly as a
           </div>
           <div class="ai-result-text" style="font-size: 0.8rem; color: var(--text-secondary); line-height: 1.4;">
             Successfully generated <strong>"${data.title || 'Untitled'}"</strong> under category <strong>"${data.category_key || 'Uncategorized'}"</strong>.<br>
-            All fields, including tools, gradient, and 2 detail blocks have been filled out below. Review them and save the project!
+            All fields, including tools, gradient, and ${currentDetailBlocks.length} detail blocks have been filled out below. Review them and save the project!
           </div>
         </div>
       `;
+    }
+
+    if (submitBtn) {
+      submitBtn.disabled = false;
+      submitBtn.style.display = 'none';
     }
   } catch (err) {
     console.error('AI creator scan failed:', err);
     if (loadingIndicator) loadingIndicator.classList.add('hidden');
     showToast('AI Creator Error', `Failed to generate project details: ${err.message}`, 'error');
+    if (submitBtn) {
+      submitBtn.disabled = false;
+      submitBtn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 14px; height: 14px; margin-right: 4px;"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg> Scan & Generate`;
+    }
   }
 }
+
 
 function extractSection(text, sectionName) {
   const regex = new RegExp(`---${sectionName}---\\s*([\\s\\S]*?)(?=---[A-Z_]+---|$)`);

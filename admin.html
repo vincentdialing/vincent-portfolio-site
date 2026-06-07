@@ -507,25 +507,32 @@ CREATE POLICY "Allow anon delete" ON brands FOR DELETE USING (true);
               ✍ AI Copywriter (Write from Title)
             </button>
           </div>
-
           <!-- Mode 1: AI Project Creator -->
-          <div id="ai-creator-container" class="ai-tab-content">
-            <p style="font-size: 0.8rem; color: var(--text-secondary); margin: 0 0 0.75rem 0;">Upload a project image to let AI auto-generate the Title, Category (deciding where it belongs), Sub-category, Description, Tools, Gradient, and Detail Blocks!</p>
-            <div style="display: flex; gap: 0.75rem; align-items: center; flex-wrap: wrap;">
-              <label class="btn btn-primary btn-sm ai-generate-btn" style="cursor: pointer; display: inline-flex; align-items: center; margin: 0;">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 14px; height: 14px; margin-right: 4px;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"/></svg>
-                Upload & Scan Image
-                <input type="file" id="ai-creator-image-input" accept="image/*" style="display: none;">
+          <div id='ai-creator-container' class='ai-tab-content'>
+            <p style='font-size: 0.8rem; color: var(--text-secondary); margin: 0 0 0.75rem 0;'>Upload one or more project images to let AI auto-generate the Title, Category, Sub-category, Description, Tools, Gradient, and Detail Blocks!</p>
+            
+            <div class='form-group' style='margin-bottom: 0.75rem;'>
+              <textarea id='ai-creator-extra-context' rows='2' placeholder='Optional: Add project details, client info, or specific ideas/directions to guide the AI...' style='font-size: 0.8rem; width: 100%; border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 6px; background: rgba(0, 0, 0, 0.2); padding: 0.5rem; color: var(--text-primary); resize: vertical; min-height: 48px;'></textarea>
+            </div>
+
+            <div style='display: flex; gap: 0.75rem; align-items: center; flex-wrap: wrap;'>
+              <label class='btn btn-secondary btn-sm' style='cursor: pointer; display: inline-flex; align-items: center; margin: 0; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1);'>
+                <svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' style='width: 14px; height: 14px; margin-right: 4px;'><path d='M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12'/></svg>
+                Choose Image(s)
+                <input type='file' id='ai-creator-image-input' accept='image/*' multiple style='display: none;'>
               </label>
-              <span id="ai-creator-file-status" style="font-size: 0.8rem; color: var(--text-muted);">No image uploaded</span>
+              <button type='button' id='ai-creator-submit-btn' class='btn btn-primary btn-sm btn-with-icon' style='background: var(--accent-color); border: none; display: none; align-items: center;'>
+                <svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' style='width: 14px; height: 14px; margin-right: 4px;'><path d='M13 2L3 14h9l-1 8 10-12h-9l1-8z'/></svg>
+                Scan & Generate
+              </button>
+              <span id='ai-creator-file-status' style='font-size: 0.8rem; color: var(--text-muted);'>No images selected</span>
             </div>
             
-            <div id="ai-creator-loading" class="ai-loading-indicator hidden" style="margin-top: 0.75rem;">
-              <div class="spinner-small"></div>
-              <span id="ai-creator-loading-text">Uploading image & analyzing...</span>
+            <div id='ai-creator-loading' class='ai-loading-indicator hidden' style='margin-top: 0.75rem;'>
+              <div class='spinner-small'></div>
+              <span id='ai-creator-loading-text'>Uploading images & analyzing...</span>
             </div>
           </div>
-
           <!-- Mode 2: AI Copywriter -->
           <div id="ai-copywriter-container" class="ai-tab-content hidden">
             <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.5rem; flex-wrap: wrap; gap: 0.5rem;">

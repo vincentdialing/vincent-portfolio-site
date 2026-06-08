@@ -794,6 +794,7 @@ nav.floating-nav {
   width: 100% !important;
   height: 100% !important;
   outline: none;
+  filter: drop-shadow(0 0 10px rgba(6, 182, 212, 0.45));
 }
 
 .blob-1 {

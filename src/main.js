@@ -927,7 +927,7 @@ if (waveCanvas && waveContainer) {
     container: waveContainer,
     canvas: waveCanvas
   });
-  siriWave.start();
+  // Do not call start() initially since chat is hidden by default
   siriWave.setAmplitude(0.1); // Idle "breathing" line
 }
 
@@ -935,7 +935,10 @@ if (waveCanvas && waveContainer) {
 if (chatWindow && chatClose) {
   const closeChat = () => {
     chatWindow.classList.add('hidden');
-    if (siriWave) siriWave.setAmplitude(0);
+    if (siriWave) {
+      siriWave.setAmplitude(0);
+      siriWave.stop();
+    }
     window.speechSynthesis.cancel();
   };
   chatClose.addEventListener('click', closeChat);
@@ -1250,6 +1253,10 @@ if (heroSpeakBtn && chatWindow && voiceBtn) {
 
     // 1. Open Chat Interface
     chatWindow.classList.remove('hidden');
+    if (siriWave) {
+      siriWave.start();
+      siriWave.setAmplitude(0.1);
+    }
 
     // Default: Idle State (No Auto-Listen)
   });

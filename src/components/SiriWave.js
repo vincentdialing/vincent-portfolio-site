@@ -83,13 +83,6 @@ export class SiriWave {
     this.ctx.strokeStyle = curve.color;
     this.ctx.lineWidth = curve.width;
 
-    // Glow Effect
-    this.ctx.shadowBlur = 15;
-    this.ctx.shadowColor = curve.color;
-
     this.ctx.stroke();
-
-    // Reset shadow for performance if needed, or leave it
-    this.ctx.shadowBlur = 0;
   }
 }

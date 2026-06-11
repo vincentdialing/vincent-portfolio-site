@@ -4699,15 +4699,18 @@ function initThumbnailGenerator() {
 
   // Handle Main Image
   const mainInput = document.getElementById('thumb-img-main');
-  const mainBox = document.getElementById('box-main');
-  if (mainInput && mainBox) {
+  if (mainInput) {
     mainInput.addEventListener('change', (e) => {
       const file = e.target.files[0];
       if (file) {
         const reader = new FileReader();
         reader.onload = async (event) => {
-          mainBox.style.backgroundImage = `url(${event.target.result})`;
-          mainBox.innerHTML = '';
+          // Look up box-main dynamically — rebuildPreview() may have replaced it
+          const currentMainBox = document.getElementById('box-main');
+          if (currentMainBox) {
+            currentMainBox.style.backgroundImage = `url(${event.target.result})`;
+            currentMainBox.innerHTML = '';
+          }
           // Auto-extract dominant color from uploaded image
           const dominant = await extractDominantColor(event.target.result);
           applyAutoGradient(dominant);

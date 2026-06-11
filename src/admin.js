@@ -1921,7 +1921,7 @@ function openProjectModal(projectId = null) {
   }
 
   renderDetailBlocks();
-  modal.classList.add('is-open');
+  openModal(modal);
 }
 
 async function handleProjectSubmit(e) {
@@ -2321,7 +2321,7 @@ function openGalleryModal() {
   if (fileInput) fileInput.value = '';
   const progressContainer = document.getElementById('gallery-upload-progress');
   if (progressContainer) progressContainer.classList.add('hidden');
-  modal.classList.add('is-open');
+  openModal(modal);
 }
 
 function openGalleryEditModal() {
@@ -2330,7 +2330,7 @@ function openGalleryEditModal() {
   galleryMarkedForDeletion.clear();
   renderGalleryEditList();
   wireGalleryEditDragAndDrop();
-  modal.classList.add('is-open');
+  openModal(modal);
 }
 
 function renderGalleryEditList() {
@@ -2539,7 +2539,7 @@ async function openProjectsEditModal() {
 
   wireModalCardDnD(listEl);
   wireModalTrashButtons(listEl, projectsMarkedForDeletion);
-  document.getElementById('projects-edit-modal').classList.add('is-open');
+  openModal(document.getElementById('projects-edit-modal'));
 }
 
 async function saveProjectsEdits() {
@@ -2596,7 +2596,7 @@ async function openServicesEditModal() {
 
   wireModalCardDnD(listEl);
   wireModalTrashButtons(listEl, servicesMarkedForDeletion);
-  document.getElementById('services-edit-modal').classList.add('is-open');
+  openModal(document.getElementById('services-edit-modal'));
 }
 
 async function saveServicesEdits() {
@@ -2653,7 +2653,7 @@ async function openBrandsEditModal() {
 
   wireModalCardDnD(listEl);
   wireModalTrashButtons(listEl, brandsMarkedForDeletion);
-  document.getElementById('brands-edit-modal').classList.add('is-open');
+  openModal(document.getElementById('brands-edit-modal'));
 }
 
 async function saveBrandsEdits() {
@@ -2722,7 +2722,7 @@ async function openCommunityEditModal() {
 
   wireModalCardDnD(listEl);
   wireModalTrashButtons(listEl, communityMarkedForDeletion);
-  document.getElementById('community-edit-modal').classList.add('is-open');
+  openModal(document.getElementById('community-edit-modal'));
 }
 
 async function saveCommunityEdits() {
@@ -3019,7 +3019,7 @@ function openServiceModal(id = null) {
     document.dispatchEvent(new CustomEvent('reset-service-mockup'));
   }
 
-  modal.classList.add('is-open');
+  openModal(modal);
 }
 
 async function handleServiceSubmit(e) {
@@ -3201,7 +3201,7 @@ function openBrandModal(id = null) {
     document.getElementById('brand-db-id').value = '';
   }
 
-  modal.classList.add('is-open');
+  openModal(modal);
 }
 
 async function handleBrandSubmit(e) {
@@ -3440,7 +3440,7 @@ function openCommunityCardModal(id = null) {
     document.getElementById('comm-order').value = communityCards.length + 1;
   }
 
-  modal.classList.add('is-open');
+  openModal(modal);
 }
 
 async function handleCommunityCardSubmit(e) {
@@ -3912,6 +3912,21 @@ function initConfigPanel() {
 // 11. GENERAL MODAL TRIGGERS
 // ==========================================
 
+function openModal(modal) {
+  if (!modal) return;
+  modal.classList.add('is-open');
+  const resetScroll = () => {
+    const scrollables = modal.querySelectorAll('.modal-form, .edit-list-scroll-wrap');
+    scrollables.forEach(el => {
+      el.scrollTop = 0;
+    });
+  };
+  resetScroll();
+  // Neutralize browser focus auto-scroll after transitions
+  setTimeout(resetScroll, 50);
+  setTimeout(resetScroll, 150);
+}
+
 function closeModal(modalId) {
   const modal = document.getElementById(modalId);
   if (modal) modal.classList.remove('is-open');
@@ -4165,7 +4180,7 @@ function openCertificateModal(id = null) {
     document.getElementById('cert-order').value = certificates.length + 1;
   }
 
-  modal.classList.add('is-open');
+  openModal(modal);
 }
 
 async function handleCertificateSubmit(e) {
@@ -4345,7 +4360,7 @@ function openReviewModal(id = null) {
     document.getElementById('review-order').value = reviews.length + 1;
   }
 
-  modal.classList.add('is-open');
+  openModal(modal);
 }
 
 async function handleReviewSubmit(e) {

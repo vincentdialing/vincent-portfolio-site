@@ -4764,17 +4764,9 @@ function initThumbnailGenerator() {
         if (error) throw error;
 
         if (data && data.length > 0) {
-          // Auto-detect best template based on image count
-          const imageCount = data.filter(d => d && d.image_url).length;
-          let bestTemplate = 5;
-          if (imageCount <= 1) bestTemplate = 1;
-          else if (imageCount === 2) bestTemplate = 2;
-          else if (imageCount === 3) bestTemplate = 3;
-          else if (imageCount === 4) bestTemplate = 4;
-          else bestTemplate = 5;
-
-          // Switch template and rebuild preview
-          setBentoTemplate(bestTemplate);
+          // Use the user's currently selected template — don't override it
+          const activeTemplate = currentBentoTemplate;
+          const gridCount = TEMPLATE_CONFIG[activeTemplate].gridCount;
 
           // Fill main
           if(data[0] && data[0].image_url) {
@@ -4784,8 +4776,7 @@ function initThumbnailGenerator() {
               mainBox.innerHTML = '';
             }
           }
-          // Fill grids based on detected template
-          const gridCount = TEMPLATE_CONFIG[bestTemplate].gridCount;
+          // Fill grids based on current template
           for(let i = 1; i <= gridCount; i++) {
             if(data[i] && data[i].image_url) {
               const box = document.getElementById(`box-${i}`);
@@ -4800,7 +4791,7 @@ function initThumbnailGenerator() {
             const dominant = await extractDominantColor(data[0].image_url);
             applyAutoGradient(dominant);
           }
-          showToast('Success', `Bento auto-filled (${bestTemplate}-image layout) with matching gradient!`, 'success');
+          showToast('Success', 'Bento auto-filled with matching gradient!', 'success');
         } else {
           showToast('Empty', 'No gallery images found for this project.', 'warning');
         }

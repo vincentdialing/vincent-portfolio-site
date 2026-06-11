@@ -2312,7 +2312,7 @@ body {
 }
 
 
-/* Bento Layout */
+/* Bento Layout — default is template 5 (1 main + 2x2 grid) */
 .thumb-layout {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -2336,6 +2336,37 @@ body {
   width: 100%;
   height: 100%;
 }
+
+/* Template 1 — Single full hero */
+.thumb-layout[data-template="1"] {
+  grid-template-columns: 1fr;
+}
+.thumb-layout[data-template="1"] .thumb-grid-col {
+  display: none;
+}
+
+/* Template 2 — Two equal side-by-side */
+.thumb-layout[data-template="2"] {
+  grid-template-columns: 1fr 1fr;
+}
+.thumb-layout[data-template="2"] .thumb-grid-col {
+  grid-template-columns: 1fr;
+  grid-template-rows: 1fr;
+}
+
+/* Template 3 — 1 main left + 2 stacked right */
+.thumb-layout[data-template="3"] .thumb-grid-col {
+  grid-template-columns: 1fr;
+  grid-template-rows: 1fr 1fr;
+}
+
+/* Template 4 — 1 main left + 3 stacked right */
+.thumb-layout[data-template="4"] .thumb-grid-col {
+  grid-template-columns: 1fr;
+  grid-template-rows: 1fr 1fr 1fr;
+}
+
+/* Template 5 — default 1 main + 2x2 (already styled above) */
 
 .thumb-img-box {
   background: rgba(255, 255, 255, 0.05);

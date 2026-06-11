@@ -4519,9 +4519,71 @@ function initThumbnailGenerator() {
   const wrapperElement = document.querySelector('.thumbnail-scale-wrapper');
   const renderBtn = document.getElementById('btn-render-apply-bento');
   const autofillBtn = document.getElementById('btn-autofill-bento');
+  const templateSelect = document.getElementById('bento-template-select');
 
   // Always-current gradient string — written by applyAutoGradient, read by renderer
   let _bentoGradient = 'linear-gradient(to bottom, #1a1a2e 0%, #16213e 100%)';
+
+  // Current template (1-5)
+  let currentBentoTemplate = 5;
+
+  // Template config — how many grid boxes each template needs
+  const TEMPLATE_CONFIG = {
+    1: { gridCount: 0, mainLabel: 'Hero Image (Full)', gridLabel: '', gridHelp: '' },
+    2: { gridCount: 1, mainLabel: 'Left Image', gridLabel: 'Right Image', gridHelp: 'Upload one image for the right side.' },
+    3: { gridCount: 2, mainLabel: 'Main Image (Left Large)', gridLabel: 'Grid Images (Select up to 2)', gridHelp: 'Upload up to 2 images to stack on the right.' },
+    4: { gridCount: 3, mainLabel: 'Main Image (Left Large)', gridLabel: 'Grid Images (Select up to 3)', gridHelp: 'Upload up to 3 images to stack on the right.' },
+    5: { gridCount: 4, mainLabel: 'Main Image (Left Large)', gridLabel: 'Grid Images (Select up to 4)', gridHelp: 'Upload multiple images at once to fill the grid automatically.' },
+  };
+
+  // Rebuild the preview boxes inside the canvas based on template
+  function rebuildPreview(template) {
+    const layout = canvasElement ? canvasElement.querySelector('.thumb-layout') : null;
+    if (!layout) return;
+    layout.setAttribute('data-template', template);
+    const config = TEMPLATE_CONFIG[template];
+
+    // Rebuild inner HTML
+    let html = '<div class="thumb-main-col"><div class="thumb-img-box" id="box-main"><span class="placeholder-text">Main Cover</span></div></div>';
+    if (config.gridCount > 0) {
+      html += '<div class="thumb-grid-col">';
+      for (let i = 1; i <= config.gridCount; i++) {
+        html += `<div class="thumb-img-box" id="box-${i}"><span class="placeholder-text">Grid ${i}</span></div>`;
+      }
+      html += '</div>';
+    }
+    layout.innerHTML = html;
+  }
+
+  // Update the control labels and visibility based on template
+  function updateControlLabels(template) {
+    const config = TEMPLATE_CONFIG[template];
+    const mainLabel = document.getElementById('bento-main-label');
+    const gridGroup = document.getElementById('bento-grid-group');
+    const gridLabel = document.getElementById('bento-grid-label');
+    const gridHelp = document.getElementById('bento-grid-help');
+
+    if (mainLabel) mainLabel.textContent = config.mainLabel;
+    if (gridGroup) gridGroup.style.display = config.gridCount === 0 ? 'none' : '';
+    if (gridLabel) gridLabel.textContent = config.gridLabel;
+    if (gridHelp) gridHelp.textContent = config.gridHelp;
+  }
+
+  // Set template programmatically (from auto-fill or selector)
+  function setBentoTemplate(template) {
+    currentBentoTemplate = template;
+    if (templateSelect) templateSelect.value = template;
+    rebuildPreview(template);
+    updateControlLabels(template);
+  }
+
+  // Template selector handler
+  if (templateSelect) {
+    templateSelect.addEventListener('change', () => {
+      const val = parseInt(templateSelect.value, 10);
+      setBentoTemplate(val);
+    });
+  }
 
   // Dynamic Scale Calculation for Preview
   function updateCanvasScale() {
@@ -4655,11 +4717,12 @@ function initThumbnailGenerator() {
     });
   }
 
-  // Handle Multiple Grid Images
+  // Handle Multiple Grid Images — respects current template limit
   const gridMultiInput = document.getElementById('thumb-img-grid-multi');
   if (gridMultiInput) {
     gridMultiInput.addEventListener('change', (e) => {
-      const files = Array.from(e.target.files).slice(0, 4); // Take up to 4
+      const maxGrid = TEMPLATE_CONFIG[currentBentoTemplate].gridCount;
+      const files = Array.from(e.target.files).slice(0, maxGrid);
       files.forEach((file, index) => {
         const box = document.getElementById(`box-${index + 1}`);
         if (box && file) {
@@ -4698,6 +4761,18 @@ function initThumbnailGenerator() {
         if (error) throw error;
 
         if (data && data.length > 0) {
+          // Auto-detect best template based on image count
+          const imageCount = data.filter(d => d && d.image_url).length;
+          let bestTemplate = 5;
+          if (imageCount <= 1) bestTemplate = 1;
+          else if (imageCount === 2) bestTemplate = 2;
+          else if (imageCount === 3) bestTemplate = 3;
+          else if (imageCount === 4) bestTemplate = 4;
+          else bestTemplate = 5;
+
+          // Switch template and rebuild preview
+          setBentoTemplate(bestTemplate);
+
           // Fill main
           if(data[0] && data[0].image_url) {
             const mainBox = document.getElementById('box-main');
@@ -4706,8 +4781,9 @@ function initThumbnailGenerator() {
               mainBox.innerHTML = '';
             }
           }
-          // Fill grids 1-4
-          for(let i = 1; i < 5; i++) {
+          // Fill grids based on detected template
+          const gridCount = TEMPLATE_CONFIG[bestTemplate].gridCount;
+          for(let i = 1; i <= gridCount; i++) {
             if(data[i] && data[i].image_url) {
               const box = document.getElementById(`box-${i}`);
               if(box) {
@@ -4721,7 +4797,7 @@ function initThumbnailGenerator() {
             const dominant = await extractDominantColor(data[0].image_url);
             applyAutoGradient(dominant);
           }
-          showToast('Success', 'Bento auto-filled with matching gradient!', 'success');
+          showToast('Success', `Bento auto-filled (${bestTemplate}-image layout) with matching gradient!`, 'success');
         } else {
           showToast('Empty', 'No gallery images found for this project.', 'warning');
         }
@@ -4745,8 +4821,9 @@ function initThumbnailGenerator() {
     return new Blob([u8arr], {type:mime});
   }
 
-  // ---- Native Canvas 2D Renderer (replaces unreliable html2canvas) ----
+  // ---- Native Canvas 2D Renderer ----
   // Draws the bento layout directly onto a real <canvas> element at 1600x900
+  // Supports templates 1-5 with different layout geometries
   async function renderBentoToCanvas() {
     const W = 1600, H = 900;
     const outputCanvas = document.createElement('canvas');
@@ -4755,7 +4832,6 @@ function initThumbnailGenerator() {
     const ctx = outputCanvas.getContext('2d');
 
     // 1. Draw background gradient using the stored _bentoGradient string
-    // _bentoGradient is always kept up-to-date by applyAutoGradient()
     const colorMatches = _bentoGradient.match(/hsl\([^)]+\)|#[0-9a-fA-F]{3,8}/g);
     if (colorMatches && colorMatches.length >= 2) {
       const grad = ctx.createLinearGradient(0, 0, 0, H);
@@ -4763,7 +4839,6 @@ function initThumbnailGenerator() {
       grad.addColorStop(1, colorMatches[colorMatches.length - 1]);
       ctx.fillStyle = grad;
     } else {
-      // Hard fallback: dark-to-slightly-lighter
       const grad = ctx.createLinearGradient(0, 0, 0, H);
       grad.addColorStop(0, '#2a2a3e');
       grad.addColorStop(1, '#0f0f1a');
@@ -4771,20 +4846,15 @@ function initThumbnailGenerator() {
     }
     ctx.fillRect(0, 0, W, H);
 
-    // 2. Layout math (mirrors the CSS grid)
+    // 2. Layout constants
     const PAD = 80, GAP = 40;
     const innerW = W - PAD * 2;
     const innerH = H - PAD * 2;
-    const mainW = (innerW - GAP) / 2;
-    const mainH = innerH;
-    const gridCellW = (mainW - GAP) / 2;
-    const gridCellH = (mainH - GAP) / 2;
     const RADIUS = 30;
 
     // Helper: draw rounded image box
     function drawBox(x, y, w, h, imgEl) {
       ctx.save();
-      // Rounded rect clip
       ctx.beginPath();
       ctx.moveTo(x + RADIUS, y);
       ctx.lineTo(x + w - RADIUS, y);
@@ -4799,7 +4869,6 @@ function initThumbnailGenerator() {
       ctx.clip();
 
       if (imgEl) {
-        // Cover-fit the image into the box
         const imgAspect = imgEl.naturalWidth / imgEl.naturalHeight;
         const boxAspect = w / h;
         let sx, sy, sw, sh;
@@ -4816,11 +4885,9 @@ function initThumbnailGenerator() {
         }
         ctx.drawImage(imgEl, sx, sy, sw, sh, x, y, w, h);
       } else {
-        // Empty placeholder
         ctx.fillStyle = 'rgba(255,255,255,0.05)';
         ctx.fillRect(x, y, w, h);
       }
-
       ctx.restore();
 
       // Subtle border overlay
@@ -4848,7 +4915,7 @@ function initThumbnailGenerator() {
         const img = new Image();
         img.crossOrigin = 'anonymous';
         img.onload = () => resolve(img);
-        img.onerror = () => resolve(null); // If CORS fails, skip
+        img.onerror = () => resolve(null);
         img.src = src;
       });
     }
@@ -4863,32 +4930,62 @@ function initThumbnailGenerator() {
       return match ? match[1] : null;
     }
 
-    // Load all images
+    // Load main image (always present)
     const mainSrc = getSrcFromBox('box-main');
-    const grid1Src = getSrcFromBox('box-1');
-    const grid2Src = getSrcFromBox('box-2');
-    const grid3Src = getSrcFromBox('box-3');
-    const grid4Src = getSrcFromBox('box-4');
+    const mainImg = mainSrc ? await loadImg(mainSrc) : null;
 
-    const [mainImg, g1Img, g2Img, g3Img, g4Img] = await Promise.all([
-      mainSrc ? loadImg(mainSrc) : Promise.resolve(null),
-      grid1Src ? loadImg(grid1Src) : Promise.resolve(null),
-      grid2Src ? loadImg(grid2Src) : Promise.resolve(null),
-      grid3Src ? loadImg(grid3Src) : Promise.resolve(null),
-      grid4Src ? loadImg(grid4Src) : Promise.resolve(null),
-    ]);
+    // Load grid images based on current template
+    const gridCount = TEMPLATE_CONFIG[currentBentoTemplate].gridCount;
+    const gridImgs = [];
+    for (let i = 1; i <= gridCount; i++) {
+      const src = getSrcFromBox(`box-${i}`);
+      gridImgs.push(src ? await loadImg(src) : null);
+    }
 
-    // 3. Draw boxes
-    // Main (left column)
-    const mainX = PAD, mainY = PAD;
-    drawBox(mainX, mainY, mainW, mainH, mainImg);
+    // 3. Draw layout based on current template
+    const template = currentBentoTemplate;
 
-    // Grid (right column — 2x2)
-    const gridStartX = PAD + mainW + GAP;
-    drawBox(gridStartX,          PAD,                           gridCellW, gridCellH, g1Img);
-    drawBox(gridStartX + gridCellW + GAP, PAD,                  gridCellW, gridCellH, g2Img);
-    drawBox(gridStartX,          PAD + gridCellH + GAP,         gridCellW, gridCellH, g3Img);
-    drawBox(gridStartX + gridCellW + GAP, PAD + gridCellH + GAP, gridCellW, gridCellH, g4Img);
+    if (template === 1) {
+      // Single full-bleed hero
+      drawBox(PAD, PAD, innerW, innerH, mainImg);
+
+    } else if (template === 2) {
+      // Two equal side-by-side columns
+      const colW = (innerW - GAP) / 2;
+      drawBox(PAD, PAD, colW, innerH, mainImg);
+      drawBox(PAD + colW + GAP, PAD, colW, innerH, gridImgs[0] || null);
+
+    } else if (template === 3) {
+      // 1 main left + 2 stacked right
+      const colW = (innerW - GAP) / 2;
+      const cellH = (innerH - GAP) / 2;
+      drawBox(PAD, PAD, colW, innerH, mainImg);
+      const gx = PAD + colW + GAP;
+      drawBox(gx, PAD, colW, cellH, gridImgs[0] || null);
+      drawBox(gx, PAD + cellH + GAP, colW, cellH, gridImgs[1] || null);
+
+    } else if (template === 4) {
+      // 1 main left + 3 stacked right
+      const colW = (innerW - GAP) / 2;
+      const cellH = (innerH - GAP * 2) / 3;
+      drawBox(PAD, PAD, colW, innerH, mainImg);
+      const gx = PAD + colW + GAP;
+      drawBox(gx, PAD, colW, cellH, gridImgs[0] || null);
+      drawBox(gx, PAD + cellH + GAP, colW, cellH, gridImgs[1] || null);
+      drawBox(gx, PAD + (cellH + GAP) * 2, colW, cellH, gridImgs[2] || null);
+
+    } else {
+      // Template 5 — 1 main + 2x2 grid (original)
+      const mainW = (innerW - GAP) / 2;
+      const gridCellW = (mainW - GAP) / 2;
+      const gridCellH = (innerH - GAP) / 2;
+      drawBox(PAD, PAD, mainW, innerH, mainImg);
+      const gx = PAD + mainW + GAP;
+      drawBox(gx, PAD, gridCellW, gridCellH, gridImgs[0] || null);
+      drawBox(gx + gridCellW + GAP, PAD, gridCellW, gridCellH, gridImgs[1] || null);
+      drawBox(gx, PAD + gridCellH + GAP, gridCellW, gridCellH, gridImgs[2] || null);
+      drawBox(gx + gridCellW + GAP, PAD + gridCellH + GAP, gridCellW, gridCellH, gridImgs[3] || null);
+    }
 
     return outputCanvas;
   }

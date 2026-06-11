@@ -1543,6 +1543,9 @@ body {
 .modal-large {
   max-width: 820px;
 }
+.modal-xlarge {
+  max-width: 1100px;
+}
 
 .modal-header {
   padding: 1.25rem 1.5rem;
@@ -2261,6 +2264,19 @@ body {
   grid-template-columns: 350px minmax(0, 1fr);
   gap: 2rem;
   margin-top: 1.5rem;
+}
+.thumbnail-gen-layout.mockup-zoomed-layout {
+  grid-template-columns: 1fr;
+}
+.thumbnail-gen-layout.mockup-zoomed-layout .thumbnail-controls {
+  order: 2;
+}
+.thumbnail-gen-layout.mockup-zoomed-layout .thumbnail-preview-area {
+  order: 1;
+  padding: 1.5rem;
+}
+.thumbnail-gen-layout.mockup-zoomed-layout .thumbnail-scale-wrapper {
+  max-width: 100%;
 }
 
 .thumbnail-controls {

@@ -5281,7 +5281,7 @@ function initServiceMockupGenerator() {
       const modalCard = toggleBtn.closest('.modal-card');
       if (section.style.display === 'none') {
         section.style.display = 'block';
-        if (modalCard) modalCard.classList.add('modal-large');
+        if (modalCard) modalCard.classList.add('modal-xlarge');
         toggleBtn.innerHTML = `
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 14px; height: 14px; margin-right: 4px;">
             <polyline points="18 15 12 9 6 15"/>
@@ -5295,7 +5295,20 @@ function initServiceMockupGenerator() {
         }, 50);
       } else {
         section.style.display = 'none';
-        if (modalCard) modalCard.classList.remove('modal-large');
+        if (modalCard) {
+          modalCard.classList.remove('modal-xlarge');
+          // Also reset the zoomed preview layout back to default
+          const layout = section.querySelector('.thumbnail-gen-layout');
+          if (layout) {
+            layout.classList.remove('mockup-zoomed-layout');
+            const zoomText = document.getElementById('btn-zoom-svc-text');
+            const zoomIcon = document.getElementById('svg-zoom-icon');
+            if (zoomText) zoomText.textContent = 'Enlarge Preview';
+            if (zoomIcon) {
+              zoomIcon.innerHTML = '<path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/>';
+            }
+          }
+        }
         toggleBtn.innerHTML = `
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 14px; height: 14px; margin-right: 4px;">
             <rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/>
@@ -6013,6 +6026,38 @@ function initServiceMockupGenerator() {
     });
   }
 
+  // Zoom/Enlarge Preview handler
+  const zoomBtn = document.getElementById('btn-zoom-svc-mockup');
+  const zoomText = document.getElementById('btn-zoom-svc-text');
+  const zoomIcon = document.getElementById('svg-zoom-icon');
+
+  if (zoomBtn) {
+    zoomBtn.addEventListener('click', () => {
+      const layout = section.querySelector('.thumbnail-gen-layout');
+      if (layout) {
+        layout.classList.toggle('mockup-zoomed-layout');
+        const isZoomed = layout.classList.contains('mockup-zoomed-layout');
+        if (isZoomed) {
+          if (zoomText) zoomText.textContent = 'Shrink Preview';
+          if (zoomIcon) {
+            zoomIcon.innerHTML = '<path d="M4 14h6v6M20 10h-6V4M14 10l7-7M10 14l-7 7"/>';
+          }
+        } else {
+          if (zoomText) zoomText.textContent = 'Enlarge Preview';
+          if (zoomIcon) {
+            zoomIcon.innerHTML = '<path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/>';
+          }
+        }
+        // Trigger update scale and redraw
+        setTimeout(() => {
+          updateCanvasScale();
+          triggerRedraw();
+          updateHandlePositions();
+        }, 50);
+      }
+    });
+  }
+
   // Reset Event
   document.addEventListener('reset-service-mockup', () => {
     _serviceMockupMain = null;
@@ -6029,6 +6074,16 @@ function initServiceMockupGenerator() {
     if (templateSelect) templateSelect.value = 'default';
     if (deleteTemplateBtn) deleteTemplateBtn.style.display = 'none';
     if (saveTemplateBtn) saveTemplateBtn.style.display = 'none';
+    
+    const layout = section.querySelector('.thumbnail-gen-layout');
+    if (layout) {
+      layout.classList.remove('mockup-zoomed-layout');
+    }
+    if (zoomText) zoomText.textContent = 'Enlarge Preview';
+    if (zoomIcon) {
+      zoomIcon.innerHTML = '<path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/>';
+    }
+    
     updateHandlePositions();
     triggerRedraw();
   });

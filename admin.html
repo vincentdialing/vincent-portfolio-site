@@ -963,6 +963,18 @@ CREATE POLICY "Allow anon delete" ON brands FOR DELETE USING (true);
             </div>
 
             <div class="thumbnail-preview-area" style="padding: 1rem;">
+              <div style="width: 100%; display: flex; justify-content: flex-end; margin-bottom: 0.75rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem; gap: 0.5rem; align-items: center;">
+                <span class="field-help" style="margin: 0; margin-right: auto; font-size: 0.75rem; font-weight: 500;">
+                  Perspective Editor Preview
+                </span>
+                <button type="button" class="btn btn-secondary btn-xs" id="btn-zoom-svc-mockup" style="display: inline-flex; align-items: center; gap: 4px; padding: 4px 8px; font-size: 0.75rem;">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 12px; height: 12px; transition: transform 0.2s;" id="svg-zoom-icon">
+                    <path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/>
+                  </svg>
+                  <span id="btn-zoom-svc-text">Enlarge Preview</span>
+                </button>
+              </div>
+
               <div class="thumbnail-scale-wrapper" style="position: relative;">
                 <div id="svc-mockup-canvas" class="thumbnail-canvas">
                   <canvas id="svc-mockup-canvas-el" width="1600" height="900" style="width: 100%; height: 100%; display: block; border-radius: 0;"></canvas>

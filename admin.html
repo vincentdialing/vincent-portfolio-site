@@ -928,7 +928,30 @@ CREATE POLICY "Allow anon delete" ON brands FOR DELETE USING (true);
               <div class="form-group">
                 <label>Collage Images (Select up to 4)</label>
                 <input type="file" id="svc-mockup-img-grid" accept="image/*" multiple class="file-input-custom">
-                <p class="field-help">Upload multiple images for the laptop screen collage.</p>
+                <p class="field-help">Upload multiple images for the screen collage.</p>
+              </div>
+
+              <div class="form-group" style="margin-top: 1rem;">
+                <label>Mockup Template</label>
+                <div style="display: flex; gap: 0.5rem; margin-bottom: 0.5rem;">
+                  <select id="svc-mockup-template-select" class="form-control" style="flex: 1;">
+                    <option value="default">Default: Flat Laptop</option>
+                  </select>
+                  <button type="button" class="btn btn-secondary btn-sm" id="btn-delete-mockup-template" style="display: none; padding: 0 0.75rem; justify-content: center; align-items: center;" title="Delete selected template">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 14px; height: 14px; color: #ef4444;"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                  </button>
+                </div>
+              </div>
+
+              <div class="form-group" style="margin-top: 1rem;">
+                <label>Upload New Mockup Background</label>
+                <div style="display: flex; gap: 0.5rem; align-items: center; margin-bottom: 0.5rem;">
+                  <input type="file" id="svc-mockup-bg-file" accept="image/*" class="file-input-custom" style="flex: 1; min-width: 0;">
+                  <button type="button" class="btn btn-secondary btn-sm" id="btn-save-mockup-template" style="display: none; white-space: nowrap; padding: 0.35rem 0.75rem; font-size: 0.75rem; font-weight: 600;">
+                    Save as Template
+                  </button>
+                </div>
+                <p class="field-help">Upload a custom mockup image. Adjust the blue handles in the preview, then click "Save as Template" to reuse it later.</p>
               </div>
 
               <button type="button" class="btn btn-primary" id="btn-render-apply-service-mockup-bottom" style="width: 100%; margin-top: 1.25rem; justify-content: center; display: flex; align-items: center; gap: 0.5rem;">
@@ -940,23 +963,14 @@ CREATE POLICY "Allow anon delete" ON brands FOR DELETE USING (true);
             </div>
 
             <div class="thumbnail-preview-area" style="padding: 1rem;">
-              <div class="thumbnail-scale-wrapper">
+              <div class="thumbnail-scale-wrapper" style="position: relative;">
                 <div id="svc-mockup-canvas" class="thumbnail-canvas">
-                  <div class="thumb-layout" data-template="mockup">
-                    <div class="mockup-laptop-preview">
-                      <div class="mockup-screen-preview">
-                        <div class="mockup-collage-preview">
-                          <div class="thumb-img-box" id="svc-box-main"><span class="placeholder-text">1</span></div>
-                          <div class="thumb-img-box" id="svc-box-1"><span class="placeholder-text">2</span></div>
-                          <div class="thumb-img-box" id="svc-box-2"><span class="placeholder-text">3</span></div>
-                          <div class="thumb-img-box" id="svc-box-3"><span class="placeholder-text">4</span></div>
-                          <div class="thumb-img-box" id="svc-box-4"><span class="placeholder-text">5</span></div>
-                        </div>
-                      </div>
-                      <div class="mockup-base-preview"></div>
-                    </div>
-                  </div>
+                  <canvas id="svc-mockup-canvas-el" width="1600" height="900" style="width: 100%; height: 100%; display: block; border-radius: 0;"></canvas>
                 </div>
+                <div class="mockup-handle" id="svc-handle-tl" style="position: absolute; width: 20px; height: 20px; background: #2563eb; border: 3px solid #fff; border-radius: 50%; cursor: move; z-index: 100; transform: translate(-50%, -50%); display: none; box-shadow: 0 3px 8px rgba(0,0,0,0.6);"></div>
+                <div class="mockup-handle" id="svc-handle-tr" style="position: absolute; width: 20px; height: 20px; background: #2563eb; border: 3px solid #fff; border-radius: 50%; cursor: move; z-index: 100; transform: translate(-50%, -50%); display: none; box-shadow: 0 3px 8px rgba(0,0,0,0.6);"></div>
+                <div class="mockup-handle" id="svc-handle-br" style="position: absolute; width: 20px; height: 20px; background: #2563eb; border: 3px solid #fff; border-radius: 50%; cursor: move; z-index: 100; transform: translate(-50%, -50%); display: none; box-shadow: 0 3px 8px rgba(0,0,0,0.6);"></div>
+                <div class="mockup-handle" id="svc-handle-bl" style="position: absolute; width: 20px; height: 20px; background: #2563eb; border: 2px solid #fff; border-radius: 50%; cursor: move; z-index: 100; transform: translate(-50%, -50%); display: none; box-shadow: 0 3px 8px rgba(0,0,0,0.6);"></div>
               </div>
             </div>
           </div>

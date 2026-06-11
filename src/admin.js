@@ -5249,14 +5249,31 @@ function initMobileMenu() {
 function initServiceMockupGenerator() {
   const toggleBtn = document.getElementById('btn-toggle-service-mockup');
   const section = document.getElementById('service-mockup-section');
-  const canvasElement = document.getElementById('svc-mockup-canvas');
+  const canvasContainer = document.getElementById('svc-mockup-canvas');
   const wrapperElement = document.querySelector('#service-mockup-section .thumbnail-scale-wrapper');
   
-  if (!section || !canvasElement || !wrapperElement) return;
+  if (!section || !canvasContainer || !wrapperElement) return;
 
   let _serviceMockupMain = null;
   let _serviceMockupGrid = [];
   let _serviceMockupGradient = 'linear-gradient(to bottom, #1a1a2e 0%, #16213e 100%)';
+  let _customMockupImg = null;
+  
+  // Draggable handles corners coordinates (normalized [0, 1])
+  let _mockupCorners = [
+    { x: 0.25, y: 0.25 }, // TL
+    { x: 0.75, y: 0.25 }, // TR
+    { x: 0.75, y: 0.75 }, // BR
+    { x: 0.25, y: 0.75 }  // BL
+  ];
+
+  // Draggable handles elements
+  const handles = [
+    { el: document.getElementById('svc-handle-tl'), index: 0 },
+    { el: document.getElementById('svc-handle-tr'), index: 1 },
+    { el: document.getElementById('svc-handle-br'), index: 2 },
+    { el: document.getElementById('svc-handle-bl'), index: 3 }
+  ];
 
   // Toggle Section
   if (toggleBtn) {
@@ -5272,7 +5289,10 @@ function initServiceMockupGenerator() {
           Close Mockup
         `;
         // Trigger scale refresh after layout changes
-        setTimeout(updateCanvasScale, 50);
+        setTimeout(() => {
+          updateCanvasScale();
+          triggerRedraw();
+        }, 50);
       } else {
         section.style.display = 'none';
         if (modalCard) modalCard.classList.remove('modal-large');
@@ -5288,9 +5308,9 @@ function initServiceMockupGenerator() {
 
   // Scale Preview
   function updateCanvasScale() {
-    if (wrapperElement && canvasElement) {
+    if (wrapperElement && canvasContainer) {
       const scale = wrapperElement.clientWidth / 1600;
-      canvasElement.style.transform = `scale(${scale})`;
+      canvasContainer.style.transform = `scale(${scale})`;
     }
   }
 
@@ -5370,50 +5390,349 @@ function initServiceMockupGenerator() {
     const lightColor = `hsl(${h}, ${fadedSat}%, ${Math.min(l + 35, 88)}%)`;
     const deepColor = `hsl(${h}, ${Math.min(fadedSat + 10, 45)}%, ${Math.max(l - 15, 20)}%)`;
     const gradientStr = `linear-gradient(to bottom, ${lightColor} 0%, ${deepColor} 100%)`;
-    canvasElement.style.background = gradientStr;
     _serviceMockupGradient = gradientStr;
+    triggerRedraw();
   }
 
-  // HTML Preview Builder
-  function renderServiceMockupPreview(imageUrls) {
-    const container = canvasElement.querySelector('.mockup-collage-preview');
-    if (!container) return;
+  // Load Image Helper
+  function loadImg(src) {
+    return new Promise((resolve) => {
+      const img = new Image();
+      img.crossOrigin = 'anonymous';
+      img.onload = () => resolve(img);
+      img.onerror = () => resolve(null);
+      img.src = src;
+    });
+  }
 
-    const urls = imageUrls.filter(Boolean);
-    const count = Math.max(1, Math.min(5, urls.length));
-
-    if (count === 1) {
-      container.style.gridTemplateColumns = '1fr';
-      container.style.gridTemplateRows = '1fr';
-    } else if (count === 2) {
-      container.style.gridTemplateColumns = 'repeat(2, 1fr)';
-      container.style.gridTemplateRows = '1fr';
-    } else if (count === 3 || count === 4) {
-      container.style.gridTemplateColumns = 'repeat(2, 1fr)';
-      container.style.gridTemplateRows = 'repeat(2, 1fr)';
-    } else {
-      container.style.gridTemplateColumns = 'repeat(3, 1fr)';
-      container.style.gridTemplateRows = 'repeat(2, 1fr)';
-    }
-
-    let html = '';
-    for (let i = 0; i < count; i++) {
-      const url = urls[i];
-      const styleAttr = url ? `background-image: url(${url}); background-size: cover; background-position: center;` : '';
-      let itemStyle = '';
-      if (count === 3 && i === 0) {
-        itemStyle = 'grid-row: span 2;';
-      } else if (count === 5 && i === 0) {
-        itemStyle = 'grid-column: span 2;';
+  // Draggable Handles Position Updates
+  function updateHandlePositions() {
+    handles.forEach(h => {
+      if (h.el) {
+        h.el.style.left = (_mockupCorners[h.index].x * 100) + '%';
+        h.el.style.top = (_mockupCorners[h.index].y * 100) + '%';
+        h.el.style.display = _customMockupImg ? 'block' : 'none';
       }
+    });
+  }
 
-      html += `
-        <div class="thumb-img-box" id="svc-box-${i === 0 ? 'main' : i}" style="${styleAttr} ${itemStyle}">
-          ${!url ? `<span class="placeholder-text">${i + 1}</span>` : ''}
-        </div>
-      `;
+  // Draggable Events setup
+  handles.forEach(h => {
+    if (!h.el) return;
+    
+    h.el.addEventListener('mousedown', (e) => {
+      e.preventDefault();
+      startDrag(e, h.index);
+    });
+    
+    h.el.addEventListener('touchstart', (e) => {
+      e.preventDefault();
+      startDrag(e.touches[0], h.index);
+    });
+  });
+
+  let activeDragIndex = null;
+
+  function startDrag(e, index) {
+    activeDragIndex = index;
+    document.addEventListener('mousemove', onDrag);
+    document.addEventListener('mouseup', endDrag);
+    document.addEventListener('touchmove', onTouchDrag, { passive: false });
+    document.addEventListener('touchend', endDrag);
+  }
+
+  function onTouchDrag(e) {
+    e.preventDefault();
+    onDrag(e.touches[0]);
+  }
+
+  function onDrag(e) {
+    if (activeDragIndex === null) return;
+    const rect = wrapperElement.getBoundingClientRect();
+    let x = (e.clientX - rect.left) / rect.width;
+    let y = (e.clientY - rect.top) / rect.height;
+    
+    x = Math.max(0, Math.min(1, x));
+    y = Math.max(0, Math.min(1, y));
+    
+    _mockupCorners[activeDragIndex] = { x, y };
+    updateHandlePositions();
+    triggerRedraw();
+  }
+
+  function endDrag() {
+    activeDragIndex = null;
+    document.removeEventListener('mousemove', onDrag);
+    document.removeEventListener('mouseup', endDrag);
+    document.removeEventListener('touchmove', onTouchDrag);
+    document.removeEventListener('touchend', endDrag);
+  }
+
+  // Texture-mapping helper for drawing slanted perspective image on 2D canvas
+  function drawPerspectiveImage(ctx, img, corners, gridWidth = 10, gridHeight = 10) {
+    const w = img.width || img.naturalWidth;
+    const h = img.height || img.naturalHeight;
+    if (!w || !h) return;
+
+    function getQuadPoint(u, v) {
+      const topX = corners[0].x + u * (corners[1].x - corners[0].x);
+      const topY = corners[0].y + u * (corners[1].y - corners[0].y);
+      const botX = corners[3].x + u * (corners[2].x - corners[3].x);
+      const botY = corners[3].y + u * (corners[2].y - corners[3].y);
+      return {
+        x: topX + v * (botX - topX),
+        y: topY + v * (botY - topY)
+      };
     }
-    container.innerHTML = html;
+
+    for (let y = 0; y < gridHeight; y++) {
+      for (let x = 0; x < gridWidth; x++) {
+        const u0 = x / gridWidth;
+        const v0 = y / gridHeight;
+        const u1 = (x + 1) / gridWidth;
+        const v1 = y / gridHeight;
+        const u2 = (x + 1) / gridWidth;
+        const v2 = (y + 1) / gridHeight;
+        const u3 = x / gridWidth;
+        const v3 = (y + 1) / gridHeight;
+
+        const p0 = getQuadPoint(u0, v0);
+        const p1 = getQuadPoint(u1, v1);
+        const p2 = getQuadPoint(u2, v2);
+        const p3 = getQuadPoint(u3, v3);
+
+        drawTriangle(ctx, img, u0 * w, v0 * h, u1 * w, v1 * h, u3 * w, v3 * h, p0.x, p0.y, p1.x, p1.y, p3.x, p3.y);
+        drawTriangle(ctx, img, u1 * w, v1 * h, u2 * w, v2 * h, u3 * w, v3 * h, p1.x, p1.y, p2.x, p2.y, p3.x, p3.y);
+      }
+    }
+  }
+
+  function drawTriangle(ctx, img, u0, v0, u1, v1, u2, v2, x0, y0, x1, y1, x2, y2) {
+    ctx.save();
+    ctx.beginPath();
+    ctx.moveTo(x0, y0);
+    ctx.lineTo(x1, y1);
+    ctx.lineTo(x2, y2);
+    ctx.closePath();
+    ctx.clip();
+
+    const den = (u0 - u2) * (v1 - v2) - (u1 - u2) * (v0 - v2);
+    if (Math.abs(den) < 1e-5) {
+      ctx.restore();
+      return;
+    }
+
+    const a = ((x0 - x2) * (v1 - v2) - (x1 - x2) * (v0 - v2)) / den;
+    const b = ((y0 - y2) * (v1 - v2) - (y1 - y2) * (v0 - v2)) / den;
+    const c = ((u0 - u2) * (x1 - x2) - (u1 - u2) * (x0 - x2)) / den;
+    const d = ((u0 - u2) * (y1 - y2) - (u1 - u2) * (y0 - y2)) / den;
+    const e = x2 - a * u2 - c * v2;
+    const f = y2 - b * u2 - d * v2;
+
+    ctx.transform(a, b, c, d, e, f);
+    ctx.drawImage(img, 0, 0);
+    ctx.restore();
+  }
+
+  // Dynamic canvas redrawing
+  async function triggerRedraw() {
+    const canvas = document.getElementById('svc-mockup-canvas-el');
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    const W = 1600, H = 900;
+
+    // 1. Draw background gradient
+    const colorMatches = _serviceMockupGradient.match(/hsl\([^)]+\)|#[0-9a-fA-F]{3,8}/g);
+    if (colorMatches && colorMatches.length >= 2) {
+      const grad = ctx.createLinearGradient(0, 0, 0, H);
+      grad.addColorStop(0, colorMatches[0]);
+      grad.addColorStop(1, colorMatches[colorMatches.length - 1]);
+      ctx.fillStyle = grad;
+    } else {
+      const grad = ctx.createLinearGradient(0, 0, 0, H);
+      grad.addColorStop(0, '#2a2a3e');
+      grad.addColorStop(1, '#0f0f1a');
+      ctx.fillStyle = grad;
+    }
+    ctx.fillRect(0, 0, W, H);
+
+    // 2. Draw collage on offscreen canvas
+    const collageCanvas = document.createElement('canvas');
+    collageCanvas.width = 1600;
+    collageCanvas.height = 1000;
+    const cCtx = collageCanvas.getContext('2d');
+
+    cCtx.fillStyle = '#0a0a0f';
+    cCtx.fillRect(0, 0, 1600, 1000);
+
+    const cGap = 16;
+    const cR = 16;
+
+    function rrPath(c, rx, ry, rw, rh, rr) {
+      c.beginPath();
+      c.moveTo(rx + rr, ry);
+      c.lineTo(rx + rw - rr, ry);
+      c.quadraticCurveTo(rx + rw, ry, rx + rw, ry + rr);
+      c.lineTo(rx + rw, ry + rh - rr);
+      c.quadraticCurveTo(rx + rw, ry + rh, rx + rw - rr, ry + rh);
+      c.lineTo(rx + rr, ry + rh);
+      c.quadraticCurveTo(rx, ry + rh, rx, ry + rh - rr);
+      c.lineTo(rx, ry + rr);
+      c.quadraticCurveTo(rx, ry, rx + rr, ry);
+      c.closePath();
+    }
+
+    function drawCollageBox(x, y, w, h, imgEl, r = cR) {
+      cCtx.save();
+      rrPath(cCtx, x, y, w, h, r);
+      cCtx.clip();
+
+      if (imgEl) {
+        const imgAspect = imgEl.naturalWidth / imgEl.naturalHeight;
+        const boxAspect = w / h;
+        let sx, sy, sw, sh;
+        if (imgAspect > boxAspect) {
+          sh = imgEl.naturalHeight;
+          sw = sh * boxAspect;
+          sx = (imgEl.naturalWidth - sw) / 2;
+          sy = 0;
+        } else {
+          sw = imgEl.naturalWidth;
+          sh = sw / boxAspect;
+          sx = 0;
+          sy = (imgEl.naturalHeight - sh) / 2;
+        }
+        cCtx.drawImage(imgEl, sx, sy, sw, sh, x, y, w, h);
+      } else {
+        cCtx.fillStyle = 'rgba(255,255,255,0.05)';
+        cCtx.fillRect(x, y, w, h);
+      }
+      cCtx.restore();
+
+      cCtx.save();
+      rrPath(cCtx, x, y, w, h, r);
+      cCtx.strokeStyle = 'rgba(255,255,255,0.12)';
+      cCtx.lineWidth = 2;
+      cCtx.stroke();
+      cCtx.restore();
+    }
+
+    const mainImg = _serviceMockupMain ? await loadImg(_serviceMockupMain) : null;
+    const gridImgs = [];
+    for (const src of _serviceMockupGrid) {
+      gridImgs.push(src ? await loadImg(src) : null);
+    }
+
+    const allImgs = [mainImg, ...gridImgs].filter(Boolean);
+    const imgCount = allImgs.length;
+
+    if (imgCount === 0) {
+      cCtx.fillStyle = 'rgba(255,255,255,0.05)';
+      cCtx.fillRect(cGap, cGap, 1600 - cGap * 2, 1000 - cGap * 2);
+      cCtx.font = '50px sans-serif';
+      cCtx.fillStyle = '#666';
+      cCtx.textAlign = 'center';
+      cCtx.textBaseline = 'middle';
+      cCtx.fillText('Collage Preview (Empty)', 800, 500);
+    } else if (imgCount === 1) {
+      drawCollageBox(cGap, cGap, 1600 - cGap * 2, 1000 - cGap * 2, allImgs[0]);
+    } else if (imgCount === 2) {
+      const colW = (1600 - cGap * 3) / 2;
+      drawCollageBox(cGap, cGap, colW, 1000 - cGap * 2, allImgs[0]);
+      drawCollageBox(cGap * 2 + colW, cGap, colW, 1000 - cGap * 2, allImgs[1]);
+    } else if (imgCount === 3) {
+      const colW = (1600 - cGap * 3) / 2;
+      const halfH = (1000 - cGap * 3) / 2;
+      drawCollageBox(cGap, cGap, colW, 1000 - cGap * 2, allImgs[0]);
+      drawCollageBox(cGap * 2 + colW, cGap, colW, halfH, allImgs[1]);
+      drawCollageBox(cGap * 2 + colW, cGap * 2 + halfH, colW, halfH, allImgs[2]);
+    } else if (imgCount === 4) {
+      const colW = (1600 - cGap * 3) / 2;
+      const rowH = (1000 - cGap * 3) / 2;
+      drawCollageBox(cGap, cGap, colW, rowH, allImgs[0]);
+      drawCollageBox(cGap * 2 + colW, cGap, colW, rowH, allImgs[1]);
+      drawCollageBox(cGap, cGap * 2 + rowH, colW, rowH, allImgs[2]);
+      drawCollageBox(cGap * 2 + colW, cGap * 2 + rowH, colW, rowH, allImgs[3]);
+    } else {
+      const col3W = (1600 - cGap * 4) / 3;
+      const rowH = (1000 - cGap * 3) / 2;
+      drawCollageBox(cGap, cGap, col3W * 2 + cGap, rowH, allImgs[0]);
+      drawCollageBox(cGap * 3 + col3W * 2, cGap, col3W, rowH, allImgs[1]);
+      drawCollageBox(cGap, cGap * 2 + rowH, col3W, rowH, allImgs[2]);
+      drawCollageBox(cGap * 2 + col3W, cGap * 2 + rowH, col3W, rowH, allImgs[3]);
+      drawCollageBox(cGap * 3 + col3W * 2, cGap * 2 + rowH, col3W, rowH, allImgs[4]);
+    }
+
+    // 3. Draw mockup template or default illustration
+    if (_customMockupImg) {
+      ctx.drawImage(_customMockupImg, 0, 0, 1600, 900);
+      const scaleCorners = _mockupCorners.map(pt => ({
+        x: pt.x * 1600,
+        y: pt.y * 900
+      }));
+      drawPerspectiveImage(ctx, collageCanvas, scaleCorners);
+    } else {
+      // Default flat laptop mockup
+      const laptopW = 920, laptopH = 600;
+      const laptopX = (W - laptopW) / 2;
+      const laptopY = 55;
+      const bezelPad = 14;
+      const camSpace = 22;
+
+      ctx.save();
+      ctx.shadowColor = 'rgba(0,0,0,0.5)';
+      ctx.shadowBlur = 80;
+      ctx.shadowOffsetY = 30;
+      rrPath(ctx, laptopX, laptopY, laptopW, laptopH, 18);
+      ctx.fillStyle = '#1c1c1e';
+      ctx.fill();
+      ctx.restore();
+
+      rrPath(ctx, laptopX, laptopY, laptopW, laptopH, 18);
+      ctx.fillStyle = '#1c1c1e';
+      ctx.fill();
+      ctx.strokeStyle = 'rgba(255,255,255,0.08)';
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+
+      ctx.beginPath();
+      ctx.arc(W / 2, laptopY + (camSpace + bezelPad) / 2, 4, 0, Math.PI * 2);
+      ctx.fillStyle = '#3a3a3a';
+      ctx.fill();
+
+      const scrX = laptopX + bezelPad;
+      const scrY = laptopY + bezelPad + camSpace;
+      const scrW = laptopW - bezelPad * 2;
+      const scrH = laptopH - bezelPad * 2 - camSpace;
+
+      ctx.save();
+      rrPath(ctx, scrX, scrY, scrW, scrH, 6);
+      ctx.clip();
+      ctx.drawImage(collageCanvas, scrX, scrY, scrW, scrH);
+      ctx.restore();
+
+      // Laptop base (trapezoid)
+      const baseY = laptopY + laptopH + 3;
+      const baseH = 18;
+      const baseTopW = laptopW;
+      const baseBotW = laptopW * 1.08;
+      ctx.beginPath();
+      ctx.moveTo((W - baseTopW) / 2, baseY);
+      ctx.lineTo((W + baseTopW) / 2, baseY);
+      ctx.lineTo((W + baseBotW) / 2, baseY + baseH);
+      ctx.quadraticCurveTo(W / 2, baseY + baseH + 5, (W - baseBotW) / 2, baseY + baseH);
+      ctx.closePath();
+      ctx.fillStyle = '#2a2a2c';
+      ctx.fill();
+      ctx.strokeStyle = 'rgba(255,255,255,0.06)';
+      ctx.lineWidth = 1;
+      ctx.stroke();
+
+      const notchW = 120;
+      rrPath(ctx, (W - notchW) / 2, baseY - 1, notchW, 6, 3);
+      ctx.fillStyle = '#3a3a3c';
+      ctx.fill();
+    }
   }
 
   // File Inputs
@@ -5425,7 +5744,7 @@ function initServiceMockupGenerator() {
         const reader = new FileReader();
         reader.onload = async (event) => {
           _serviceMockupMain = event.target.result;
-          renderServiceMockupPreview([_serviceMockupMain, ..._serviceMockupGrid]);
+          triggerRedraw();
           const dominant = await extractDominantColor(event.target.result);
           applyAutoGradient(dominant);
         };
@@ -5448,11 +5767,188 @@ function initServiceMockupGenerator() {
           loadedCount++;
           if (loadedCount === files.length) {
             _serviceMockupGrid = results;
-            renderServiceMockupPreview([_serviceMockupMain, ..._serviceMockupGrid]);
+            triggerRedraw();
           }
         };
         reader.readAsDataURL(file);
       });
+    });
+  }
+
+  const templateSelect = document.getElementById('svc-mockup-template-select');
+  const deleteTemplateBtn = document.getElementById('btn-delete-mockup-template');
+  const saveTemplateBtn = document.getElementById('btn-save-mockup-template');
+  const bgFileInput = document.getElementById('svc-mockup-bg-file');
+
+  // Load Templates from localStorage
+  function loadTemplatesFromStorage() {
+    if (!templateSelect) return;
+    const templates = JSON.parse(localStorage.getItem('vincent_mockup_templates') || '[]');
+    templateSelect.innerHTML = '<option value="default">Default: Flat Laptop</option>';
+    templates.forEach(tpl => {
+      const opt = document.createElement('option');
+      opt.value = tpl.id;
+      opt.textContent = tpl.name;
+      templateSelect.appendChild(opt);
+    });
+  }
+
+  // Initial load
+  loadTemplatesFromStorage();
+
+  // Template dropdown change handler
+  if (templateSelect) {
+    templateSelect.addEventListener('change', async () => {
+      const val = templateSelect.value;
+      if (val === 'default') {
+        _customMockupImg = null;
+        _mockupCorners = [
+          { x: 0.25, y: 0.25 },
+          { x: 0.75, y: 0.25 },
+          { x: 0.75, y: 0.75 },
+          { x: 0.25, y: 0.75 }
+        ];
+        if (deleteTemplateBtn) deleteTemplateBtn.style.display = 'none';
+        if (saveTemplateBtn) saveTemplateBtn.style.display = 'none';
+        if (bgFileInput) bgFileInput.value = '';
+        updateHandlePositions();
+        triggerRedraw();
+      } else {
+        const templates = JSON.parse(localStorage.getItem('vincent_mockup_templates') || '[]');
+        const tpl = templates.find(t => t.id === val);
+        if (tpl) {
+          if (deleteTemplateBtn) deleteTemplateBtn.style.display = 'inline-flex';
+          if (saveTemplateBtn) saveTemplateBtn.style.display = 'none';
+          
+          const originalText = templateSelect.options[templateSelect.selectedIndex].text;
+          templateSelect.options[templateSelect.selectedIndex].text = 'Loading template...';
+          
+          const img = await loadImg(tpl.imageUrl);
+          if (img) {
+            _customMockupImg = img;
+            _mockupCorners = JSON.parse(JSON.stringify(tpl.corners));
+            updateHandlePositions();
+            triggerRedraw();
+          } else {
+            showToast('Error', 'Failed to load template image.', 'error');
+          }
+          templateSelect.options[templateSelect.selectedIndex].text = originalText;
+        }
+      }
+    });
+  }
+
+  // Delete Template handler
+  if (deleteTemplateBtn) {
+    deleteTemplateBtn.addEventListener('click', () => {
+      const val = templateSelect.value;
+      if (val === 'default') return;
+      
+      if (confirm('Are you sure you want to delete this mockup template?')) {
+        let templates = JSON.parse(localStorage.getItem('vincent_mockup_templates') || '[]');
+        templates = templates.filter(t => t.id !== val);
+        localStorage.setItem('vincent_mockup_templates', JSON.stringify(templates));
+        
+        showToast('Deleted', 'Template deleted successfully.', 'success');
+        loadTemplatesFromStorage();
+        templateSelect.value = 'default';
+        templateSelect.dispatchEvent(new Event('change'));
+      }
+    });
+  }
+
+  // Save Template handler
+  if (saveTemplateBtn) {
+    saveTemplateBtn.addEventListener('click', async () => {
+      if (!bgFileInput || !bgFileInput.files || bgFileInput.files.length === 0) {
+        showToast('Error', 'Please upload a background image file first.', 'error');
+        return;
+      }
+      
+      const file = bgFileInput.files[0];
+      const name = prompt('Enter a name for this mockup template:', 'My Custom Mockup');
+      if (!name) return;
+      
+      const originalText = saveTemplateBtn.innerHTML;
+      saveTemplateBtn.innerHTML = 'Saving...';
+      saveTemplateBtn.disabled = true;
+      
+      try {
+        const ext = file.name.split('.').pop() || 'png';
+        const fileName = `mockup-template-${Date.now()}.${ext}`;
+        const bucketName = 'portfolio';
+        
+        if (!supabase) throw new Error('Database not connected.');
+        
+        const { data, error } = await supabase.storage
+          .from(bucketName)
+          .upload(fileName, file, {
+            cacheControl: '31536000',
+            upsert: false,
+            contentType: file.type
+          });
+          
+        if (error) throw error;
+        
+        const { data: publicUrlData } = supabase.storage
+          .from(bucketName)
+          .getPublicUrl(fileName);
+          
+        const publicUrl = publicUrlData.publicUrl;
+        
+        const newTpl = {
+          id: 'tpl_' + Date.now(),
+          name: name,
+          imageUrl: publicUrl,
+          corners: JSON.parse(JSON.stringify(_mockupCorners))
+        };
+        
+        const templates = JSON.parse(localStorage.getItem('vincent_mockup_templates') || '[]');
+        templates.push(newTpl);
+        localStorage.setItem('vincent_mockup_templates', JSON.stringify(templates));
+        
+        showToast('Success', 'Template saved successfully!', 'success');
+        
+        loadTemplatesFromStorage();
+        templateSelect.value = newTpl.id;
+        if (saveTemplateBtn) saveTemplateBtn.style.display = 'none';
+        if (deleteTemplateBtn) deleteTemplateBtn.style.display = 'inline-flex';
+        
+      } catch (err) {
+        console.error('Error saving mockup template:', err);
+        showToast('Error', err.message || 'Failed to save template.', 'error');
+      } finally {
+        saveTemplateBtn.innerHTML = originalText;
+        saveTemplateBtn.disabled = false;
+      }
+    });
+  }
+
+  // Background Custom File handler
+  if (bgFileInput) {
+    bgFileInput.addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = (event) => {
+          const img = new Image();
+          img.onload = () => {
+            _customMockupImg = img;
+            if (saveTemplateBtn) saveTemplateBtn.style.display = 'inline-flex';
+            if (deleteTemplateBtn) deleteTemplateBtn.style.display = 'none';
+            _mockupCorners = [
+              { x: 0.25, y: 0.25 },
+              { x: 0.75, y: 0.25 },
+              { x: 0.75, y: 0.75 },
+              { x: 0.25, y: 0.75 }
+            ];
+            updateHandlePositions();
+            triggerRedraw();
+          };
+          img.src = event.target.result;
+        };
+        reader.readAsDataURL(file);
+      }
     });
   }
 
@@ -5471,7 +5967,6 @@ function initServiceMockupGenerator() {
       autofillBtn.disabled = true;
 
       try {
-        // Fetch projects matching service_key
         const { data: projects, error: projErr } = await supabase
           .from('portfolio_projects')
           .select('project_key')
@@ -5486,7 +5981,6 @@ function initServiceMockupGenerator() {
 
         const projectKeys = projects.map(p => p.project_key);
 
-        // Fetch up to 5 images from those projects
         const { data: images, error: imgErr } = await supabase
           .from('portfolio_project_images')
           .select('image_url')
@@ -5500,7 +5994,7 @@ function initServiceMockupGenerator() {
           _serviceMockupMain = images[0].image_url;
           _serviceMockupGrid = images.slice(1).map(img => img.image_url);
           
-          renderServiceMockupPreview([_serviceMockupMain, ..._serviceMockupGrid]);
+          triggerRedraw();
 
           const dominant = await extractDominantColor(_serviceMockupMain);
           applyAutoGradient(dominant);
@@ -5523,217 +6017,24 @@ function initServiceMockupGenerator() {
   document.addEventListener('reset-service-mockup', () => {
     _serviceMockupMain = null;
     _serviceMockupGrid = [];
+    _customMockupImg = null;
     _serviceMockupGradient = 'linear-gradient(to bottom, #1a1a2e 0%, #16213e 100%)';
-    renderServiceMockupPreview([]);
+    _mockupCorners = [
+      { x: 0.25, y: 0.25 },
+      { x: 0.75, y: 0.25 },
+      { x: 0.75, y: 0.75 },
+      { x: 0.25, y: 0.75 }
+    ];
+    if (bgFileInput) bgFileInput.value = '';
+    if (templateSelect) templateSelect.value = 'default';
+    if (deleteTemplateBtn) deleteTemplateBtn.style.display = 'none';
+    if (saveTemplateBtn) saveTemplateBtn.style.display = 'none';
+    updateHandlePositions();
+    triggerRedraw();
   });
 
-  // Helper to convert DataURL to Blob
-  function dataURLtoBlob(dataurl) {
-    var arr = dataurl.split(','), mime = arr[0].match(/:(.*?);/)[1],
-        bstr = atob(arr[1]), n = bstr.length, u8arr = new Uint8Array(n);
-    while(n--){
-        u8arr[n] = bstr.charCodeAt(n);
-    }
-    return new Blob([u8arr], {type:mime});
-  }
-
-  // Canvas Renderer
-  async function renderServiceMockupToCanvas() {
-    const W = 1600, H = 900;
-    const outputCanvas = document.createElement('canvas');
-    outputCanvas.width = W;
-    outputCanvas.height = H;
-    const ctx = outputCanvas.getContext('2d');
-
-    // 1. Draw background gradient using the stored _serviceMockupGradient string
-    const colorMatches = _serviceMockupGradient.match(/hsl\([^)]+\)|#[0-9a-fA-F]{3,8}/g);
-    if (colorMatches && colorMatches.length >= 2) {
-      const grad = ctx.createLinearGradient(0, 0, 0, H);
-      grad.addColorStop(0, colorMatches[0]);
-      grad.addColorStop(1, colorMatches[colorMatches.length - 1]);
-      ctx.fillStyle = grad;
-    } else {
-      const grad = ctx.createLinearGradient(0, 0, 0, H);
-      grad.addColorStop(0, '#2a2a3e');
-      grad.addColorStop(1, '#0f0f1a');
-      ctx.fillStyle = grad;
-    }
-    ctx.fillRect(0, 0, W, H);
-
-    // 2. Helper: draw rounded rect path
-    function rrPath(rx, ry, rw, rh, rr) {
-      ctx.beginPath();
-      ctx.moveTo(rx + rr, ry);
-      ctx.lineTo(rx + rw - rr, ry);
-      ctx.quadraticCurveTo(rx + rw, ry, rx + rw, ry + rr);
-      ctx.lineTo(rx + rw, ry + rh - rr);
-      ctx.quadraticCurveTo(rx + rw, ry + rh, rx + rw - rr, ry + rh);
-      ctx.lineTo(rx + rr, ry + rh);
-      ctx.quadraticCurveTo(rx, ry + rh, rx, ry + rh - rr);
-      ctx.lineTo(rx, ry + rr);
-      ctx.quadraticCurveTo(rx, ry, rx + rr, ry);
-      ctx.closePath();
-    }
-
-    // Helper: draw rounded image box
-    function drawBox(x, y, w, h, imgEl, r) {
-      if (r === undefined) r = 30; // default to 30
-      ctx.save();
-      rrPath(x, y, w, h, r);
-      ctx.clip();
-
-      if (imgEl) {
-        const imgAspect = imgEl.naturalWidth / imgEl.naturalHeight;
-        const boxAspect = w / h;
-        let sx, sy, sw, sh;
-        if (imgAspect > boxAspect) {
-          sh = imgEl.naturalHeight;
-          sw = sh * boxAspect;
-          sx = (imgEl.naturalWidth - sw) / 2;
-          sy = 0;
-        } else {
-          sw = imgEl.naturalWidth;
-          sh = sw / boxAspect;
-          sx = 0;
-          sy = (imgEl.naturalHeight - sh) / 2;
-        }
-        ctx.drawImage(imgEl, sx, sy, sw, sh, x, y, w, h);
-      } else {
-        ctx.fillStyle = 'rgba(255,255,255,0.05)';
-        ctx.fillRect(x, y, w, h);
-      }
-      ctx.restore();
-
-      // Subtle border overlay
-      ctx.save();
-      rrPath(x, y, w, h, r);
-      ctx.strokeStyle = 'rgba(255,255,255,0.12)';
-      ctx.lineWidth = r > 10 ? 2 : 1;
-      ctx.stroke();
-      ctx.restore();
-    }
-
-    // Helper: load an image from URL
-    function loadImg(src) {
-      return new Promise((resolve) => {
-        const img = new Image();
-        img.crossOrigin = 'anonymous';
-        img.onload = () => resolve(img);
-        img.onerror = () => resolve(null);
-        img.src = src;
-      });
-    }
-
-    // Load images
-    const mainImg = _serviceMockupMain ? await loadImg(_serviceMockupMain) : null;
-    const gridImgs = [];
-    for (const src of _serviceMockupGrid) {
-      gridImgs.push(src ? await loadImg(src) : null);
-    }
-
-    // ===== Laptop Mockup Collage =====
-    const laptopW = 920, laptopH = 600;
-    const laptopX = (W - laptopW) / 2;
-    const laptopY = 55;
-    const bezelPad = 14;
-    const camSpace = 22;
-
-    // Drop shadow
-    ctx.save();
-    ctx.shadowColor = 'rgba(0,0,0,0.5)';
-    ctx.shadowBlur = 80;
-    ctx.shadowOffsetY = 30;
-    rrPath(laptopX, laptopY, laptopW, laptopH, 18);
-    ctx.fillStyle = '#1c1c1e';
-    ctx.fill();
-    ctx.restore();
-
-    // Bezel
-    rrPath(laptopX, laptopY, laptopW, laptopH, 18);
-    ctx.fillStyle = '#1c1c1e';
-    ctx.fill();
-    ctx.strokeStyle = 'rgba(255,255,255,0.08)';
-    ctx.lineWidth = 1.5;
-    ctx.stroke();
-
-    // Camera dot
-    ctx.beginPath();
-    ctx.arc(W / 2, laptopY + (camSpace + bezelPad) / 2, 4, 0, Math.PI * 2);
-    ctx.fillStyle = '#3a3a3a';
-    ctx.fill();
-
-    // Screen content area
-    const scrX = laptopX + bezelPad;
-    const scrY = laptopY + bezelPad + camSpace;
-    const scrW = laptopW - bezelPad * 2;
-    const scrH = laptopH - bezelPad * 2 - camSpace;
-
-    // Screen background
-    rrPath(scrX, scrY, scrW, scrH, 6);
-    ctx.fillStyle = '#0a0a0f';
-    ctx.fill();
-
-    // Collage inside screen
-    const cGap = 6;
-    const cR = 6;
-    const allImgs = [mainImg, ...gridImgs].filter(Boolean);
-    const imgCount = allImgs.length;
-
-    if (imgCount === 1) {
-      drawBox(scrX + cGap, scrY + cGap, scrW - cGap * 2, scrH - cGap * 2, allImgs[0], cR);
-    } else if (imgCount === 2) {
-      const colW = (scrW - cGap * 3) / 2;
-      const colH = scrH - cGap * 2;
-      drawBox(scrX + cGap, scrY + cGap, colW, colH, allImgs[0], cR);
-      drawBox(scrX + cGap * 2 + colW, scrY + cGap, colW, colH, allImgs[1], cR);
-    } else if (imgCount === 3) {
-      const colW = (scrW - cGap * 3) / 2;
-      const halfH = (scrH - cGap * 3) / 2;
-      drawBox(scrX + cGap, scrY + cGap, colW, scrH - cGap * 2, allImgs[0], cR);
-      drawBox(scrX + cGap * 2 + colW, scrY + cGap, colW, halfH, allImgs[1], cR);
-      drawBox(scrX + cGap * 2 + colW, scrY + cGap * 2 + halfH, colW, halfH, allImgs[2], cR);
-    } else if (imgCount === 4) {
-      const colW = (scrW - cGap * 3) / 2;
-      const rowH = (scrH - cGap * 3) / 2;
-      drawBox(scrX + cGap, scrY + cGap, colW, rowH, allImgs[0], cR);
-      drawBox(scrX + cGap * 2 + colW, scrY + cGap, colW, rowH, allImgs[1], cR);
-      drawBox(scrX + cGap, scrY + cGap * 2 + rowH, colW, rowH, allImgs[2], cR);
-      drawBox(scrX + cGap * 2 + colW, scrY + cGap * 2 + rowH, colW, rowH, allImgs[3], cR);
-    } else if (imgCount >= 5) {
-      const col3W = (scrW - cGap * 4) / 3;
-      const rowH = (scrH - cGap * 3) / 2;
-      drawBox(scrX + cGap, scrY + cGap, col3W * 2 + cGap, rowH, allImgs[0], cR);
-      drawBox(scrX + cGap * 3 + col3W * 2, scrY + cGap, col3W, rowH, allImgs[1], cR);
-      drawBox(scrX + cGap, scrY + cGap * 2 + rowH, col3W, rowH, allImgs[2], cR);
-      drawBox(scrX + cGap * 2 + col3W, scrY + cGap * 2 + rowH, col3W, rowH, allImgs[3], cR);
-      drawBox(scrX + cGap * 3 + col3W * 2, scrY + cGap * 2 + rowH, col3W, rowH, allImgs[4], cR);
-    }
-
-    // Laptop base (trapezoid)
-    const baseY = laptopY + laptopH + 3;
-    const baseH = 18;
-    const baseTopW = laptopW;
-    const baseBotW = laptopW * 1.08;
-    ctx.beginPath();
-    ctx.moveTo((W - baseTopW) / 2, baseY);
-    ctx.lineTo((W + baseTopW) / 2, baseY);
-    ctx.lineTo((W + baseBotW) / 2, baseY + baseH);
-    ctx.quadraticCurveTo(W / 2, baseY + baseH + 5, (W - baseBotW) / 2, baseY + baseH);
-    ctx.closePath();
-    ctx.fillStyle = '#2a2a2c';
-    ctx.fill();
-    ctx.strokeStyle = 'rgba(255,255,255,0.06)';
-    ctx.lineWidth = 1;
-    ctx.stroke();
-
-    // Hinge notch
-    const notchW = 120;
-    rrPath((W - notchW) / 2, baseY - 1, notchW, 6, 3);
-    ctx.fillStyle = '#3a3a3c';
-    ctx.fill();
-
-    return outputCanvas;
-  }
+  // Render trigger
+  triggerRedraw();
 
   // Handle Render and Upload
   const renderActionBtns = [
@@ -5758,8 +6059,10 @@ function initServiceMockupGenerator() {
         });
 
         try {
-          const outputCanvas = await renderServiceMockupToCanvas();
-          const dataUrl = outputCanvas.toDataURL('image/webp', 0.95);
+          const canvas = document.getElementById('svc-mockup-canvas-el');
+          if (!canvas) throw new Error('Canvas element not found.');
+
+          const dataUrl = canvas.toDataURL('image/webp', 0.95);
           const blob = dataURLtoBlob(dataUrl);
 
           const fileName = `service-mockup-${serviceKey}-${Date.now()}.webp`;

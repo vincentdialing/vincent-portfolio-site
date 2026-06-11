@@ -2511,7 +2511,14 @@ async function openProjectsEditModal() {
   const listEl = document.getElementById('projects-edit-list');
   if (!listEl) return;
 
-  listEl.innerHTML = allProjects.map(p => `
+  const serviceSelect = document.getElementById('project-service-filter');
+  const serviceKey = serviceSelect ? serviceSelect.value : '';
+
+  const filteredProjects = serviceKey 
+    ? allProjects.filter(p => p.service_key === serviceKey)
+    : allProjects;
+
+  listEl.innerHTML = filteredProjects.map(p => `
     <div class="edit-thumb-card" data-id="${p.id}" style="position:relative; border-radius:8px; overflow:hidden; background:var(--bg-tertiary); border:1px solid var(--border-color); cursor:grab;">
       <img src="${p.image_url || 'https://placehold.co/600x380'}" style="width:100%; height:105px; object-fit:cover; display:block;" alt="${p.title}">
       <!-- Drag handle indicator -->

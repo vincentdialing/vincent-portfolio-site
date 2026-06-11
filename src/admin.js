@@ -5678,7 +5678,24 @@ function initServiceMockupGenerator() {
 
     // 3. Draw mockup template or default illustration
     if (_customMockupImg) {
-      ctx.drawImage(_customMockupImg, 0, 0, 1600, 900);
+      // Draw background image preserving original aspect ratio (cover sizing)
+      const imgW = _customMockupImg.naturalWidth || _customMockupImg.width;
+      const imgH = _customMockupImg.naturalHeight || _customMockupImg.height;
+      if (imgW && imgH) {
+        const imgAspect = imgW / imgH;
+        const canvasAspect = 1600 / 900;
+        let dx = 0, dy = 0, dw = 1600, dh = 900;
+        if (imgAspect > canvasAspect) {
+          dw = 900 * imgAspect;
+          dx = (1600 - dw) / 2;
+        } else {
+          dh = 1600 / imgAspect;
+          dy = (900 - dh) / 2;
+        }
+        ctx.drawImage(_customMockupImg, dx, dy, dw, dh);
+      } else {
+        ctx.drawImage(_customMockupImg, 0, 0, 1600, 900);
+      }
       const scaleCorners = _mockupCorners.map(pt => ({
         x: pt.x * 1600,
         y: pt.y * 900
@@ -5982,8 +5999,9 @@ function initServiceMockupGenerator() {
       try {
         const { data: projects, error: projErr } = await supabase
           .from('portfolio_projects')
-          .select('project_key')
-          .eq('service_key', serviceKey);
+          .select('image_url')
+          .eq('service_key', serviceKey)
+          .order('display_order', { ascending: true });
 
         if (projErr) throw projErr;
 
@@ -5992,33 +6010,26 @@ function initServiceMockupGenerator() {
           return;
         }
 
-        const projectKeys = projects.map(p => p.project_key);
+        const projectThumbnails = projects
+          .map(p => p.image_url)
+          .filter(url => url && url.trim() !== '');
 
-        const { data: images, error: imgErr } = await supabase
-          .from('portfolio_project_images')
-          .select('image_url')
-          .in('project_key', projectKeys)
-          .order('display_order', { ascending: true })
-          .limit(5);
-
-        if (imgErr) throw imgErr;
-
-        if (images && images.length > 0) {
-          _serviceMockupMain = images[0].image_url;
-          _serviceMockupGrid = images.slice(1).map(img => img.image_url);
+        if (projectThumbnails.length > 0) {
+          _serviceMockupMain = projectThumbnails[0];
+          _serviceMockupGrid = projectThumbnails.slice(1, 5);
           
           triggerRedraw();
 
           const dominant = await extractDominantColor(_serviceMockupMain);
           applyAutoGradient(dominant);
 
-          showToast('Success', 'Mockup cover auto-filled with project images!', 'success');
+          showToast('Success', 'Mockup cover auto-filled with project bento thumbnails!', 'success');
         } else {
-          showToast('Empty', 'No gallery images found in service projects.', 'warning');
+          showToast('Empty', 'No generated bento thumbnails found for these projects.', 'warning');
         }
       } catch (err) {
         console.error('Service mockup auto-fill error:', err);
-        showToast('Error', 'Failed to load project images for service.', 'error');
+        showToast('Error', 'Failed to load project thumbnails for service.', 'error');
       } finally {
         autofillBtn.innerHTML = originalText;
         autofillBtn.disabled = false;

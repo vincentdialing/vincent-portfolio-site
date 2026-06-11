@@ -4534,6 +4534,7 @@ function initThumbnailGenerator() {
     3: { gridCount: 2, mainLabel: 'Main Image (Left Large)', gridLabel: 'Grid Images (Select up to 2)', gridHelp: 'Upload up to 2 images to stack on the right.' },
     4: { gridCount: 3, mainLabel: 'Main Image (Left Large)', gridLabel: 'Grid Images (Select up to 3)', gridHelp: 'Upload up to 3 images to stack on the right.' },
     5: { gridCount: 4, mainLabel: 'Main Image (Left Large)', gridLabel: 'Grid Images (Select up to 4)', gridHelp: 'Upload multiple images at once to fill the grid automatically.' },
+    'mockup': { gridCount: 4, mainLabel: 'Featured Image', gridLabel: 'Collage Images (Select up to 4)', gridHelp: 'These images will be arranged as a collage on a laptop screen.' },
   };
 
   // Rebuild the preview boxes inside the canvas based on template
@@ -4543,7 +4544,23 @@ function initThumbnailGenerator() {
     layout.setAttribute('data-template', template);
     const config = TEMPLATE_CONFIG[template];
 
-    // Rebuild inner HTML
+    if (template === 'mockup') {
+      // Laptop mockup preview with collage grid inside
+      let collageItems = '<div class="thumb-img-box" id="box-main"><span class="placeholder-text">1</span></div>';
+      for (let i = 1; i <= config.gridCount; i++) {
+        collageItems += `<div class="thumb-img-box" id="box-${i}"><span class="placeholder-text">${i + 1}</span></div>`;
+      }
+      layout.innerHTML = `
+        <div class="mockup-laptop-preview">
+          <div class="mockup-screen-preview">
+            <div class="mockup-collage-preview">${collageItems}</div>
+          </div>
+          <div class="mockup-base-preview"></div>
+        </div>`;
+      return;
+    }
+
+    // Standard bento layouts (1-5)
     let html = '<div class="thumb-main-col"><div class="thumb-img-box" id="box-main"><span class="placeholder-text">Main Cover</span></div></div>';
     if (config.gridCount > 0) {
       html += '<div class="thumb-grid-col">';
@@ -4580,8 +4597,9 @@ function initThumbnailGenerator() {
   // Template selector handler
   if (templateSelect) {
     templateSelect.addEventListener('change', () => {
-      const val = parseInt(templateSelect.value, 10);
-      setBentoTemplate(val);
+      const rawVal = templateSelect.value;
+      const numVal = parseInt(rawVal, 10);
+      setBentoTemplate(isNaN(numVal) ? rawVal : numVal);
     });
   }
 
@@ -4846,20 +4864,26 @@ function initThumbnailGenerator() {
     const innerH = H - PAD * 2;
     const RADIUS = 30;
 
-    // Helper: draw rounded image box
-    function drawBox(x, y, w, h, imgEl) {
-      ctx.save();
+    // Helper: draw rounded rect path (no fill/stroke)
+    function rrPath(rx, ry, rw, rh, rr) {
       ctx.beginPath();
-      ctx.moveTo(x + RADIUS, y);
-      ctx.lineTo(x + w - RADIUS, y);
-      ctx.quadraticCurveTo(x + w, y, x + w, y + RADIUS);
-      ctx.lineTo(x + w, y + h - RADIUS);
-      ctx.quadraticCurveTo(x + w, y + h, x + w - RADIUS, y + h);
-      ctx.lineTo(x + RADIUS, y + h);
-      ctx.quadraticCurveTo(x, y + h, x, y + h - RADIUS);
-      ctx.lineTo(x, y + RADIUS);
-      ctx.quadraticCurveTo(x, y, x + RADIUS, y);
+      ctx.moveTo(rx + rr, ry);
+      ctx.lineTo(rx + rw - rr, ry);
+      ctx.quadraticCurveTo(rx + rw, ry, rx + rw, ry + rr);
+      ctx.lineTo(rx + rw, ry + rh - rr);
+      ctx.quadraticCurveTo(rx + rw, ry + rh, rx + rw - rr, ry + rh);
+      ctx.lineTo(rx + rr, ry + rh);
+      ctx.quadraticCurveTo(rx, ry + rh, rx, ry + rh - rr);
+      ctx.lineTo(rx, ry + rr);
+      ctx.quadraticCurveTo(rx, ry, rx + rr, ry);
       ctx.closePath();
+    }
+
+    // Helper: draw rounded image box (r = corner radius, defaults to RADIUS)
+    function drawBox(x, y, w, h, imgEl, r) {
+      if (r === undefined) r = RADIUS;
+      ctx.save();
+      rrPath(x, y, w, h, r);
       ctx.clip();
 
       if (imgEl) {
@@ -4886,19 +4910,9 @@ function initThumbnailGenerator() {
 
       // Subtle border overlay
       ctx.save();
-      ctx.beginPath();
-      ctx.moveTo(x + RADIUS, y);
-      ctx.lineTo(x + w - RADIUS, y);
-      ctx.quadraticCurveTo(x + w, y, x + w, y + RADIUS);
-      ctx.lineTo(x + w, y + h - RADIUS);
-      ctx.quadraticCurveTo(x + w, y + h, x + w - RADIUS, y + h);
-      ctx.lineTo(x + RADIUS, y + h);
-      ctx.quadraticCurveTo(x, y + h, x, y + h - RADIUS);
-      ctx.lineTo(x, y + RADIUS);
-      ctx.quadraticCurveTo(x, y, x + RADIUS, y);
-      ctx.closePath();
+      rrPath(x, y, w, h, r);
       ctx.strokeStyle = 'rgba(255,255,255,0.12)';
-      ctx.lineWidth = 2;
+      ctx.lineWidth = r > 10 ? 2 : 1;
       ctx.stroke();
       ctx.restore();
     }
@@ -4967,6 +4981,113 @@ function initThumbnailGenerator() {
       drawBox(gx, PAD, colW, cellH, gridImgs[0] || null);
       drawBox(gx, PAD + cellH + GAP, colW, cellH, gridImgs[1] || null);
       drawBox(gx, PAD + (cellH + GAP) * 2, colW, cellH, gridImgs[2] || null);
+
+    } else if (template === 'mockup') {
+      // ===== Laptop Mockup Collage =====
+      const laptopW = 920, laptopH = 600;
+      const laptopX = (W - laptopW) / 2;
+      const laptopY = 55;
+      const bezelPad = 14;
+      const camSpace = 22;
+
+      // Drop shadow
+      ctx.save();
+      ctx.shadowColor = 'rgba(0,0,0,0.5)';
+      ctx.shadowBlur = 80;
+      ctx.shadowOffsetY = 30;
+      rrPath(laptopX, laptopY, laptopW, laptopH, 18);
+      ctx.fillStyle = '#1c1c1e';
+      ctx.fill();
+      ctx.restore();
+
+      // Bezel
+      rrPath(laptopX, laptopY, laptopW, laptopH, 18);
+      ctx.fillStyle = '#1c1c1e';
+      ctx.fill();
+      ctx.strokeStyle = 'rgba(255,255,255,0.08)';
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+
+      // Camera dot
+      ctx.beginPath();
+      ctx.arc(W / 2, laptopY + (camSpace + bezelPad) / 2, 4, 0, Math.PI * 2);
+      ctx.fillStyle = '#3a3a3a';
+      ctx.fill();
+
+      // Screen content area
+      const scrX = laptopX + bezelPad;
+      const scrY = laptopY + bezelPad + camSpace;
+      const scrW = laptopW - bezelPad * 2;
+      const scrH = laptopH - bezelPad * 2 - camSpace;
+
+      // Screen background
+      rrPath(scrX, scrY, scrW, scrH, 6);
+      ctx.fillStyle = '#0a0a0f';
+      ctx.fill();
+
+      // Collage inside screen
+      const cGap = 6;
+      const cR = 6;
+      const allImgs = [mainImg, ...gridImgs].filter(Boolean);
+      const imgCount = allImgs.length;
+
+      if (imgCount === 1) {
+        drawBox(scrX + cGap, scrY + cGap, scrW - cGap * 2, scrH - cGap * 2, allImgs[0], cR);
+      } else if (imgCount === 2) {
+        const colW = (scrW - cGap * 3) / 2;
+        const colH = scrH - cGap * 2;
+        drawBox(scrX + cGap, scrY + cGap, colW, colH, allImgs[0], cR);
+        drawBox(scrX + cGap * 2 + colW, scrY + cGap, colW, colH, allImgs[1], cR);
+      } else if (imgCount === 3) {
+        // Main left tall + 2 stacked right
+        const colW = (scrW - cGap * 3) / 2;
+        const halfH = (scrH - cGap * 3) / 2;
+        drawBox(scrX + cGap, scrY + cGap, colW, scrH - cGap * 2, allImgs[0], cR);
+        drawBox(scrX + cGap * 2 + colW, scrY + cGap, colW, halfH, allImgs[1], cR);
+        drawBox(scrX + cGap * 2 + colW, scrY + cGap * 2 + halfH, colW, halfH, allImgs[2], cR);
+      } else if (imgCount === 4) {
+        // 2x2 grid
+        const colW = (scrW - cGap * 3) / 2;
+        const rowH = (scrH - cGap * 3) / 2;
+        drawBox(scrX + cGap, scrY + cGap, colW, rowH, allImgs[0], cR);
+        drawBox(scrX + cGap * 2 + colW, scrY + cGap, colW, rowH, allImgs[1], cR);
+        drawBox(scrX + cGap, scrY + cGap * 2 + rowH, colW, rowH, allImgs[2], cR);
+        drawBox(scrX + cGap * 2 + colW, scrY + cGap * 2 + rowH, colW, rowH, allImgs[3], cR);
+      } else {
+        // 5 images: top row (main 2-wide + img1), bottom row (img2 + img3 + img4)
+        const col3W = (scrW - cGap * 4) / 3;
+        const rowH = (scrH - cGap * 3) / 2;
+        // Top: main spans 2 cols
+        drawBox(scrX + cGap, scrY + cGap, col3W * 2 + cGap, rowH, allImgs[0], cR);
+        drawBox(scrX + cGap * 3 + col3W * 2, scrY + cGap, col3W, rowH, allImgs[1], cR);
+        // Bottom: 3 equal
+        drawBox(scrX + cGap, scrY + cGap * 2 + rowH, col3W, rowH, allImgs[2], cR);
+        drawBox(scrX + cGap * 2 + col3W, scrY + cGap * 2 + rowH, col3W, rowH, allImgs[3], cR);
+        drawBox(scrX + cGap * 3 + col3W * 2, scrY + cGap * 2 + rowH, col3W, rowH, allImgs[4], cR);
+      }
+
+      // Laptop base (trapezoid)
+      const baseY = laptopY + laptopH + 3;
+      const baseH = 18;
+      const baseTopW = laptopW;
+      const baseBotW = laptopW * 1.08;
+      ctx.beginPath();
+      ctx.moveTo((W - baseTopW) / 2, baseY);
+      ctx.lineTo((W + baseTopW) / 2, baseY);
+      ctx.lineTo((W + baseBotW) / 2, baseY + baseH);
+      ctx.quadraticCurveTo(W / 2, baseY + baseH + 5, (W - baseBotW) / 2, baseY + baseH);
+      ctx.closePath();
+      ctx.fillStyle = '#2a2a2c';
+      ctx.fill();
+      ctx.strokeStyle = 'rgba(255,255,255,0.06)';
+      ctx.lineWidth = 1;
+      ctx.stroke();
+
+      // Hinge notch
+      const notchW = 120;
+      rrPath((W - notchW) / 2, baseY - 1, notchW, 6, 3);
+      ctx.fillStyle = '#3a3a3c';
+      ctx.fill();
 
     } else {
       // Template 5 — 1 main + 2x2 grid (original)

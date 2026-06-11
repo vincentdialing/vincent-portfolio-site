@@ -2368,6 +2368,82 @@ body {
 
 /* Template 5 — default 1 main + 2x2 (already styled above) */
 
+/* Template: Laptop Mockup — Collage */
+.thumb-layout[data-template="mockup"] {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 120px;
+}
+
+.mockup-laptop-preview {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.mockup-screen-preview {
+  background: #1c1c1e;
+  border-radius: 14px;
+  padding: 14px;
+  padding-top: 26px;
+  width: 100%;
+  position: relative;
+  border: 1.5px solid rgba(255, 255, 255, 0.08);
+}
+
+.mockup-screen-preview::before {
+  content: '';
+  width: 8px;
+  height: 8px;
+  background: #3a3a3a;
+  border-radius: 50%;
+  position: absolute;
+  top: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.mockup-collage-preview {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  grid-auto-rows: 1fr;
+  gap: 6px;
+  background: #0a0a0f;
+  border-radius: 4px;
+  overflow: hidden;
+  aspect-ratio: 16 / 10;
+}
+
+.mockup-collage-preview .thumb-img-box {
+  border-radius: 4px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+}
+
+.mockup-collage-preview .thumb-img-box::after {
+  border-radius: 4px;
+  border-width: 1px;
+}
+
+.mockup-collage-preview .thumb-img-box:first-child {
+  grid-column: span 2;
+}
+
+.mockup-collage-preview .thumb-img-box .placeholder-text {
+  font-size: 14px;
+}
+
+.mockup-base-preview {
+  width: 108%;
+  height: 14px;
+  background: linear-gradient(to bottom, #3a3a3c, #2a2a2c);
+  border-radius: 0 0 8px 8px;
+  margin-top: 3px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-top: none;
+}
+
 .thumb-img-box {
   background: rgba(255, 255, 255, 0.05);
   border-radius: 30px;

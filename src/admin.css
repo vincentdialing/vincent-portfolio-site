@@ -2546,3 +2546,11 @@ body {
   border-color: var(--border-hover);
 }
 
+/* Responsive layout for bento and mockup generators */
+@media (max-width: 860px) {
+  .thumbnail-gen-layout {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+}
+

@@ -2995,6 +2995,8 @@ function openServiceModal(id = null) {
   const serviceMockupSec = document.getElementById('service-mockup-section');
   if (serviceMockupSec) {
     serviceMockupSec.style.display = 'none';
+    const modalIndex = document.querySelector('#service-modal .modal-card');
+    if (modalIndex) modalIndex.classList.remove('modal-large');
     const toggleBtn = document.getElementById('btn-toggle-service-mockup');
     if (toggleBtn) {
       toggleBtn.innerHTML = `
@@ -5259,8 +5261,10 @@ function initServiceMockupGenerator() {
   // Toggle Section
   if (toggleBtn) {
     toggleBtn.addEventListener('click', () => {
+      const modalCard = toggleBtn.closest('.modal-card');
       if (section.style.display === 'none') {
         section.style.display = 'block';
+        if (modalCard) modalCard.classList.add('modal-large');
         toggleBtn.innerHTML = `
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 14px; height: 14px; margin-right: 4px;">
             <polyline points="18 15 12 9 6 15"/>
@@ -5271,6 +5275,7 @@ function initServiceMockupGenerator() {
         setTimeout(updateCanvasScale, 50);
       } else {
         section.style.display = 'none';
+        if (modalCard) modalCard.classList.remove('modal-large');
         toggleBtn.innerHTML = `
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 14px; height: 14px; margin-right: 4px;">
             <rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/>

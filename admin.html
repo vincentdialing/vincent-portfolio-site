@@ -647,7 +647,6 @@ CREATE POLICY "Allow anon delete" ON brands FOR DELETE USING (true);
                     <option value="3">3 Images — 1 Main + 2 Stacked</option>
                     <option value="2">2 Images — Side by Side</option>
                     <option value="1">1 Image — Full Hero</option>
-                    <option value="mockup">Laptop Mockup — Collage</option>
                   </select>
                 </div>
 
@@ -888,6 +887,81 @@ CREATE POLICY "Allow anon delete" ON brands FOR DELETE USING (true);
             </label>
           </div>
         </div>
+
+        <!-- Mockup Cover Generator Toggle -->
+        <div class="form-group" style="text-align: center;">
+          <button type="button" id="btn-toggle-service-mockup" class="btn btn-secondary btn-sm" style="width: 100%; justify-content: center; display: flex; align-items: center; gap: 4px;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 14px; height: 14px;">
+              <rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/>
+            </svg>
+            Generate Mockup Cover
+          </button>
+        </div>
+
+        <!-- Embedded Mockup Generator (Hidden by Default) -->
+        <div id="service-mockup-section" style="display: none; background: var(--bg-tertiary); padding: 1.5rem; border-radius: var(--radius-md); border: 1px solid var(--border-color); margin-bottom: 1rem;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+            <h4 style="margin: 0; display: flex; align-items: center; gap: 0.5rem;">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 18px; height: 18px; color: var(--accent-light);">
+                <rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/>
+              </svg>
+              Laptop Mockup Cover
+            </h4>
+            <button type="button" class="btn btn-primary btn-sm" id="btn-render-apply-service-mockup">Generate & Apply to URL</button>
+          </div>
+
+          <div class="thumbnail-gen-layout" style="margin-top: 0;">
+            <div class="thumbnail-controls">
+              <p class="field-help" style="margin-bottom: 1rem;">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px; height:14px; vertical-align:text-bottom;"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                Arrange project images as a collage on a laptop screen. Gradient is auto-generated from the first image.
+              </p>
+              <div class="form-group" style="display: flex; align-items: center; justify-content: space-between;">
+                <label>Featured Image</label>
+                <button type="button" class="btn btn-secondary btn-xs" id="btn-autofill-service-mockup">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 12px; height: 12px; margin-right: 4px;"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+                  Auto-fill from Projects
+                </button>
+              </div>
+              <input type="file" id="svc-mockup-img-main" accept="image/*" class="file-input-custom" style="margin-bottom: 1rem;">
+
+              <div class="form-group">
+                <label>Collage Images (Select up to 4)</label>
+                <input type="file" id="svc-mockup-img-grid" accept="image/*" multiple class="file-input-custom">
+                <p class="field-help">Upload multiple images for the laptop screen collage.</p>
+              </div>
+
+              <button type="button" class="btn btn-primary" id="btn-render-apply-service-mockup-bottom" style="width: 100%; margin-top: 1.25rem; justify-content: center; display: flex; align-items: center; gap: 0.5rem;">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 16px; height: 16px;">
+                  <rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/>
+                </svg>
+                Generate & Apply Mockup
+              </button>
+            </div>
+
+            <div class="thumbnail-preview-area" style="padding: 1rem;">
+              <div class="thumbnail-scale-wrapper">
+                <div id="svc-mockup-canvas" class="thumbnail-canvas">
+                  <div class="thumb-layout" data-template="mockup">
+                    <div class="mockup-laptop-preview">
+                      <div class="mockup-screen-preview">
+                        <div class="mockup-collage-preview">
+                          <div class="thumb-img-box" id="svc-box-main"><span class="placeholder-text">1</span></div>
+                          <div class="thumb-img-box" id="svc-box-1"><span class="placeholder-text">2</span></div>
+                          <div class="thumb-img-box" id="svc-box-2"><span class="placeholder-text">3</span></div>
+                          <div class="thumb-img-box" id="svc-box-3"><span class="placeholder-text">4</span></div>
+                          <div class="thumb-img-box" id="svc-box-4"><span class="placeholder-text">5</span></div>
+                        </div>
+                      </div>
+                      <div class="mockup-base-preview"></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
         <div class="form-group">
           <label for="service-order">Display Order</label>
           <input type="number" id="service-order" value="0">

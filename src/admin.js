@@ -2991,6 +2991,32 @@ function openServiceModal(id = null) {
   const aiResults = document.getElementById('service-ai-results');
   if (aiResults) { aiResults.innerHTML = ''; aiResults.classList.add('hidden'); }
 
+  // Reset Service Mockup Section
+  const serviceMockupSec = document.getElementById('service-mockup-section');
+  if (serviceMockupSec) {
+    serviceMockupSec.style.display = 'none';
+    const toggleBtn = document.getElementById('btn-toggle-service-mockup');
+    if (toggleBtn) {
+      toggleBtn.innerHTML = `
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 14px; height: 14px;">
+          <rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/>
+        </svg>
+        Generate Mockup Cover
+      `;
+    }
+    const mainInput = document.getElementById('svc-mockup-img-main');
+    const gridInput = document.getElementById('svc-mockup-img-grid');
+    if (mainInput) mainInput.value = '';
+    if (gridInput) gridInput.value = '';
+    
+    const canvas = document.getElementById('svc-mockup-canvas');
+    if (canvas) {
+      canvas.style.background = 'linear-gradient(to bottom, #1a1a2e 0%, #16213e 100%)';
+    }
+    
+    document.dispatchEvent(new CustomEvent('reset-service-mockup'));
+  }
+
   modal.classList.add('is-open');
 }
 
@@ -4487,6 +4513,9 @@ document.addEventListener('DOMContentLoaded', async () => {
   // Initialize Thumbnail Generator
   initThumbnailGenerator();
 
+  // Initialize Service Mockup Generator
+  initServiceMockupGenerator();
+
   // Trigger loading initial project grid list
   loadProjects();
 });
@@ -5213,4 +5242,562 @@ function initMobileMenu() {
       }
     });
   });
+}
+
+function initServiceMockupGenerator() {
+  const toggleBtn = document.getElementById('btn-toggle-service-mockup');
+  const section = document.getElementById('service-mockup-section');
+  const canvasElement = document.getElementById('svc-mockup-canvas');
+  const wrapperElement = document.querySelector('#service-mockup-section .thumbnail-scale-wrapper');
+  
+  if (!section || !canvasElement || !wrapperElement) return;
+
+  let _serviceMockupMain = null;
+  let _serviceMockupGrid = [];
+  let _serviceMockupGradient = 'linear-gradient(to bottom, #1a1a2e 0%, #16213e 100%)';
+
+  // Toggle Section
+  if (toggleBtn) {
+    toggleBtn.addEventListener('click', () => {
+      if (section.style.display === 'none') {
+        section.style.display = 'block';
+        toggleBtn.innerHTML = `
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 14px; height: 14px; margin-right: 4px;">
+            <polyline points="18 15 12 9 6 15"/>
+          </svg>
+          Close Mockup
+        `;
+        // Trigger scale refresh after layout changes
+        setTimeout(updateCanvasScale, 50);
+      } else {
+        section.style.display = 'none';
+        toggleBtn.innerHTML = `
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 14px; height: 14px; margin-right: 4px;">
+            <rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/>
+          </svg>
+          Generate Mockup Cover
+        `;
+      }
+    });
+  }
+
+  // Scale Preview
+  function updateCanvasScale() {
+    if (wrapperElement && canvasElement) {
+      const scale = wrapperElement.clientWidth / 1600;
+      canvasElement.style.transform = `scale(${scale})`;
+    }
+  }
+
+  window.addEventListener('resize', updateCanvasScale);
+  const ro = new ResizeObserver(updateCanvasScale);
+  ro.observe(wrapperElement);
+
+  // Helper: RGB to HSL
+  function rgbToHsl(r, g, b) {
+    r /= 255; g /= 255; b /= 255;
+    const max = Math.max(r, g, b), min = Math.min(r, g, b);
+    let h, s, l = (max + min) / 2;
+    if (max === min) { h = s = 0; }
+    else {
+      const d = max - min;
+      s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+      switch (max) {
+        case r: h = ((g - b) / d + (g < b ? 6 : 0)) / 6; break;
+        case g: h = ((b - r) / d + 2) / 6; break;
+        case b: h = ((r - g) / d + 4) / 6; break;
+      }
+    }
+    return [Math.round(h * 360), Math.round(s * 100), Math.round(l * 100)];
+  }
+
+  // Dominant color extraction
+  function extractDominantColor(imgSrc) {
+    return new Promise((resolve) => {
+      const img = new Image();
+      img.crossOrigin = 'anonymous';
+      img.onload = () => {
+        try {
+          const sampleCanvas = document.createElement('canvas');
+          const ctx = sampleCanvas.getContext('2d');
+          const size = 50;
+          sampleCanvas.width = size;
+          sampleCanvas.height = size;
+          ctx.drawImage(img, 0, 0, size, size);
+          const imageData = ctx.getImageData(0, 0, size, size).data;
+
+          const colorMap = {};
+          for (let i = 0; i < imageData.length; i += 16) {
+            const r = Math.round(imageData[i] / 10) * 10;
+            const g = Math.round(imageData[i + 1] / 10) * 10;
+            const b = Math.round(imageData[i + 2] / 10) * 10;
+            const a = imageData[i + 3];
+            if (a < 128) continue;
+            const brightness = (r + g + b) / 3;
+            if (brightness < 25 || brightness > 240) continue;
+            const key = `${r},${g},${b}`;
+            colorMap[key] = (colorMap[key] || 0) + 1;
+          }
+
+          let maxCount = 0;
+          let dominant = null;
+          for (const [key, count] of Object.entries(colorMap)) {
+            if (count > maxCount) { maxCount = count; dominant = key.split(',').map(Number); }
+          }
+          resolve(dominant || [80, 60, 160]);
+        } catch (e) {
+          let hash = 0;
+          for (let i = 0; i < imgSrc.length; i++) hash = (hash * 31 + imgSrc.charCodeAt(i)) & 0xffffff;
+          const r = (hash >> 16) & 0xff;
+          const g = (hash >> 8) & 0xff;
+          const b = hash & 0xff;
+          resolve([r, g, b]);
+        }
+      };
+      img.onerror = () => resolve([80, 60, 160]);
+      img.src = imgSrc;
+    });
+  }
+
+  function applyAutoGradient(dominant) {
+    const [h, s, l] = rgbToHsl(dominant[0], dominant[1], dominant[2]);
+    const fadedSat = Math.min(s * 0.4, 35);
+    const lightColor = `hsl(${h}, ${fadedSat}%, ${Math.min(l + 35, 88)}%)`;
+    const deepColor = `hsl(${h}, ${Math.min(fadedSat + 10, 45)}%, ${Math.max(l - 15, 20)}%)`;
+    const gradientStr = `linear-gradient(to bottom, ${lightColor} 0%, ${deepColor} 100%)`;
+    canvasElement.style.background = gradientStr;
+    _serviceMockupGradient = gradientStr;
+  }
+
+  // HTML Preview Builder
+  function renderServiceMockupPreview(imageUrls) {
+    const container = canvasElement.querySelector('.mockup-collage-preview');
+    if (!container) return;
+
+    const urls = imageUrls.filter(Boolean);
+    const count = Math.max(1, Math.min(5, urls.length));
+
+    if (count === 1) {
+      container.style.gridTemplateColumns = '1fr';
+      container.style.gridTemplateRows = '1fr';
+    } else if (count === 2) {
+      container.style.gridTemplateColumns = 'repeat(2, 1fr)';
+      container.style.gridTemplateRows = '1fr';
+    } else if (count === 3 || count === 4) {
+      container.style.gridTemplateColumns = 'repeat(2, 1fr)';
+      container.style.gridTemplateRows = 'repeat(2, 1fr)';
+    } else {
+      container.style.gridTemplateColumns = 'repeat(3, 1fr)';
+      container.style.gridTemplateRows = 'repeat(2, 1fr)';
+    }
+
+    let html = '';
+    for (let i = 0; i < count; i++) {
+      const url = urls[i];
+      const styleAttr = url ? `background-image: url(${url}); background-size: cover; background-position: center;` : '';
+      let itemStyle = '';
+      if (count === 3 && i === 0) {
+        itemStyle = 'grid-row: span 2;';
+      } else if (count === 5 && i === 0) {
+        itemStyle = 'grid-column: span 2;';
+      }
+
+      html += `
+        <div class="thumb-img-box" id="svc-box-${i === 0 ? 'main' : i}" style="${styleAttr} ${itemStyle}">
+          ${!url ? `<span class="placeholder-text">${i + 1}</span>` : ''}
+        </div>
+      `;
+    }
+    container.innerHTML = html;
+  }
+
+  // File Inputs
+  const mainFileInput = document.getElementById('svc-mockup-img-main');
+  if (mainFileInput) {
+    mainFileInput.addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = async (event) => {
+          _serviceMockupMain = event.target.result;
+          renderServiceMockupPreview([_serviceMockupMain, ..._serviceMockupGrid]);
+          const dominant = await extractDominantColor(event.target.result);
+          applyAutoGradient(dominant);
+        };
+        reader.readAsDataURL(file);
+      }
+    });
+  }
+
+  const gridFileInput = document.getElementById('svc-mockup-img-grid');
+  if (gridFileInput) {
+    gridFileInput.addEventListener('change', (e) => {
+      const files = Array.from(e.target.files).slice(0, 4);
+      if (files.length === 0) return;
+      let loadedCount = 0;
+      const results = new Array(files.length);
+      files.forEach((file, index) => {
+        const reader = new FileReader();
+        reader.onload = (event) => {
+          results[index] = event.target.result;
+          loadedCount++;
+          if (loadedCount === files.length) {
+            _serviceMockupGrid = results;
+            renderServiceMockupPreview([_serviceMockupMain, ..._serviceMockupGrid]);
+          }
+        };
+        reader.readAsDataURL(file);
+      });
+    });
+  }
+
+  // Autofill Button
+  const autofillBtn = document.getElementById('btn-autofill-service-mockup');
+  if (autofillBtn) {
+    autofillBtn.addEventListener('click', async () => {
+      const serviceKey = document.getElementById('service-key').value.trim();
+      if (!serviceKey) {
+        showToast('Info', 'Please enter a Service Key first or save the service.', 'info');
+        return;
+      }
+
+      const originalText = autofillBtn.innerHTML;
+      autofillBtn.innerHTML = 'Loading...';
+      autofillBtn.disabled = true;
+
+      try {
+        // Fetch projects matching service_key
+        const { data: projects, error: projErr } = await supabase
+          .from('portfolio_projects')
+          .select('project_key')
+          .eq('service_key', serviceKey);
+
+        if (projErr) throw projErr;
+
+        if (!projects || projects.length === 0) {
+          showToast('Empty', 'No projects found for this service key.', 'warning');
+          return;
+        }
+
+        const projectKeys = projects.map(p => p.project_key);
+
+        // Fetch up to 5 images from those projects
+        const { data: images, error: imgErr } = await supabase
+          .from('portfolio_project_images')
+          .select('image_url')
+          .in('project_key', projectKeys)
+          .order('display_order', { ascending: true })
+          .limit(5);
+
+        if (imgErr) throw imgErr;
+
+        if (images && images.length > 0) {
+          _serviceMockupMain = images[0].image_url;
+          _serviceMockupGrid = images.slice(1).map(img => img.image_url);
+          
+          renderServiceMockupPreview([_serviceMockupMain, ..._serviceMockupGrid]);
+
+          const dominant = await extractDominantColor(_serviceMockupMain);
+          applyAutoGradient(dominant);
+
+          showToast('Success', 'Mockup cover auto-filled with project images!', 'success');
+        } else {
+          showToast('Empty', 'No gallery images found in service projects.', 'warning');
+        }
+      } catch (err) {
+        console.error('Service mockup auto-fill error:', err);
+        showToast('Error', 'Failed to load project images for service.', 'error');
+      } finally {
+        autofillBtn.innerHTML = originalText;
+        autofillBtn.disabled = false;
+      }
+    });
+  }
+
+  // Reset Event
+  document.addEventListener('reset-service-mockup', () => {
+    _serviceMockupMain = null;
+    _serviceMockupGrid = [];
+    _serviceMockupGradient = 'linear-gradient(to bottom, #1a1a2e 0%, #16213e 100%)';
+    renderServiceMockupPreview([]);
+  });
+
+  // Helper to convert DataURL to Blob
+  function dataURLtoBlob(dataurl) {
+    var arr = dataurl.split(','), mime = arr[0].match(/:(.*?);/)[1],
+        bstr = atob(arr[1]), n = bstr.length, u8arr = new Uint8Array(n);
+    while(n--){
+        u8arr[n] = bstr.charCodeAt(n);
+    }
+    return new Blob([u8arr], {type:mime});
+  }
+
+  // Canvas Renderer
+  async function renderServiceMockupToCanvas() {
+    const W = 1600, H = 900;
+    const outputCanvas = document.createElement('canvas');
+    outputCanvas.width = W;
+    outputCanvas.height = H;
+    const ctx = outputCanvas.getContext('2d');
+
+    // 1. Draw background gradient using the stored _serviceMockupGradient string
+    const colorMatches = _serviceMockupGradient.match(/hsl\([^)]+\)|#[0-9a-fA-F]{3,8}/g);
+    if (colorMatches && colorMatches.length >= 2) {
+      const grad = ctx.createLinearGradient(0, 0, 0, H);
+      grad.addColorStop(0, colorMatches[0]);
+      grad.addColorStop(1, colorMatches[colorMatches.length - 1]);
+      ctx.fillStyle = grad;
+    } else {
+      const grad = ctx.createLinearGradient(0, 0, 0, H);
+      grad.addColorStop(0, '#2a2a3e');
+      grad.addColorStop(1, '#0f0f1a');
+      ctx.fillStyle = grad;
+    }
+    ctx.fillRect(0, 0, W, H);
+
+    // 2. Helper: draw rounded rect path
+    function rrPath(rx, ry, rw, rh, rr) {
+      ctx.beginPath();
+      ctx.moveTo(rx + rr, ry);
+      ctx.lineTo(rx + rw - rr, ry);
+      ctx.quadraticCurveTo(rx + rw, ry, rx + rw, ry + rr);
+      ctx.lineTo(rx + rw, ry + rh - rr);
+      ctx.quadraticCurveTo(rx + rw, ry + rh, rx + rw - rr, ry + rh);
+      ctx.lineTo(rx + rr, ry + rh);
+      ctx.quadraticCurveTo(rx, ry + rh, rx, ry + rh - rr);
+      ctx.lineTo(rx, ry + rr);
+      ctx.quadraticCurveTo(rx, ry, rx + rr, ry);
+      ctx.closePath();
+    }
+
+    // Helper: draw rounded image box
+    function drawBox(x, y, w, h, imgEl, r) {
+      if (r === undefined) r = 30; // default to 30
+      ctx.save();
+      rrPath(x, y, w, h, r);
+      ctx.clip();
+
+      if (imgEl) {
+        const imgAspect = imgEl.naturalWidth / imgEl.naturalHeight;
+        const boxAspect = w / h;
+        let sx, sy, sw, sh;
+        if (imgAspect > boxAspect) {
+          sh = imgEl.naturalHeight;
+          sw = sh * boxAspect;
+          sx = (imgEl.naturalWidth - sw) / 2;
+          sy = 0;
+        } else {
+          sw = imgEl.naturalWidth;
+          sh = sw / boxAspect;
+          sx = 0;
+          sy = (imgEl.naturalHeight - sh) / 2;
+        }
+        ctx.drawImage(imgEl, sx, sy, sw, sh, x, y, w, h);
+      } else {
+        ctx.fillStyle = 'rgba(255,255,255,0.05)';
+        ctx.fillRect(x, y, w, h);
+      }
+      ctx.restore();
+
+      // Subtle border overlay
+      ctx.save();
+      rrPath(x, y, w, h, r);
+      ctx.strokeStyle = 'rgba(255,255,255,0.12)';
+      ctx.lineWidth = r > 10 ? 2 : 1;
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    // Helper: load an image from URL
+    function loadImg(src) {
+      return new Promise((resolve) => {
+        const img = new Image();
+        img.crossOrigin = 'anonymous';
+        img.onload = () => resolve(img);
+        img.onerror = () => resolve(null);
+        img.src = src;
+      });
+    }
+
+    // Load images
+    const mainImg = _serviceMockupMain ? await loadImg(_serviceMockupMain) : null;
+    const gridImgs = [];
+    for (const src of _serviceMockupGrid) {
+      gridImgs.push(src ? await loadImg(src) : null);
+    }
+
+    // ===== Laptop Mockup Collage =====
+    const laptopW = 920, laptopH = 600;
+    const laptopX = (W - laptopW) / 2;
+    const laptopY = 55;
+    const bezelPad = 14;
+    const camSpace = 22;
+
+    // Drop shadow
+    ctx.save();
+    ctx.shadowColor = 'rgba(0,0,0,0.5)';
+    ctx.shadowBlur = 80;
+    ctx.shadowOffsetY = 30;
+    rrPath(laptopX, laptopY, laptopW, laptopH, 18);
+    ctx.fillStyle = '#1c1c1e';
+    ctx.fill();
+    ctx.restore();
+
+    // Bezel
+    rrPath(laptopX, laptopY, laptopW, laptopH, 18);
+    ctx.fillStyle = '#1c1c1e';
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(255,255,255,0.08)';
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+
+    // Camera dot
+    ctx.beginPath();
+    ctx.arc(W / 2, laptopY + (camSpace + bezelPad) / 2, 4, 0, Math.PI * 2);
+    ctx.fillStyle = '#3a3a3a';
+    ctx.fill();
+
+    // Screen content area
+    const scrX = laptopX + bezelPad;
+    const scrY = laptopY + bezelPad + camSpace;
+    const scrW = laptopW - bezelPad * 2;
+    const scrH = laptopH - bezelPad * 2 - camSpace;
+
+    // Screen background
+    rrPath(scrX, scrY, scrW, scrH, 6);
+    ctx.fillStyle = '#0a0a0f';
+    ctx.fill();
+
+    // Collage inside screen
+    const cGap = 6;
+    const cR = 6;
+    const allImgs = [mainImg, ...gridImgs].filter(Boolean);
+    const imgCount = allImgs.length;
+
+    if (imgCount === 1) {
+      drawBox(scrX + cGap, scrY + cGap, scrW - cGap * 2, scrH - cGap * 2, allImgs[0], cR);
+    } else if (imgCount === 2) {
+      const colW = (scrW - cGap * 3) / 2;
+      const colH = scrH - cGap * 2;
+      drawBox(scrX + cGap, scrY + cGap, colW, colH, allImgs[0], cR);
+      drawBox(scrX + cGap * 2 + colW, scrY + cGap, colW, colH, allImgs[1], cR);
+    } else if (imgCount === 3) {
+      const colW = (scrW - cGap * 3) / 2;
+      const halfH = (scrH - cGap * 3) / 2;
+      drawBox(scrX + cGap, scrY + cGap, colW, scrH - cGap * 2, allImgs[0], cR);
+      drawBox(scrX + cGap * 2 + colW, scrY + cGap, colW, halfH, allImgs[1], cR);
+      drawBox(scrX + cGap * 2 + colW, scrY + cGap * 2 + halfH, colW, halfH, allImgs[2], cR);
+    } else if (imgCount === 4) {
+      const colW = (scrW - cGap * 3) / 2;
+      const rowH = (scrH - cGap * 3) / 2;
+      drawBox(scrX + cGap, scrY + cGap, colW, rowH, allImgs[0], cR);
+      drawBox(scrX + cGap * 2 + colW, scrY + cGap, colW, rowH, allImgs[1], cR);
+      drawBox(scrX + cGap, scrY + cGap * 2 + rowH, colW, rowH, allImgs[2], cR);
+      drawBox(scrX + cGap * 2 + colW, scrY + cGap * 2 + rowH, colW, rowH, allImgs[3], cR);
+    } else if (imgCount >= 5) {
+      const col3W = (scrW - cGap * 4) / 3;
+      const rowH = (scrH - cGap * 3) / 2;
+      drawBox(scrX + cGap, scrY + cGap, col3W * 2 + cGap, rowH, allImgs[0], cR);
+      drawBox(scrX + cGap * 3 + col3W * 2, scrY + cGap, col3W, rowH, allImgs[1], cR);
+      drawBox(scrX + cGap, scrY + cGap * 2 + rowH, col3W, rowH, allImgs[2], cR);
+      drawBox(scrX + cGap * 2 + col3W, scrY + cGap * 2 + rowH, col3W, rowH, allImgs[3], cR);
+      drawBox(scrX + cGap * 3 + col3W * 2, scrY + cGap * 2 + rowH, col3W, rowH, allImgs[4], cR);
+    }
+
+    // Laptop base (trapezoid)
+    const baseY = laptopY + laptopH + 3;
+    const baseH = 18;
+    const baseTopW = laptopW;
+    const baseBotW = laptopW * 1.08;
+    ctx.beginPath();
+    ctx.moveTo((W - baseTopW) / 2, baseY);
+    ctx.lineTo((W + baseTopW) / 2, baseY);
+    ctx.lineTo((W + baseBotW) / 2, baseY + baseH);
+    ctx.quadraticCurveTo(W / 2, baseY + baseH + 5, (W - baseBotW) / 2, baseY + baseH);
+    ctx.closePath();
+    ctx.fillStyle = '#2a2a2c';
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(255,255,255,0.06)';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+
+    // Hinge notch
+    const notchW = 120;
+    rrPath((W - notchW) / 2, baseY - 1, notchW, 6, 3);
+    ctx.fillStyle = '#3a3a3c';
+    ctx.fill();
+
+    return outputCanvas;
+  }
+
+  // Handle Render and Upload
+  const renderActionBtns = [
+    document.getElementById('btn-render-apply-service-mockup'),
+    document.getElementById('btn-render-apply-service-mockup-bottom')
+  ].filter(Boolean);
+
+  if (renderActionBtns.length > 0) {
+    renderActionBtns.forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const serviceKey = document.getElementById('service-key').value.trim().toLowerCase();
+        if (!serviceKey) {
+          showToast('Error', 'Please provide a Service Key before generating.', 'error');
+          return;
+        }
+
+        const originalTexts = renderActionBtns.map(b => b.innerHTML);
+        
+        renderActionBtns.forEach(b => {
+          b.innerHTML = '<div class="spinner-small" style="display:inline-block; margin-right:4px;"></div> Rendering...';
+          b.disabled = true;
+        });
+
+        try {
+          const outputCanvas = await renderServiceMockupToCanvas();
+          const dataUrl = outputCanvas.toDataURL('image/webp', 0.95);
+          const blob = dataURLtoBlob(dataUrl);
+
+          const fileName = `service-mockup-${serviceKey}-${Date.now()}.webp`;
+          const bucketName = 'portfolio';
+
+          if (!supabase) throw new Error('Database not connected.');
+
+          const { data, error } = await supabase.storage
+            .from(bucketName)
+            .upload(fileName, blob, {
+              cacheControl: '3600',
+              upsert: false,
+              contentType: 'image/webp'
+            });
+
+          if (error) throw error;
+
+          const { data: publicUrlData } = supabase.storage
+            .from(bucketName)
+            .getPublicUrl(fileName);
+
+          const publicUrl = publicUrlData.publicUrl;
+
+          const coverInput = document.getElementById('service-image');
+          if (coverInput) {
+            coverInput.value = publicUrl;
+            coverInput.dispatchEvent(new Event('change'));
+          }
+
+          showToast('Success', 'Laptop mockup cover generated and applied!', 'success');
+          
+          if (toggleBtn) toggleBtn.click(); // Close mockup generator panel
+
+        } catch (err) {
+          console.error('Error generating mockup cover:', err);
+          showToast('Error', err.message || 'Failed to generate mockup.', 'error');
+        } finally {
+          renderActionBtns.forEach((b, idx) => {
+            b.innerHTML = originalTexts[idx];
+            b.disabled = false;
+          });
+        }
+      });
+    });
+  }
 }

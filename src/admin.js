@@ -5523,11 +5523,30 @@ function initServiceMockupGenerator() {
   }
 
   function drawTriangle(ctx, img, u0, v0, u1, v1, u2, v2, x0, y0, x1, y1, x2, y2) {
+    // Calculate centroid of the destination triangle
+    const cx = (x0 + x1 + x2) / 3;
+    const cy = (y0 + y1 + y2) / 3;
+    
+    // Extrude vertices outward slightly (by 0.8 pixels) to cover anti-aliased seams
+    const extrude = 0.8;
+    
+    const dx0 = x0 - cx, dy0 = y0 - cy, d0 = Math.hypot(dx0, dy0);
+    const ex0 = x0 + (d0 > 0.001 ? (dx0 / d0) * extrude : 0);
+    const ey0 = y0 + (d0 > 0.001 ? (dy0 / d0) * extrude : 0);
+    
+    const dx1 = x1 - cx, dy1 = y1 - cy, d1 = Math.hypot(dx1, dy1);
+    const ex1 = x1 + (d1 > 0.001 ? (dx1 / d1) * extrude : 0);
+    const ey1 = y1 + (d1 > 0.001 ? (dy1 / d1) * extrude : 0);
+    
+    const dx2 = x2 - cx, dy2 = y2 - cy, d2 = Math.hypot(dx2, dy2);
+    const ex2 = x2 + (d2 > 0.001 ? (dx2 / d2) * extrude : 0);
+    const ey2 = y2 + (d2 > 0.001 ? (dy2 / d2) * extrude : 0);
+
     ctx.save();
     ctx.beginPath();
-    ctx.moveTo(x0, y0);
-    ctx.lineTo(x1, y1);
-    ctx.lineTo(x2, y2);
+    ctx.moveTo(ex0, ey0);
+    ctx.lineTo(ex1, ey1);
+    ctx.lineTo(ex2, ey2);
     ctx.closePath();
     ctx.clip();
 
@@ -5537,12 +5556,12 @@ function initServiceMockupGenerator() {
       return;
     }
 
-    const a = ((x0 - x2) * (v1 - v2) - (x1 - x2) * (v0 - v2)) / den;
-    const b = ((y0 - y2) * (v1 - v2) - (y1 - y2) * (v0 - v2)) / den;
-    const c = ((u0 - u2) * (x1 - x2) - (u1 - u2) * (x0 - x2)) / den;
-    const d = ((u0 - u2) * (y1 - y2) - (u1 - u2) * (y0 - y2)) / den;
-    const e = x2 - a * u2 - c * v2;
-    const f = y2 - b * u2 - d * v2;
+    const a = ((ex0 - ex2) * (v1 - v2) - (ex1 - ex2) * (v0 - v2)) / den;
+    const b = ((ey0 - ey2) * (v1 - v2) - (ey1 - ey2) * (v0 - v2)) / den;
+    const c = ((u0 - u2) * (ex1 - ex2) - (u1 - u2) * (ex0 - ex2)) / den;
+    const d = ((u0 - u2) * (ey1 - ey2) - (u1 - u2) * (ey0 - ey2)) / den;
+    const e = ex2 - a * u2 - c * v2;
+    const f = ey2 - b * u2 - d * v2;
 
     ctx.transform(a, b, c, d, e, f);
     ctx.drawImage(img, 0, 0);

@@ -5569,7 +5569,7 @@ function initServiceMockupGenerator() {
   }
 
   // Dynamic canvas redrawing
-  async function triggerRedraw() {
+  async function triggerRedraw(isExport = false) {
     const canvas = document.getElementById('svc-mockup-canvas-el');
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
@@ -5723,6 +5723,22 @@ function initServiceMockupGenerator() {
         y: pt.y * H
       }));
       drawPerspectiveImage(ctx, collageCanvas, scaleCorners);
+
+      // Draw quad outline guide ONLY during editing (not on export)
+      if (!isExport) {
+        ctx.save();
+        ctx.beginPath();
+        ctx.moveTo(_mockupCorners[0].x * W, _mockupCorners[0].y * H);
+        ctx.lineTo(_mockupCorners[1].x * W, _mockupCorners[1].y * H);
+        ctx.lineTo(_mockupCorners[2].x * W, _mockupCorners[2].y * H);
+        ctx.lineTo(_mockupCorners[3].x * W, _mockupCorners[3].y * H);
+        ctx.closePath();
+        ctx.strokeStyle = '#2563eb';
+        ctx.lineWidth = 4;
+        ctx.setLineDash([8, 6]);
+        ctx.stroke();
+        ctx.restore();
+      }
     } else {
       // Default flat laptop mockup
       const laptopW = 920, laptopH = 600;
@@ -6150,6 +6166,9 @@ function initServiceMockupGenerator() {
           const canvas = document.getElementById('svc-mockup-canvas-el');
           if (!canvas) throw new Error('Canvas element not found.');
 
+          // Redraw with isExport = true (hides blue dashed guide line)
+          await triggerRedraw(true);
+
           const dataUrl = canvas.toDataURL('image/webp', 0.95);
           const blob = dataURLtoBlob(dataUrl);
 
@@ -6188,6 +6207,8 @@ function initServiceMockupGenerator() {
           console.error('Error generating mockup cover:', err);
           showToast('Error', err.message || 'Failed to generate mockup.', 'error');
         } finally {
+          // Always restore edit preview guide line
+          triggerRedraw(false);
           renderActionBtns.forEach((b, idx) => {
             b.innerHTML = originalTexts[idx];
             b.disabled = false;

@@ -5322,7 +5322,9 @@ function initServiceMockupGenerator() {
   // Scale Preview
   function updateCanvasScale() {
     if (wrapperElement && canvasContainer) {
-      const scale = wrapperElement.clientWidth / 1600;
+      const canvasEl = document.getElementById('svc-mockup-canvas-el');
+      const currentW = canvasEl ? canvasEl.width : 1600;
+      const scale = wrapperElement.clientWidth / currentW;
       canvasContainer.style.transform = `scale(${scale})`;
     }
   }
@@ -5552,7 +5554,25 @@ function initServiceMockupGenerator() {
     const canvas = document.getElementById('svc-mockup-canvas-el');
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
-    const W = 1600, H = 900;
+    
+    let W = 1600, H = 900;
+    if (_customMockupImg) {
+      W = _customMockupImg.naturalWidth || _customMockupImg.width || 1600;
+      H = _customMockupImg.naturalHeight || _customMockupImg.height || 900;
+    }
+
+    if (canvas.width !== W || canvas.height !== H) {
+      canvas.width = W;
+      canvas.height = H;
+      if (canvasContainer) {
+        canvasContainer.style.width = `${W}px`;
+        canvasContainer.style.height = `${H}px`;
+      }
+      if (wrapperElement) {
+        wrapperElement.style.aspectRatio = `${W} / ${H}`;
+      }
+      updateCanvasScale();
+    }
 
     // 1. Draw background gradient
     const colorMatches = _serviceMockupGradient.match(/hsl\([^)]+\)|#[0-9a-fA-F]{3,8}/g);
@@ -5678,27 +5698,10 @@ function initServiceMockupGenerator() {
 
     // 3. Draw mockup template or default illustration
     if (_customMockupImg) {
-      // Draw background image preserving original aspect ratio (cover sizing)
-      const imgW = _customMockupImg.naturalWidth || _customMockupImg.width;
-      const imgH = _customMockupImg.naturalHeight || _customMockupImg.height;
-      if (imgW && imgH) {
-        const imgAspect = imgW / imgH;
-        const canvasAspect = 1600 / 900;
-        let dx = 0, dy = 0, dw = 1600, dh = 900;
-        if (imgAspect > canvasAspect) {
-          dw = 900 * imgAspect;
-          dx = (1600 - dw) / 2;
-        } else {
-          dh = 1600 / imgAspect;
-          dy = (900 - dh) / 2;
-        }
-        ctx.drawImage(_customMockupImg, dx, dy, dw, dh);
-      } else {
-        ctx.drawImage(_customMockupImg, 0, 0, 1600, 900);
-      }
+      ctx.drawImage(_customMockupImg, 0, 0, W, H);
       const scaleCorners = _mockupCorners.map(pt => ({
-        x: pt.x * 1600,
-        y: pt.y * 900
+        x: pt.x * W,
+        y: pt.y * H
       }));
       drawPerspectiveImage(ctx, collageCanvas, scaleCorners);
     } else {

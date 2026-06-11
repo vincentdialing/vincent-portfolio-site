@@ -645,11 +645,11 @@ CREATE POLICY "Allow anon delete" ON brands FOR DELETE USING (true);
                     Auto-fill from Gallery
                   </button>
                 </div>
-                <input type="file" id="thumb-img-main" accept="image/*" class="form-control" style="background: var(--bg-secondary); padding: 0.5rem; border-radius: var(--radius-sm); margin-bottom: 1rem;">
+                <input type="file" id="thumb-img-main" accept="image/*" class="file-input-custom" style="margin-bottom: 1rem;">
                 
                 <div class="form-group">
                   <label>Grid Images (Select up to 4)</label>
-                  <input type="file" id="thumb-img-grid-multi" accept="image/*" multiple class="form-control" style="background: var(--bg-secondary); padding: 0.5rem; border-radius: var(--radius-sm);">
+                  <input type="file" id="thumb-img-grid-multi" accept="image/*" multiple class="file-input-custom">
                   <p class="field-help">Upload multiple images at once to fill the grid automatically.</p>
                 </div>
                 

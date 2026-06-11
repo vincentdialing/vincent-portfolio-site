@@ -247,64 +247,136 @@ const TAB_CONFIGS = {
   config: { title: 'Supabase Credentials', subtitle: 'Configure credentials to authenticate your write sessions.', button: '' }
 };
 
+const TAB_TO_URL = {
+  projects: 'projects',
+  gallery: 'projectgallery',
+  services: 'services',
+  brands: 'brands',
+  bento: 'bento',
+  uploads: 'uploads',
+  certificates: 'certificates',
+  reviews: 'reviews',
+  config: 'config'
+};
+
+const URL_TO_TAB = {
+  projects: 'projects',
+  gallery: 'gallery',
+  projectgallery: 'gallery',
+  services: 'services',
+  brands: 'brands',
+  brandlogos: 'brands',
+  bento: 'bento',
+  uploads: 'uploads',
+  filemanager: 'uploads',
+  certificates: 'certificates',
+  reviews: 'reviews',
+  config: 'config',
+  credentials: 'config'
+};
+
 let activeTab = 'projects';
 
-function initTabs() {
+function getTabFromUrl() {
+  // Try to match path segment first: /admin/projects
+  const path = window.location.pathname;
+  const match = path.match(/\/admin\/([a-zA-Z0-9_-]+)/);
+  if (match && match[1]) {
+    const segment = match[1].toLowerCase();
+    if (URL_TO_TAB[segment]) return URL_TO_TAB[segment];
+  }
+
+  // Fallback to hash routing: /admin#projects
+  const hash = window.location.hash.replace('#', '').toLowerCase();
+  if (URL_TO_TAB[hash]) return URL_TO_TAB[hash];
+
+  return null;
+}
+
+function switchTab(target, updateUrl = true) {
+  if (!TAB_CONFIGS[target]) return;
+  activeTab = target;
+  localStorage.setItem('admin_active_tab', target);
+
   const tabs = document.querySelectorAll('.nav-tab-btn');
   const panels = document.querySelectorAll('.tab-panel');
   const actionBtn = document.getElementById('add-item-btn');
   const tabTitle = document.getElementById('active-tab-title');
   const tabSubtitle = document.getElementById('active-tab-subtitle');
 
+  // Update Nav active states
+  tabs.forEach(t => {
+    if (t.dataset.tab === target) {
+      t.classList.add('active');
+    } else {
+      t.classList.remove('active');
+    }
+  });
+
+  // Update Panels active states
+  panels.forEach(p => {
+    if (p.id === `panel-${target}`) {
+      p.classList.add('active');
+    } else {
+      p.classList.remove('active');
+    }
+  });
+
+  // Update Header content
+  const cfg = TAB_CONFIGS[target] || { title: 'Admin', subtitle: '', button: '' };
+  if (tabTitle) tabTitle.textContent = cfg.title;
+  if (tabSubtitle) tabSubtitle.textContent = cfg.subtitle;
+
+  // Update header action button
+  if (actionBtn) {
+    if (cfg.button) {
+      actionBtn.style.display = 'inline-flex';
+      actionBtn.innerHTML = `
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        ${cfg.button}
+      `;
+    } else {
+      actionBtn.style.display = 'none';
+    }
+  }
+
+  // Trigger lazy loads
+  loadTabData(target);
+
+  // Update URL
+  if (updateUrl) {
+    const segment = TAB_TO_URL[target] || target;
+    const newPath = `/admin/${segment}`;
+    if (window.location.pathname !== newPath) {
+      window.history.pushState({ tab: target }, '', newPath);
+    }
+  }
+}
+
+function initTabs() {
+  const tabs = document.querySelectorAll('.nav-tab-btn');
+  const actionBtn = document.getElementById('add-item-btn');
+
   tabs.forEach(tab => {
     tab.addEventListener('click', () => {
       const target = tab.dataset.tab;
-      activeTab = target;
-      localStorage.setItem('admin_active_tab', target);
-
-      // Update Nav active states
-      tabs.forEach(t => t.classList.remove('active'));
-      tab.classList.add('active');
-
-      // Update Panels active states
-      panels.forEach(p => p.classList.remove('active'));
-      const activePanel = document.getElementById(`panel-${target}`);
-      if (activePanel) activePanel.classList.add('active');
-
-      // Update Header content
-      const cfg = TAB_CONFIGS[target] || { title: 'Admin', subtitle: '', button: '' };
-      if (tabTitle) tabTitle.textContent = cfg.title;
-      if (tabSubtitle) tabSubtitle.textContent = cfg.subtitle;
-
-      // Update header action button
-      if (actionBtn) {
-        if (cfg.button) {
-          actionBtn.style.display = 'inline-flex';
-          actionBtn.innerHTML = `
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-            ${cfg.button}
-          `;
-        } else {
-          actionBtn.style.display = 'none';
-        }
-      }
-
-      // Trigger lazy loads
-      loadTabData(target);
+      switchTab(target, true);
     });
   });
 
-  // Restore last active tab from localStorage
-  const savedTab = localStorage.getItem('admin_active_tab');
-  if (savedTab && TAB_CONFIGS[savedTab]) {
-    const savedTabBtn = document.querySelector(`.nav-tab-btn[data-tab="${savedTab}"]`);
-    if (savedTabBtn) savedTabBtn.click();
-  } else {
-    // Default: click first tab
-    const firstTab = document.querySelector('.nav-tab-btn');
-    if (firstTab) firstTab.click();
-  }
+  // Listen to popstate event to support browser back/forward buttons
+  window.addEventListener('popstate', (event) => {
+    const tab = getTabFromUrl() || (event.state && event.state.tab) || localStorage.getItem('admin_active_tab') || 'projects';
+    switchTab(tab, false);
+  });
 
+  // Determine initial tab to open
+  const urlTab = getTabFromUrl();
+  const savedTab = localStorage.getItem('admin_active_tab');
+  const initialTab = urlTab || (savedTab && TAB_CONFIGS[savedTab] ? savedTab : 'projects');
+
+  // Load initial tab and sync URL
+  switchTab(initialTab, true);
 
   // Wire header action btn click to opening the respective modal
   if (actionBtn) {
@@ -327,8 +399,7 @@ function initTabs() {
   const gotoConfig = document.getElementById('goto-config-btn');
   if (gotoConfig) {
     gotoConfig.addEventListener('click', () => {
-      const configTab = document.querySelector('.nav-tab-btn[data-tab="config"]');
-      if (configTab) configTab.click();
+      switchTab('config', true);
     });
   }
 }

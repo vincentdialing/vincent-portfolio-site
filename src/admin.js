@@ -5484,7 +5484,7 @@ function initServiceMockupGenerator() {
   }
 
   // Texture-mapping helper for drawing slanted perspective image on 2D canvas
-  function drawPerspectiveImage(ctx, img, corners, gridWidth = 10, gridHeight = 10) {
+  function drawPerspectiveImage(ctx, img, corners, gridWidth = 1, gridHeight = 1) {
     const w = img.width || img.naturalWidth;
     const h = img.height || img.naturalHeight;
     if (!w || !h) return;
@@ -5527,8 +5527,8 @@ function initServiceMockupGenerator() {
     const cx = (x0 + x1 + x2) / 3;
     const cy = (y0 + y1 + y2) / 3;
     
-    // Extrude vertices outward slightly (by 0.8 pixels) to cover anti-aliased seams
-    const extrude = 0.8;
+    // Extrude vertices outward slightly (by 1.2 pixels) to cover anti-aliased seams
+    const extrude = 1.2;
     
     const dx0 = x0 - cx, dy0 = y0 - cy, d0 = Math.hypot(dx0, dy0);
     const ex0 = x0 + (d0 > 0.001 ? (dx0 / d0) * extrude : 0);

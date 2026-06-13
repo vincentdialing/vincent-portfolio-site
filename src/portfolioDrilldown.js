@@ -1374,6 +1374,17 @@ function isDirectVideoFile(url) {
     return /\.(mp4|webm|ogg|mov)(\?.*)?$/i.test(url);
 }
 
+function extractGoogleDriveId(url) {
+    if (!url) return null;
+    // Matches: drive.google.com/file/d/FILE_ID/...
+    const fileMatch = url.match(/drive\.google\.com\/file\/d\/([^/\s?#]+)/);
+    if (fileMatch) return fileMatch[1];
+    // Matches: drive.google.com/open?id=FILE_ID or drive.google.com/uc?id=FILE_ID
+    const idMatch = url.match(/drive\.google\.com\/(?:open|uc)\?.*id=([^&\s#]+)/);
+    if (idMatch) return idMatch[1];
+    return null;
+}
+
 function getVideoMeta(url) {
     const youtubeId = extractYouTubeId(url);
     if (youtubeId) {
@@ -1397,6 +1408,15 @@ function getVideoMeta(url) {
         return {
             provider: 'facebook',
             embedSrc: `https://www.facebook.com/plugins/video.php?href=${encodeURIComponent(url)}&show_text=false&autoplay=1`,
+            thumbnail: ''
+        };
+    }
+
+    const gdriveId = extractGoogleDriveId(url);
+    if (gdriveId) {
+        return {
+            provider: 'gdrive',
+            embedSrc: `https://drive.google.com/file/d/${gdriveId}/preview`,
             thumbnail: ''
         };
     }

@@ -1163,13 +1163,15 @@ ${categoriesList}
     });
 
     const visionModels = [
-      'llama-3.2-90b-vision-preview',
       'llama-3.2-11b-vision-preview',
-      'qwen-2.5-vl-72b',
+      'llama-3.2-90b-vision-preview',
+      'qwen-2.5-vl-72b-instruct',
+      'qwen/qwen3.6-27b',
       'llama-4-scout-17b-16e-instruct'
     ];
 
     let aiResponseText = null;
+    let errors = [];
     for (const model of visionModels) {
       try {
         if (loadingText) loadingText.textContent = `Analyzing with ${model.split('/').pop()}...`;
@@ -1194,8 +1196,12 @@ ${categoriesList}
         break;
       } catch (err) {
         console.warn(`Model ${model} failed:`, err.message);
-        if (model === visionModels[visionModels.length - 1]) throw err;
+        errors.push(`${model}: ${err.message}`);
       }
+    }
+
+    if (!aiResponseText) {
+      throw new Error(`All vision models failed. Errors:\n${errors.join('\n')}`);
     }
 
     console.log('Groq Vision response:', aiResponseText);
@@ -4331,13 +4337,15 @@ IMPORTANT: Only return the JSON object, no markdown fences, no explanation.`;
     });
 
     const visionModels = [
-      'llama-3.2-90b-vision-preview',
       'llama-3.2-11b-vision-preview',
-      'qwen-2.5-vl-72b',
+      'llama-3.2-90b-vision-preview',
+      'qwen-2.5-vl-72b-instruct',
+      'qwen/qwen3.6-27b',
       'llama-4-scout-17b-16e-instruct'
     ];
 
     let aiResponse = null;
+    let errors = [];
     for (const model of visionModels) {
       try {
         if (loadingText) loadingText.textContent = `Scanning with ${model.split('/').pop()}...`;
@@ -4365,8 +4373,12 @@ IMPORTANT: Only return the JSON object, no markdown fences, no explanation.`;
         break;
       } catch (modelErr) {
         console.warn(`Model ${model} failed:`, modelErr.message);
-        if (model === visionModels[visionModels.length - 1]) throw modelErr;
+        errors.push(`${model}: ${modelErr.message}`);
       }
+    }
+
+    if (!aiResponse) {
+      throw new Error(`All vision models failed. Errors:\n${errors.join('\n')}`);
     }
 
     console.log('Certificate scan response:', aiResponse);

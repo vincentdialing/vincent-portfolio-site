@@ -1179,15 +1179,15 @@ ${categoriesList}
           messages: [
             {
               role: 'system',
-              content: 'You are an AI portfolio assistant that responds ONLY with a valid JSON object starting with { and ending with }.'
+              content: 'You are an AI portfolio assistant that responds ONLY with a valid JSON object. You MUST NOT output any conversational text, explanations, or thinking process. You MUST start your response EXACTLY with the character "{" and end with "}".'
             },
             {
               role: 'user',
               content: userContent
             }
           ],
-          temperature: 0.7,
-          max_tokens: 1024
+          temperature: 0.1,
+          max_tokens: 2048
         });
         aiResponseText = completion.choices[0].message.content;
         console.log(`Groq Vision succeeded with model: ${model}`);
@@ -4358,7 +4358,7 @@ IMPORTANT: Only return the JSON object, no markdown fences, no explanation.`;
           messages: [
             {
               role: 'system',
-              content: 'You are a precise OCR assistant that extracts certificate information from images. Respond ONLY with a valid JSON object starting with { and ending with }.'
+              content: 'You are a precise OCR assistant that extracts certificate information from images. You MUST NOT output any conversational text, explanations, or thinking process. You MUST start your response EXACTLY with the character "{" and end with "}". Respond ONLY with a valid JSON object.'
             },
             {
               role: 'user',
@@ -4368,8 +4368,8 @@ IMPORTANT: Only return the JSON object, no markdown fences, no explanation.`;
               ]
             }
           ],
-          temperature: 0.3,
-          max_tokens: 512
+          temperature: 0.1,
+          max_tokens: 1024
         });
         aiResponse = completion.choices[0].message.content;
         console.log(`Certificate scan succeeded with model: ${model}`);

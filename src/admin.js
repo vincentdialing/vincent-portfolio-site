@@ -1162,24 +1162,42 @@ ${categoriesList}
       userContent.push({ type: 'image_url', image_url: { url: base64Image } });
     });
 
-    const completion = await groq.chat.completions.create({
-      model: 'meta-llama/llama-4-scout-17b-16e-instruct',
-      messages: [
-        {
-          role: 'system',
-          content: 'You are an AI portfolio assistant that responds ONLY with a valid JSON object. Do not include ```json or other formatting.'
-        },
-        {
-          role: 'user',
-          content: userContent
-        }
-      ],
-      response_format: { type: 'json_object' },
-      temperature: 0.7,
-      max_tokens: 1024
-    });
+    const visionModels = [
+      'llama-3.2-90b-vision-preview',
+      'llama-3.2-11b-vision-preview',
+      'qwen-2.5-vl-72b',
+      'llama-4-scout-17b-16e-instruct'
+    ];
 
-    const aiResponseText = completion.choices[0].message.content;
+    let aiResponseText = null;
+    for (const model of visionModels) {
+      try {
+        if (loadingText) loadingText.textContent = `Analyzing with ${model.split('/').pop()}...`;
+        const completion = await groq.chat.completions.create({
+          model: model,
+          messages: [
+            {
+              role: 'system',
+              content: 'You are an AI portfolio assistant that responds ONLY with a valid JSON object. Do not include ```json or other formatting.'
+            },
+            {
+              role: 'user',
+              content: userContent
+            }
+          ],
+          response_format: { type: 'json_object' },
+          temperature: 0.7,
+          max_tokens: 1024
+        });
+        aiResponseText = completion.choices[0].message.content;
+        console.log(`Groq Vision succeeded with model: ${model}`);
+        break;
+      } catch (err) {
+        console.warn(`Model ${model} failed:`, err.message);
+        if (model === visionModels[visionModels.length - 1]) throw err;
+      }
+    }
+
     console.log('Groq Vision response:', aiResponseText);
 
     // 7. Parse Response
@@ -4313,9 +4331,9 @@ IMPORTANT: Only return the JSON object, no markdown fences, no explanation.`;
     });
 
     const visionModels = [
-      'llama-3.2-11b-vision-preview',
       'llama-3.2-90b-vision-preview',
-      'llama-3.3-70b-versatile',
+      'llama-3.2-11b-vision-preview',
+      'qwen-2.5-vl-72b',
       'llama-4-scout-17b-16e-instruct'
     ];
 

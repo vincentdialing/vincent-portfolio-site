@@ -708,7 +708,7 @@ CREATE POLICY "Allow anon delete" ON brands FOR DELETE USING (true);
               <button type="button" class="btn btn-secondary btn-xs" id="add-video-block-btn">+ Video Block</button>
               <button type="button" class="btn btn-secondary btn-xs" id="add-link-block-btn">+ Link Block</button>
               <button type="button" class="btn btn-secondary btn-xs" id="add-cert-block-btn">+ Certificate Block</button>
-              <input type="file" id="project-batch-images-input" accept="image/*" multiple style="display: none;">
+              <input type="file" id="project-batch-images-input" accept="image/*,application/pdf" multiple style="display: none;">
             </div>
           </div>
           <div class="detail-blocks-list" id="project-detail-blocks-container">
@@ -1142,7 +1142,7 @@ CREATE POLICY "Allow anon delete" ON brands FOR DELETE USING (true);
           </label>
           <p class="field-help" style="margin-bottom: 0.6rem;">Upload a certificate image and let AI auto-fill the fields below.</p>
           <div class="input-with-upload" style="gap: 0.5rem; display: flex; align-items: center;">
-            <input type="file" id="cert-scan-file" accept="image/*" style="display: none;">
+            <input type="file" id="cert-scan-file" accept="image/*,application/pdf" style="display: none;">
             <label for="cert-scan-file" id="cert-scan-file-label" style="flex: 1; padding: 0.5rem 1rem; border: 1px solid var(--border-color); border-radius: 8px; background: rgba(255, 255, 255, 0.03); color: var(--text-secondary); cursor: pointer; font-size: 0.85rem; display: flex; align-items: center; gap: 0.5rem; transition: all 0.2s; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin: 0;">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;flex-shrink:0;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"/></svg>
               <span id="cert-scan-file-name">Choose an image...</span>

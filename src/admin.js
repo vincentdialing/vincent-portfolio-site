@@ -3619,6 +3619,13 @@ async function uploadFileToSupabase(file, bucketName = 'portfolio') {
       console.warn('WebP compression failed, uploading original:', err);
       uploadFile = file; // fallback to original
     }
+  } else if (file.type === 'application/pdf') {
+    try {
+      uploadFile = await convertPdfToWebP(file, 0.9);
+    } catch (err) {
+      console.warn('PDF to WebP conversion failed, uploading original PDF:', err);
+      uploadFile = file;
+    }
   }
 
   // Generate unique URL-safe filename (use .webp extension for compressed files)
@@ -3730,6 +3737,57 @@ function compressToWebP(file, quality = 0.82) {
     };
 
     img.src = objectUrl;
+  });
+}
+
+/**
+ * Converts a PDF file into a high-quality WebP image of its first page.
+ * @param {File} file - The original PDF file
+ * @param {number} quality - WebP quality 0-1
+ * @returns {Promise<File>} - A new File object in WebP format
+ */
+async function convertPdfToWebP(file, quality = 0.9) {
+  // Dynamically load PDF.js if not present
+  if (!window.pdfjsLib) {
+    await new Promise((resolve, reject) => {
+      const script = document.createElement('script');
+      script.src = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js';
+      script.onload = () => {
+        window.pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+        resolve();
+      };
+      script.onerror = reject;
+      document.head.appendChild(script);
+    });
+  }
+
+  const arrayBuffer = await file.arrayBuffer();
+  const pdf = await window.pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+  const page = await pdf.getPage(1);
+  
+  // Render at 2x scale for high quality
+  const viewport = page.getViewport({ scale: 2.0 }); 
+  const canvas = document.createElement('canvas');
+  canvas.width = viewport.width;
+  canvas.height = viewport.height;
+  const ctx = canvas.getContext('2d');
+  
+  await page.render({ canvasContext: ctx, viewport: viewport }).promise;
+
+  return new Promise((resolve, reject) => {
+    canvas.toBlob(
+      (blob) => {
+        if (!blob) {
+          reject(new Error('Canvas toBlob failed for PDF'));
+          return;
+        }
+        const webpName = file.name.replace(/\.[^.]+$/, '.webp');
+        const webpFile = new File([blob], webpName, { type: 'image/webp' });
+        resolve(webpFile);
+      },
+      'image/webp',
+      quality
+    );
   });
 }
 
@@ -4307,45 +4365,101 @@ async function handleCertScan() {
     const certImageInput = document.getElementById('cert-image');
     if (certImageInput) certImageInput.value = uploadedUrl;
 
-    // 2. Convert image to Base64 (with compression to save tokens)
-    if (loadingText) loadingText.textContent = 'Processing image for AI analysis...';
-    const base64Image = await new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        const img = new Image();
-        img.onload = () => {
-          // Compress image to max 800px
-          const MAX_SIZE = 800;
-          let width = img.width;
-          let height = img.height;
-          
-          if (width > height) {
-            if (width > MAX_SIZE) {
-              height *= MAX_SIZE / width;
-              width = MAX_SIZE;
+    // 2. Read and compress file (Image or PDF) to base64
+    if (loadingText) loadingText.textContent = 'Processing file for AI analysis...';
+    
+    let base64Image;
+    if (file.type === 'application/pdf') {
+      // Dynamically load PDF.js
+      if (!window.pdfjsLib) {
+        if (loadingText) loadingText.textContent = 'Loading PDF engine...';
+        await new Promise((resolve, reject) => {
+          const script = document.createElement('script');
+          script.src = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js';
+          script.onload = () => {
+            window.pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+            resolve();
+          };
+          script.onerror = reject;
+          document.head.appendChild(script);
+        });
+      }
+      
+      if (loadingText) loadingText.textContent = 'Converting PDF to image...';
+      const arrayBuffer = await file.arrayBuffer();
+      const pdf = await window.pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+      const page = await pdf.getPage(1);
+      const viewport = page.getViewport({ scale: 2.0 }); // Render high quality first
+      
+      const tempCanvas = document.createElement('canvas');
+      tempCanvas.width = viewport.width;
+      tempCanvas.height = viewport.height;
+      const tempCtx = tempCanvas.getContext('2d');
+      await page.render({ canvasContext: tempCtx, viewport: viewport }).promise;
+      
+      // Compress the rendered PDF page
+      const MAX_SIZE = 800;
+      let width = tempCanvas.width;
+      let height = tempCanvas.height;
+      
+      if (width > height) {
+        if (width > MAX_SIZE) {
+          height *= MAX_SIZE / width;
+          width = MAX_SIZE;
+        }
+      } else {
+        if (height > MAX_SIZE) {
+          width *= MAX_SIZE / height;
+          height = MAX_SIZE;
+        }
+      }
+      
+      const finalCanvas = document.createElement('canvas');
+      finalCanvas.width = width;
+      finalCanvas.height = height;
+      const finalCtx = finalCanvas.getContext('2d');
+      finalCtx.drawImage(tempCanvas, 0, 0, width, height);
+      
+      base64Image = finalCanvas.toDataURL('image/jpeg', 0.8);
+    } else {
+      // Standard image compression
+      base64Image = await new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = (event) => {
+          const img = new Image();
+          img.onload = () => {
+            // Compress image to max 800px
+            const MAX_SIZE = 800;
+            let width = img.width;
+            let height = img.height;
+            
+            if (width > height) {
+              if (width > MAX_SIZE) {
+                height *= MAX_SIZE / width;
+                width = MAX_SIZE;
+              }
+            } else {
+              if (height > MAX_SIZE) {
+                width *= MAX_SIZE / height;
+                height = MAX_SIZE;
+              }
             }
-          } else {
-            if (height > MAX_SIZE) {
-              width *= MAX_SIZE / height;
-              height = MAX_SIZE;
-            }
-          }
-          
-          const canvas = document.createElement('canvas');
-          canvas.width = width;
-          canvas.height = height;
-          const ctx = canvas.getContext('2d');
-          ctx.drawImage(img, 0, 0, width, height);
-          
-          // Export as JPEG with 0.8 quality for smaller token footprint
-          resolve(canvas.toDataURL('image/jpeg', 0.8));
+            
+            const canvas = document.createElement('canvas');
+            canvas.width = width;
+            canvas.height = height;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0, width, height);
+            
+            resolve(canvas.toDataURL('image/jpeg', 0.8));
+          };
+          img.onerror = reject;
+          img.src = event.target.result;
         };
-        img.onerror = reject;
-        img.src = event.target.result;
-      };
-      reader.onerror = reject;
-      reader.readAsDataURL(file);
-    });
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
+    }
 
     // 3. Call Groq Vision API
     if (loadingText) loadingText.textContent = 'AI is reading the certificate...';

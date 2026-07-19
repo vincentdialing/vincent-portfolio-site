@@ -1207,7 +1207,8 @@ ${categoriesList}
     // Extract JSON block using regex in case model includes markdown fences
     const jsonMatch = aiResponseText.match(/\{[\s\S]*\}/);
     if (!jsonMatch) {
-      throw new Error("Failed to parse JSON from AI response.");
+      console.error("Raw AI Response:", aiResponseText);
+      throw new Error(`Failed to parse JSON from AI response. Raw output: ${aiResponseText.substring(0, 100)}...`);
     }
     
     // 7. Parse Response
@@ -4388,7 +4389,8 @@ IMPORTANT: Only return the JSON object, no markdown fences, no explanation.`;
     // Extract JSON block using regex in case model includes markdown fences
     const jsonMatch = aiResponse.match(/\{[\s\S]*\}/);
     if (!jsonMatch) {
-      throw new Error("Failed to parse JSON from AI response.");
+      console.error("Raw AI Response:", aiResponse);
+      throw new Error(`Failed to parse JSON from AI response. Raw output: ${aiResponse.substring(0, 100)}...`);
     }
     const data = JSON.parse(jsonMatch[0]);
 

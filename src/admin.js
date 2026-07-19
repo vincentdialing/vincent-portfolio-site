@@ -4213,13 +4213,13 @@ function renderCertificates() {
   }
 
   container.innerHTML = certificates.map(c => `
-    <div class="service-item-card" data-id="${c.id}">
+    <div class="service-item-card" data-id="${c.id}" style="cursor: grab;">
       <div class="service-img-preview">
-        <img src="${c.image_url}" alt="${c.title}" style="object-fit: contain; background: #111;">
+        <img src="${c.image_url}" alt="${c.title}" style="object-fit: contain; background: #111; pointer-events: none;">
       </div>
-      <div class="service-info">
+      <div class="service-info" style="pointer-events: none;">
         <h4>${c.title}</h4>
-        <p>Issuer: <span>${c.issuer}</span> | Date: ${c.date} | Order: ${c.display_order}</p>
+        <p>Issuer: <span>${c.issuer}</span> | Date: ${c.date} | Order: <span class="order-text">${c.display_order}</span></p>
       </div>
       <div class="control-btn-group">
         <button class="action-icon-btn edit-cert-btn" data-id="${c.id}" title="Edit Certificate">
@@ -4239,6 +4239,54 @@ function renderCertificates() {
 
   container.querySelectorAll('.delete-cert-btn').forEach(btn => {
     btn.addEventListener('click', () => deleteCertificate(parseInt(btn.dataset.id)));
+  });
+
+  // Initialize Drag and Drop Sorting
+  if (!window.Sortable) {
+    const script = document.createElement('script');
+    script.src = 'https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js';
+    script.onload = () => initCertificateSortable(container);
+    document.head.appendChild(script);
+  } else {
+    initCertificateSortable(container);
+  }
+}
+
+function initCertificateSortable(container) {
+  new window.Sortable(container, {
+    animation: 150,
+    ghostClass: 'sortable-ghost',
+    delay: 100, // Small delay to prevent accidental drags when clicking
+    delayOnTouchOnly: true,
+    onEnd: async function (evt) {
+      const items = container.querySelectorAll('.service-item-card');
+      const updates = [];
+      
+      items.forEach((item, index) => {
+        const id = item.dataset.id;
+        const newOrder = index + 1;
+        // Update visually immediately
+        const orderText = item.querySelector('.order-text');
+        if (orderText) orderText.textContent = newOrder;
+        
+        updates.push({ id: parseInt(id), display_order: newOrder });
+      });
+
+      // Batch update the DB using our client fallback
+      try {
+        for (const update of updates) {
+          // Update the in-memory array too
+          const cert = certificates.find(c => c.id === update.id);
+          if (cert) cert.display_order = update.display_order;
+          
+          await supabase.from('portfolio_certificates').update({ display_order: update.display_order }).eq('id', update.id);
+        }
+        showToast('Success', 'Certificate order updated!', 'success');
+      } catch (err) {
+        console.error('Reorder error:', err);
+        showToast('Error', 'Failed to update order in database.', 'error');
+      }
+    }
   });
 }
 

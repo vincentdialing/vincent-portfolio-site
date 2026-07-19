@@ -4338,7 +4338,7 @@ async function handleCertScan() {
 Return a JSON object with these exact keys:
 {
   "certificate_id": "a short, URL-friendly slug based on the certificate name and year, e.g. 'google-ux-design-2024' or 'husay-2026'. Use lowercase with hyphens.",
-  "title": "The full official title/name of the certificate exactly as written on it",
+  "title": "The name of the specific event, course, or achievement the certificate is for, merged with the certificate type if necessary (e.g., 'Certificate of Recognition - Husay 2026 Hackathon' instead of just 'Certificate of Recognition'). Focus on WHAT the certificate is for.",
   "issuer": "The organization or institution that issued this certificate (e.g. 'Google', 'Coursera', 'HUSAY')",
   "date": "The issue date as shown on the certificate. Format as 'Issued Mon YYYY' (e.g. 'Issued Jun 2024'). If only a year is visible, use 'Issued YYYY'.",
   "link": "Any verification URL or credential ID visible on the certificate. If none found, return empty string."

@@ -4312,27 +4312,44 @@ IMPORTANT: Only return the JSON object, no markdown fences, no explanation.`;
       dangerouslyAllowBrowser: true
     });
 
-    const completion = await groq.chat.completions.create({
-      model: 'meta-llama/llama-4-scout-17b-16e-instruct',
-      messages: [
-        {
-          role: 'system',
-          content: 'You are a precise OCR assistant that extracts certificate information from images. Respond ONLY with a valid JSON object.'
-        },
-        {
-          role: 'user',
-          content: [
-            { type: 'text', text: promptText },
-            { type: 'image_url', image_url: { url: base64Image } }
-          ]
-        }
-      ],
-      response_format: { type: 'json_object' },
-      temperature: 0.3,
-      max_tokens: 512
-    });
+    const visionModels = [
+      'meta-llama/llama-4-scout-17b-16e-instruct',
+      'qwen/qwen3.6-27b',
+      'llama-3.3-70b-versatile'
+    ];
 
-    const aiResponse = completion.choices[0].message.content;
+    let aiResponse = null;
+    for (const model of visionModels) {
+      try {
+        if (loadingText) loadingText.textContent = `Scanning with ${model.split('/').pop()}...`;
+        const completion = await groq.chat.completions.create({
+          model: model,
+          messages: [
+            {
+              role: 'system',
+              content: 'You are a precise OCR assistant that extracts certificate information from images. Respond ONLY with a valid JSON object.'
+            },
+            {
+              role: 'user',
+              content: [
+                { type: 'text', text: promptText },
+                { type: 'image_url', image_url: { url: base64Image } }
+              ]
+            }
+          ],
+          response_format: { type: 'json_object' },
+          temperature: 0.3,
+          max_tokens: 512
+        });
+        aiResponse = completion.choices[0].message.content;
+        console.log(`Certificate scan succeeded with model: ${model}`);
+        break;
+      } catch (modelErr) {
+        console.warn(`Model ${model} failed:`, modelErr.message);
+        if (model === visionModels[visionModels.length - 1]) throw modelErr;
+      }
+    }
+
     console.log('Certificate scan response:', aiResponse);
     const data = JSON.parse(aiResponse);
 

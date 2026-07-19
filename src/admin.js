@@ -4307,27 +4307,44 @@ async function handleCertScan() {
     const certImageInput = document.getElementById('cert-image');
     if (certImageInput) certImageInput.value = uploadedUrl;
 
-    // 2. Compress & convert to Base64 for Vision API
+    // 2. Convert image to Base64 (with compression to save tokens)
     if (loadingText) loadingText.textContent = 'Processing image for AI analysis...';
     const base64Image = await new Promise((resolve, reject) => {
       const reader = new FileReader();
-      reader.readAsDataURL(file);
       reader.onload = (event) => {
         const img = new Image();
-        img.src = event.target.result;
         img.onload = () => {
+          // Compress image to max 800px
+          const MAX_SIZE = 800;
+          let width = img.width;
+          let height = img.height;
+          
+          if (width > height) {
+            if (width > MAX_SIZE) {
+              height *= MAX_SIZE / width;
+              width = MAX_SIZE;
+            }
+          } else {
+            if (height > MAX_SIZE) {
+              width *= MAX_SIZE / height;
+              height = MAX_SIZE;
+            }
+          }
+          
           const canvas = document.createElement('canvas');
-          const MAX_WIDTH = 1024;
-          const scale = Math.min(MAX_WIDTH / img.width, 1);
-          canvas.width = img.width * scale;
-          canvas.height = img.height * scale;
+          canvas.width = width;
+          canvas.height = height;
           const ctx = canvas.getContext('2d');
-          ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-          resolve(canvas.toDataURL('image/webp', 0.8));
+          ctx.drawImage(img, 0, 0, width, height);
+          
+          // Export as JPEG with 0.8 quality for smaller token footprint
+          resolve(canvas.toDataURL('image/jpeg', 0.8));
         };
         img.onerror = reject;
+        img.src = event.target.result;
       };
       reader.onerror = reject;
+      reader.readAsDataURL(file);
     });
 
     // 3. Call Groq Vision API

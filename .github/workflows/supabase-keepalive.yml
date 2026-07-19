@@ -2,8 +2,9 @@ name: Supabase Keepalive
 
 on:
   schedule:
-    # Run every 3 days to keep the free project from being marked inactive.
-    - cron: '0 3 */3 * *'
+    # Run DAILY at 3 AM UTC to keep the free project alive.
+    # Supabase pauses free projects after ~7 days of inactivity.
+    - cron: '0 3 * * *'
   workflow_dispatch:
 
 jobs:
@@ -27,6 +28,10 @@ jobs:
           SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
         run: |
           curl --fail --silent --show-error \
+            --retry 3 \
+            --retry-delay 10 \
+            --retry-connrefused \
+            --max-time 30 \
             --request GET \
             --header "apikey: $SUPABASE_ANON_KEY" \
             --header "Authorization: Bearer $SUPABASE_ANON_KEY" \
@@ -34,4 +39,4 @@ jobs:
             "$SUPABASE_URL/rest/v1/brands?select=id&limit=1"
 
       - name: Confirm keepalive succeeded
-        run: echo "Supabase keepalive request completed successfully."
+        run: echo "Supabase keepalive ping completed successfully at $(date -u)."

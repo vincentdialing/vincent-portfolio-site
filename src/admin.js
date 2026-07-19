@@ -1176,7 +1176,7 @@ ${categoriesList}
           messages: [
             {
               role: 'system',
-              content: 'You are an AI portfolio assistant that responds ONLY with a valid JSON object. You MUST NOT output any conversational text, explanations, or thinking process. You MUST start your response EXACTLY with the character "{" and end with "}".'
+              content: 'You are a precise OCR data extraction pipeline. You must silently process the image and output ONLY the raw JSON object. Do not output any thinking steps, reasoning, or conversational text. Begin your entire response with { and end it with }.'
             },
             {
               role: 'user',
@@ -1184,7 +1184,7 @@ ${categoriesList}
             }
           ],
           temperature: 0.1,
-          max_tokens: 1024
+          max_tokens: 1536
         });
         aiResponseText = completion.choices[0].message.content;
         console.log(`Groq Vision succeeded with model: ${model}`);
@@ -4352,7 +4352,7 @@ IMPORTANT: Only return the JSON object, no markdown fences, no explanation.`;
           messages: [
             {
               role: 'system',
-              content: 'You are a precise OCR assistant that extracts certificate information from images. You MUST NOT output any conversational text, explanations, or thinking process. You MUST start your response EXACTLY with the character "{" and end with "}". Respond ONLY with a valid JSON object.'
+              content: 'You are a precise OCR data extraction pipeline. You must silently process the image and output ONLY the raw JSON object. Do not output any thinking steps, reasoning, or conversational text. Begin your entire response with { and end it with }.'
             },
             {
               role: 'user',
@@ -4363,7 +4363,7 @@ IMPORTANT: Only return the JSON object, no markdown fences, no explanation.`;
             }
           ],
           temperature: 0.1,
-          max_tokens: 512
+          max_tokens: 1536
         });
         aiResponse = completion.choices[0].message.content;
         console.log(`Certificate scan succeeded with model: ${model}`);

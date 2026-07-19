@@ -4255,6 +4255,19 @@ async function handleCertificateSubmit(e) {
 
 function initCertificateScanner() {
   const scanBtn = document.getElementById('cert-scan-btn');
+  const fileInput = document.getElementById('cert-scan-file');
+  const fileNameDisplay = document.getElementById('cert-scan-file-name');
+  
+  if (fileInput && fileNameDisplay) {
+    fileInput.addEventListener('change', (e) => {
+      if (e.target.files && e.target.files[0]) {
+        fileNameDisplay.textContent = e.target.files[0].name;
+      } else {
+        fileNameDisplay.textContent = 'Choose an image...';
+      }
+    });
+  }
+
   if (!scanBtn) return;
 
   scanBtn.addEventListener('click', handleCertScan);

@@ -4223,6 +4223,148 @@ async function handleCertificateSubmit(e) {
   }
 }
 
+// ==========================================
+// 11b-2. AI CERTIFICATE SCANNER
+// ==========================================
+
+function initCertificateScanner() {
+  const scanBtn = document.getElementById('cert-scan-btn');
+  if (!scanBtn) return;
+
+  scanBtn.addEventListener('click', handleCertScan);
+}
+
+async function handleCertScan() {
+  const fileInput = document.getElementById('cert-scan-file');
+  const scanBtn = document.getElementById('cert-scan-btn');
+  const loadingEl = document.getElementById('cert-scan-loading');
+  const loadingText = document.getElementById('cert-scan-loading-text');
+
+  if (!fileInput || !fileInput.files || fileInput.files.length === 0) {
+    showToast('No Image', 'Please select a certificate image first.', 'error');
+    return;
+  }
+
+  const apiKey = getGroqApiKey();
+  if (!apiKey) {
+    showToast('No API Key', 'Please configure your Groq API key in the Settings tab first.', 'error');
+    return;
+  }
+
+  const file = fileInput.files[0];
+  const originalBtnHtml = scanBtn.innerHTML;
+  scanBtn.disabled = true;
+  scanBtn.innerHTML = `<div class="spinner-small" style="width:12px;height:12px;margin-right:6px;"></div> Scanning...`;
+  if (loadingEl) loadingEl.classList.remove('hidden');
+
+  try {
+    // 1. Upload to Supabase first
+    if (loadingText) loadingText.textContent = 'Uploading certificate image...';
+    const bucketName = document.getElementById('upload-bucket-name')?.value.trim() || 'portfolio';
+    const uploadResult = await uploadFileToSupabase(file, bucketName);
+    const uploadedUrl = uploadResult.url;
+
+    // Fill the image URL field immediately
+    const certImageInput = document.getElementById('cert-image');
+    if (certImageInput) certImageInput.value = uploadedUrl;
+
+    // 2. Compress & convert to Base64 for Vision API
+    if (loadingText) loadingText.textContent = 'Processing image for AI analysis...';
+    const base64Image = await new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = (event) => {
+        const img = new Image();
+        img.src = event.target.result;
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          const MAX_WIDTH = 1024;
+          const scale = Math.min(MAX_WIDTH / img.width, 1);
+          canvas.width = img.width * scale;
+          canvas.height = img.height * scale;
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+          resolve(canvas.toDataURL('image/webp', 0.8));
+        };
+        img.onerror = reject;
+      };
+      reader.onerror = reject;
+    });
+
+    // 3. Call Groq Vision API
+    if (loadingText) loadingText.textContent = 'AI is reading the certificate...';
+
+    const promptText = `Analyze this certificate/credential image carefully. Extract ALL visible text and information from it.
+
+Return a JSON object with these exact keys:
+{
+  "certificate_id": "a short, URL-friendly slug based on the certificate name and year, e.g. 'google-ux-design-2024' or 'husay-2026'. Use lowercase with hyphens.",
+  "title": "The full official title/name of the certificate exactly as written on it",
+  "issuer": "The organization or institution that issued this certificate (e.g. 'Google', 'Coursera', 'HUSAY')",
+  "date": "The issue date as shown on the certificate. Format as 'Issued Mon YYYY' (e.g. 'Issued Jun 2024'). If only a year is visible, use 'Issued YYYY'.",
+  "link": "Any verification URL or credential ID visible on the certificate. If none found, return empty string."
+}
+
+IMPORTANT: Only return the JSON object, no markdown fences, no explanation.`;
+
+    const groq = new Groq({
+      apiKey: apiKey,
+      dangerouslyAllowBrowser: true
+    });
+
+    const completion = await groq.chat.completions.create({
+      model: 'meta-llama/llama-4-scout-17b-16e-instruct',
+      messages: [
+        {
+          role: 'system',
+          content: 'You are a precise OCR assistant that extracts certificate information from images. Respond ONLY with a valid JSON object.'
+        },
+        {
+          role: 'user',
+          content: [
+            { type: 'text', text: promptText },
+            { type: 'image_url', image_url: { url: base64Image } }
+          ]
+        }
+      ],
+      response_format: { type: 'json_object' },
+      temperature: 0.3,
+      max_tokens: 512
+    });
+
+    const aiResponse = completion.choices[0].message.content;
+    console.log('Certificate scan response:', aiResponse);
+    const data = JSON.parse(aiResponse);
+
+    // 4. Auto-fill form fields
+    if (data.certificate_id) {
+      document.getElementById('cert-id').value = data.certificate_id;
+    }
+    if (data.title) {
+      document.getElementById('cert-title').value = data.title;
+    }
+    if (data.issuer) {
+      document.getElementById('cert-issuer').value = data.issuer;
+    }
+    if (data.date) {
+      document.getElementById('cert-date').value = data.date;
+    }
+    if (data.link) {
+      document.getElementById('cert-link').value = data.link;
+    }
+
+    showToast('Scanned!', 'Certificate data extracted and auto-filled successfully.', 'success');
+
+  } catch (err) {
+    console.error('Certificate scan error:', err);
+    showToast('Scan Failed', err.message || 'Could not scan the certificate image.', 'error');
+  } finally {
+    scanBtn.innerHTML = originalBtnHtml;
+    scanBtn.disabled = false;
+    if (loadingEl) loadingEl.classList.add('hidden');
+  }
+}
+
 async function deleteCertificate(id) {
   const cert = certificates.find(c => c.id === id);
   if (!cert) return;
@@ -4457,6 +4599,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   wireInlineFileUploads(document);
   initAIWriter();
   initServiceAIWriter();
+  initCertificateScanner();
 
   // Gallery add button wiring
   const addGalleryBtn = document.getElementById('add-gallery-img-btn');

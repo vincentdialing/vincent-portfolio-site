@@ -1163,9 +1163,8 @@ ${categoriesList}
     });
 
     const visionModels = [
-      'llama-3.2-11b-vision-preview',
-      'llama-3.2-90b-vision-preview',
-      'qwen-2.5-vl-72b-instruct',
+      'llama-3.2-11b-vision-instruct',
+      'llama-3.2-90b-vision-instruct',
       'qwen/qwen3.6-27b',
       'llama-4-scout-17b-16e-instruct'
     ];
@@ -1180,14 +1179,13 @@ ${categoriesList}
           messages: [
             {
               role: 'system',
-              content: 'You are an AI portfolio assistant that responds ONLY with a valid JSON object. Do not include ```json or other formatting.'
+              content: 'You are an AI portfolio assistant that responds ONLY with a valid JSON object starting with { and ending with }.'
             },
             {
               role: 'user',
               content: userContent
             }
           ],
-          response_format: { type: 'json_object' },
           temperature: 0.7,
           max_tokens: 1024
         });
@@ -1205,9 +1203,15 @@ ${categoriesList}
     }
 
     console.log('Groq Vision response:', aiResponseText);
-
+    
+    // Extract JSON block using regex in case model includes markdown fences
+    const jsonMatch = aiResponseText.match(/\{[\s\S]*\}/);
+    if (!jsonMatch) {
+      throw new Error("Failed to parse JSON from AI response.");
+    }
+    
     // 7. Parse Response
-    const data = JSON.parse(aiResponseText);
+    const data = JSON.parse(jsonMatch[0]);
 
     // 8. Auto-fill form fields
     if (data.title) {
@@ -4337,9 +4341,8 @@ IMPORTANT: Only return the JSON object, no markdown fences, no explanation.`;
     });
 
     const visionModels = [
-      'llama-3.2-11b-vision-preview',
-      'llama-3.2-90b-vision-preview',
-      'qwen-2.5-vl-72b-instruct',
+      'llama-3.2-11b-vision-instruct',
+      'llama-3.2-90b-vision-instruct',
       'qwen/qwen3.6-27b',
       'llama-4-scout-17b-16e-instruct'
     ];
@@ -4354,7 +4357,7 @@ IMPORTANT: Only return the JSON object, no markdown fences, no explanation.`;
           messages: [
             {
               role: 'system',
-              content: 'You are a precise OCR assistant that extracts certificate information from images. Respond ONLY with a valid JSON object.'
+              content: 'You are a precise OCR assistant that extracts certificate information from images. Respond ONLY with a valid JSON object starting with { and ending with }.'
             },
             {
               role: 'user',
@@ -4364,7 +4367,6 @@ IMPORTANT: Only return the JSON object, no markdown fences, no explanation.`;
               ]
             }
           ],
-          response_format: { type: 'json_object' },
           temperature: 0.3,
           max_tokens: 512
         });
@@ -4382,7 +4384,13 @@ IMPORTANT: Only return the JSON object, no markdown fences, no explanation.`;
     }
 
     console.log('Certificate scan response:', aiResponse);
-    const data = JSON.parse(aiResponse);
+    
+    // Extract JSON block using regex in case model includes markdown fences
+    const jsonMatch = aiResponse.match(/\{[\s\S]*\}/);
+    if (!jsonMatch) {
+      throw new Error("Failed to parse JSON from AI response.");
+    }
+    const data = JSON.parse(jsonMatch[0]);
 
     // 4. Auto-fill form fields
     if (data.certificate_id) {

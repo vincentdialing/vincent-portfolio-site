@@ -1187,7 +1187,7 @@ ${categoriesList}
             }
           ],
           temperature: 0.1,
-          max_tokens: 512
+          max_tokens: 2000
         });
         aiResponseText = completion.choices[0].message.content;
         console.log(`Groq Vision succeeded with model: ${model}`);
@@ -4513,7 +4513,7 @@ IMPORTANT: Only return the JSON object, no markdown fences, no explanation.`;
             }
           ],
           temperature: 0.1,
-          max_tokens: 512
+          max_tokens: 2000
         });
         aiResponse = completion.choices[0].message.content;
         console.log(`Certificate scan succeeded with model: ${model}`);

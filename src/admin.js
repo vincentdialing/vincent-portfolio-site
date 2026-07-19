@@ -703,8 +703,8 @@ Format EXACTLY:
           { role: 'system', content: 'You are a client-facing portfolio copywriter. Write specific, vivid, compelling copy. Follow the format and word count exactly.' },
           { role: 'user', content: prompt }
         ],
-        temperature: 0.7,
-        max_tokens: 350
+        temperature: 0.1,
+        max_tokens: 512
       });
 
       const content = completion.choices[0].message.content;
@@ -1184,7 +1184,7 @@ ${categoriesList}
             }
           ],
           temperature: 0.1,
-          max_tokens: 1536
+          max_tokens: 512
         });
         aiResponseText = completion.choices[0].message.content;
         console.log(`Groq Vision succeeded with model: ${model}`);
@@ -4398,7 +4398,7 @@ async function handleCertScan() {
       await page.render({ canvasContext: tempCtx, viewport: viewport }).promise;
       
       // Compress the rendered PDF page
-      const MAX_SIZE = 800;
+      const MAX_SIZE = 512;
       let width = tempCanvas.width;
       let height = tempCanvas.height;
       
@@ -4428,8 +4428,8 @@ async function handleCertScan() {
         reader.onload = (event) => {
           const img = new Image();
           img.onload = () => {
-            // Compress image to max 800px
-            const MAX_SIZE = 800;
+            // Compress image to max 512px
+            const MAX_SIZE = 512;
             let width = img.width;
             let height = img.height;
             
@@ -4507,7 +4507,7 @@ IMPORTANT: Only return the JSON object, no markdown fences, no explanation.`;
             }
           ],
           temperature: 0.1,
-          max_tokens: 1536
+          max_tokens: 512
         });
         aiResponse = completion.choices[0].message.content;
         console.log(`Certificate scan succeeded with model: ${model}`);

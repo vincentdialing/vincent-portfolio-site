@@ -4313,9 +4313,10 @@ IMPORTANT: Only return the JSON object, no markdown fences, no explanation.`;
     });
 
     const visionModels = [
-      'llama-4-scout-17b-16e-instruct',
-      'llama-4-maverick-17b-128e-instruct',
-      'meta-llama/llama-4-scout-17b-16e-instruct'
+      'llama-3.2-11b-vision-preview',
+      'llama-3.2-90b-vision-preview',
+      'llama-3.3-70b-versatile',
+      'llama-4-scout-17b-16e-instruct'
     ];
 
     let aiResponse = null;

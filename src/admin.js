@@ -1163,10 +1163,7 @@ ${categoriesList}
     });
 
     const visionModels = [
-      'llama-3.2-11b-vision-instruct',
-      'llama-3.2-90b-vision-instruct',
-      'qwen/qwen3.6-27b',
-      'llama-4-scout-17b-16e-instruct'
+      'qwen/qwen3.6-27b'
     ];
 
     let aiResponseText = null;
@@ -1187,7 +1184,7 @@ ${categoriesList}
             }
           ],
           temperature: 0.1,
-          max_tokens: 2048
+          max_tokens: 1024
         });
         aiResponseText = completion.choices[0].message.content;
         console.log(`Groq Vision succeeded with model: ${model}`);
@@ -4342,10 +4339,7 @@ IMPORTANT: Only return the JSON object, no markdown fences, no explanation.`;
     });
 
     const visionModels = [
-      'llama-3.2-11b-vision-instruct',
-      'llama-3.2-90b-vision-instruct',
-      'qwen/qwen3.6-27b',
-      'llama-4-scout-17b-16e-instruct'
+      'qwen/qwen3.6-27b'
     ];
 
     let aiResponse = null;
@@ -4369,7 +4363,7 @@ IMPORTANT: Only return the JSON object, no markdown fences, no explanation.`;
             }
           ],
           temperature: 0.1,
-          max_tokens: 1024
+          max_tokens: 512
         });
         aiResponse = completion.choices[0].message.content;
         console.log(`Certificate scan succeeded with model: ${model}`);

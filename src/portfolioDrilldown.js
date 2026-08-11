@@ -1041,6 +1041,24 @@ function renderLevel3(project) {
 
     level3Container.appendChild(detail);
 
+    // YouTube Thumbnail Fallback Logic (maxresdefault -> hqdefault)
+    detail.querySelectorAll('.video-thumbnail').forEach(thumbEl => {
+        const bg = thumbEl.style.backgroundImage;
+        if (bg && bg.includes('maxresdefault.jpg')) {
+            const match = bg.match(/url\(['"]?(.*?)['"]?\)/);
+            if (match && match[1]) {
+                const img = new Image();
+                img.onload = () => {
+                    // YouTube returns a 120x90 grey image when maxresdefault is not found
+                    if (img.naturalWidth === 120 && img.naturalHeight === 90) {
+                        thumbEl.style.backgroundImage = bg.replace('maxresdefault.jpg', 'hqdefault.jpg');
+                    }
+                };
+                img.src = match[1];
+            }
+        }
+    });
+
     // Bind video play buttons
     detail.querySelectorAll('.video-player-wrapper').forEach(wrapper => {
         const thumbEl = wrapper.querySelector('.video-thumbnail');
@@ -1391,7 +1409,7 @@ function getVideoMeta(url) {
         return {
             provider: 'youtube',
             embedSrc: `https://www.youtube-nocookie.com/embed/${youtubeId}?autoplay=1&rel=0&modestbranding=1&controls=1&color=white&iv_load_policy=3`,
-            thumbnail: `https://img.youtube.com/vi/${youtubeId}/hqdefault.jpg`
+            thumbnail: `https://img.youtube.com/vi/${youtubeId}/maxresdefault.jpg`
         };
     }
 

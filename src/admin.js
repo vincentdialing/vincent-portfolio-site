@@ -1867,7 +1867,12 @@ function renderDetailBlocks() {
         }
 
         const arrayBuffer = await file.arrayBuffer();
-        const pdf = await window.pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+        const pdf = await window.pdfjsLib.getDocument({ 
+          data: arrayBuffer,
+          cMapUrl: 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/cmaps/',
+          cMapPacked: true,
+          standardFontDataUrl: 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/standard_fonts/'
+        }).promise;
         const numPages = pdf.numPages;
         
         let newUrls = [];
@@ -1877,14 +1882,18 @@ function renderDetailBlocks() {
           const viewport = page.getViewport({ scale: 2.0 }); // High quality scale
           
           const canvas = document.createElement('canvas');
-          const context = canvas.getContext('2d');
+          const context = canvas.getContext('2d', { willReadFrequently: true });
           canvas.height = viewport.height;
           canvas.width = viewport.width;
+          
+          // Fill white background for transparent PDFs
+          context.fillStyle = '#ffffff';
+          context.fillRect(0, 0, canvas.width, canvas.height);
           
           await page.render({ canvasContext: context, viewport: viewport }).promise;
           
           // Convert to blob
-          const blob = await new Promise(res => canvas.toBlob(res, 'image/jpeg', 0.9));
+          const blob = await new Promise(res => canvas.toBlob(res, 'image/jpeg', 0.95));
           
           // Upload to Supabase
           const fileExt = 'jpg';

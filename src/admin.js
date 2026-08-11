@@ -1838,7 +1838,91 @@ function renderDetailBlocks() {
   container.querySelectorAll('.block-flipbook-pdf-btn').forEach(btn => {
     const fileInput = btn.nextElementSibling;
     btn.addEventListener('click', () => {
-      alert("PDF Auto-Convert feature is in development. Please use the Batch Image Upload for now by exporting your PDF to images first!");
+      fileInput.click();
+    });
+
+    fileInput.addEventListener('change', async (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      const textarea = btn.closest('.block-field-group').querySelector('.block-input-pages');
+      
+      const originalText = btn.innerHTML;
+      btn.innerHTML = '<span class="spinner"></span> Converting...';
+      btn.disabled = true;
+
+      try {
+        // Ensure PDF.js is loaded
+        if (!window.pdfjsLib) {
+          await new Promise((resolve, reject) => {
+            const script = document.createElement('script');
+            script.src = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js';
+            script.onload = () => {
+              window.pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+              resolve();
+            };
+            script.onerror = reject;
+            document.head.appendChild(script);
+          });
+        }
+
+        const arrayBuffer = await file.arrayBuffer();
+        const pdf = await window.pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+        const numPages = pdf.numPages;
+        
+        let newUrls = [];
+        for (let i = 1; i <= numPages; i++) {
+          btn.innerHTML = `<span class="spinner"></span> Converting Page ${i}/${numPages}`;
+          const page = await pdf.getPage(i);
+          const viewport = page.getViewport({ scale: 2.0 }); // High quality scale
+          
+          const canvas = document.createElement('canvas');
+          const context = canvas.getContext('2d');
+          canvas.height = viewport.height;
+          canvas.width = viewport.width;
+          
+          await page.render({ canvasContext: context, viewport: viewport }).promise;
+          
+          // Convert to blob
+          const blob = await new Promise(res => canvas.toBlob(res, 'image/jpeg', 0.9));
+          
+          // Upload to Supabase
+          const fileExt = 'jpg';
+          const fileName = `${Math.random().toString(36).substr(2, 9)}_${Date.now()}_page${i}.${fileExt}`;
+          const filePath = `flipbooks/${fileName}`;
+
+          btn.innerHTML = `<span class="spinner"></span> Uploading Page ${i}/${numPages}`;
+          const { error: uploadError } = await supabase.storage
+            .from('project-images')
+            .upload(filePath, blob, {
+                cacheControl: '3600',
+                upsert: false
+            });
+
+          if (uploadError) throw uploadError;
+
+          const { data: { publicUrl } } = supabase.storage
+            .from('project-images')
+            .getPublicUrl(filePath);
+
+          newUrls.push(publicUrl);
+        }
+
+        const currentVal = textarea.value.trim();
+        const combined = currentVal ? currentVal + '\n' + newUrls.join('\n') : newUrls.join('\n');
+        textarea.value = combined;
+        
+        // Trigger save
+        saveBlockInputs();
+
+      } catch (err) {
+        console.error('PDF conversion error:', err);
+        alert('Failed to convert PDF: ' + err.message);
+      } finally {
+        btn.innerHTML = originalText;
+        btn.disabled = false;
+        fileInput.value = '';
+      }
     });
   });
 

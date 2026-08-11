@@ -3492,11 +3492,13 @@ nav.floating-nav {
    ========================================== */
 
 .detail-external-link {
-  display: inline-flex;
+  display: flex;
+  width: fit-content;
   align-items: center;
+  justify-content: center;
   gap: 0.6rem;
   padding: 0.9rem 1.55rem;
-  margin: 1.25rem 0 0;
+  margin: 1.25rem auto 0;
   background: rgba(255, 255, 255, 0.05);
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 100px;
@@ -3545,11 +3547,13 @@ nav.floating-nav {
    ========================================== */
 
 .detail-internal-link-pill {
-  display: inline-flex;
+  display: flex;
+  width: fit-content;
   align-items: center;
+  justify-content: center;
   gap: 0.6rem;
   padding: 0.9rem 1.55rem;
-  margin: 1.25rem 0 0;
+  margin: 1.25rem auto 0;
   background: rgba(59, 130, 246, 0.1);
   border: 1px solid rgba(59, 130, 246, 0.25);
   border-radius: 100px;

@@ -987,13 +987,13 @@ function renderLevel3(project) {
                   <div class="flipbook-wrapper" style="width: 100%; margin: 2.5rem 0; display: flex; justify-content: center; perspective: 1500px;">
                     <div id="${flipbookId}" class="flipbook" data-pages='${JSON.stringify(block.pages).replace(/'/g, "&apos;")}'>
                       <!-- Cover Page (Always first) -->
-                      <div class="flipbook-page flipbook-cover" style="background-image: url('${block.pages[0]}'); background-size: cover; background-position: center; border-radius: 4px 8px 8px 4px;">
-                        <div class="flipbook-page-depth"></div>
+                      <div class="flipbook-page flipbook-cover" style="padding: 0; overflow: hidden;">
+                        <img src="${block.pages[0]}" style="width: 100%; height: 100%; object-fit: cover; display: block;" alt="Cover">
                       </div>
                       <!-- Inner Pages -->
                       ${block.pages.slice(1).map((url, i) => `
-                        <div class="flipbook-page ${i % 2 === 0 ? 'page-right' : 'page-left'}" style="background-image: url('${url}'); background-size: cover; background-position: center;">
-                          <div class="flipbook-page-fold-shadow"></div>
+                        <div class="flipbook-page ${i % 2 === 0 ? 'page-right' : 'page-left'}" style="padding: 0; overflow: hidden;">
+                          <img src="${url}" style="width: 100%; height: 100%; object-fit: cover; display: block;" alt="Page ${i + 2}">
                         </div>
                       `).join('')}
                     </div>

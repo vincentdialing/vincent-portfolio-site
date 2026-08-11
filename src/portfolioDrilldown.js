@@ -4,6 +4,7 @@
 // ==========================================
 
 import { supabase } from './supabaseClient.js'
+import { PageFlip } from 'page-flip';
 
 // Portfolio data fetched from Supabase (populated by fetchPortfolioData)
 let portfolioData = {};
@@ -979,6 +980,26 @@ function renderLevel3(project) {
                     <span>${block.label || 'View Certificate'}</span>
                   </button>`;
 
+            case 'flipbook':
+                if (!block.pages || block.pages.length === 0) return '';
+                const flipbookId = 'flipbook-' + Math.random().toString(36).substr(2, 9);
+                return `
+                  <div class="flipbook-wrapper" style="width: 100%; margin: 2.5rem 0; display: flex; justify-content: center; perspective: 1500px;">
+                    <div id="${flipbookId}" class="flipbook" data-pages='${JSON.stringify(block.pages).replace(/'/g, "&apos;")}'>
+                      <!-- Cover Page (Always first) -->
+                      <div class="flipbook-page flipbook-cover" style="background-image: url('${block.pages[0]}'); background-size: cover; background-position: center; border-radius: 4px 8px 8px 4px;">
+                        <div class="flipbook-page-depth"></div>
+                      </div>
+                      <!-- Inner Pages -->
+                      ${block.pages.slice(1).map((url, i) => `
+                        <div class="flipbook-page ${i % 2 === 0 ? 'page-right' : 'page-left'}" style="background-image: url('${url}'); background-size: cover; background-position: center;">
+                          <div class="flipbook-page-fold-shadow"></div>
+                        </div>
+                      `).join('')}
+                    </div>
+                  </div>
+                `;
+
             default:
                 return '';
         }
@@ -1130,6 +1151,37 @@ function renderLevel3(project) {
                 }, 450);
             }
         });
+    });
+
+    // Initialize Flipbooks
+    const flipbooks = detail.querySelectorAll('.flipbook');
+    flipbooks.forEach(fb => {
+        try {
+            // Wait for the modal animation to finish before measuring
+            setTimeout(() => {
+                const width = Math.min(fb.parentElement.clientWidth / 2, 450); // max 450 per page
+                const height = width * 1.414; // A4 aspect ratio
+
+                const pageFlip = new PageFlip(fb, {
+                    width: width,
+                    height: height,
+                    size: 'fixed',
+                    minWidth: 315,
+                    maxWidth: 1000,
+                    minHeight: 420,
+                    maxHeight: 1350,
+                    showCover: true,
+                    mobileScrollSupport: true,
+                    maxShadowOpacity: 0.5,
+                    drawShadow: true,
+                    flippingTime: 1000
+                });
+
+                pageFlip.loadFromHTML(fb.querySelectorAll('.flipbook-page'));
+            }, 600); // Wait for GSAP modal enter animation
+        } catch (err) {
+            console.error('Failed to initialize flipbook:', err);
+        }
     });
 
     // Bind lightbox on gallery images

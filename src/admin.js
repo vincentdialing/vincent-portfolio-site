@@ -1625,9 +1625,30 @@ function renderDetailBlocks() {
           </div>
         </div>
       `;
+      `;
+    } else if (block.type === 'flipbook') {
+      formFieldsHtml = `
+        <div class="block-field-group">
+          <label>Pages (Image URLs, one per line) — Must be same aspect ratio</label>
+          <div class="input-with-upload">
+            <textarea class="block-input-pages" rows="4" placeholder="https://...&#10;https://..." required>${(block.pages || []).join('\n')}</textarea>
+          </div>
+          <div style="margin-top: 0.5rem; display: flex; gap: 0.5rem;">
+            <button type="button" class="btn btn-secondary btn-sm block-flipbook-upload-btn btn-with-icon" style="padding: 0.5rem 0.8rem; flex: 1; justify-content: center;">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"/></svg>
+              Upload Images (Batch)
+            </button>
+            <input type="file" class="block-flipbook-file-input hidden" accept="image/*" multiple style="display:none;">
+            
+            <button type="button" class="btn btn-secondary btn-sm block-flipbook-pdf-btn btn-with-icon" style="padding: 0.5rem 0.8rem; flex: 1; justify-content: center; border-color: #f59e0b; color: #f59e0b;">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+              Auto-Convert PDF
+            </button>
+            <input type="file" class="block-flipbook-pdf-input hidden" accept="application/pdf" style="display:none;">
+          </div>
+        </div>
+      `;
     }
-
-    return `
       <div class="detail-editor-block" data-index="${index}">
         <div class="block-header-row">
           <span class="block-badge-type ${block.type}">${block.type}</span>
@@ -1769,6 +1790,57 @@ function renderDetailBlocks() {
     });
   });
 
+  // Wire upload buttons inside flipbook blocks
+  container.querySelectorAll('.block-flipbook-upload-btn').forEach(btn => {
+    const fileInput = btn.nextElementSibling;
+    btn.addEventListener('click', () => fileInput.click());
+
+    fileInput.addEventListener('change', async (e) => {
+      const files = Array.from(e.target.files);
+      if (files.length === 0) return;
+
+      const originalText = btn.innerHTML;
+      btn.innerHTML = '<span class="spinner-small" style="width:12px;height:12px;margin-right:0;"></span>...';
+      btn.disabled = true;
+
+      try {
+        const bucketName = document.getElementById('upload-bucket-name')?.value.trim() || 'portfolio';
+        const uploadedUrls = [];
+        for (const file of files) {
+          const uploadRes = await uploadFileToSupabase(file, bucketName);
+          uploadedUrls.push(uploadRes.url);
+        }
+        
+        const blockEl = btn.closest('.detail-editor-block');
+        const idx = parseInt(blockEl.dataset.index);
+        
+        const existingPages = currentDetailBlocks[idx].pages || [];
+        currentDetailBlocks[idx].pages = [...existingPages, ...uploadedUrls];
+        
+        const pagesInput = blockEl.querySelector('.block-input-pages');
+        if (pagesInput) {
+          pagesInput.value = currentDetailBlocks[idx].pages.join('\n');
+        }
+        
+        showToast('Uploaded', `${files.length} pages uploaded successfully!`, 'success');
+      } catch (err) {
+        console.error('Flipbook batch upload failed:', err);
+        showToast('Upload Failed', err.message || 'Could not upload pages.', 'error');
+      } finally {
+        btn.innerHTML = originalText;
+        btn.disabled = false;
+        fileInput.value = ''; // reset
+      }
+    });
+  });
+
+  container.querySelectorAll('.block-flipbook-pdf-btn').forEach(btn => {
+    const fileInput = btn.nextElementSibling;
+    btn.addEventListener('click', () => {
+      alert("PDF Auto-Convert feature is in development. Please use the Batch Image Upload for now by exporting your PDF to images first!");
+    });
+  });
+
   // Track live changes back to state when editing
   container.querySelectorAll('input, textarea').forEach(input => {
     input.addEventListener('change', saveBlockInputs);
@@ -1805,6 +1877,9 @@ function saveBlockInputs() {
       block.alt = blockEl.querySelector('.block-input-alt').value;
       block.redirect_url = blockEl.querySelector('.block-input-redirect-url').value;
       block.redirect_label = blockEl.querySelector('.block-input-redirect-label').value;
+    } else if (block.type === 'flipbook') {
+      const textVal = blockEl.querySelector('.block-input-pages').value || '';
+      block.pages = textVal.split('\n').map(l => l.trim()).filter(l => l);
     }
   });
 }
@@ -1901,6 +1976,15 @@ function initJsonBlockBuilder() {
     currentDetailBlocks.push({ type: 'certificate', certificateId: '', label: '' });
     renderDetailBlocks();
   });
+
+  const flipBtn = document.getElementById('add-flipbook-block-btn');
+  if (flipBtn) {
+    flipBtn.addEventListener('click', () => {
+      saveBlockInputs();
+      currentDetailBlocks.push({ type: 'flipbook', pages: [] });
+      renderDetailBlocks();
+    });
+  }
 }
 
 // Modal open/close actions

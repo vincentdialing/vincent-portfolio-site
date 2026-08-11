@@ -1625,7 +1625,6 @@ function renderDetailBlocks() {
           </div>
         </div>
       `;
-      `;
     } else if (block.type === 'flipbook') {
       formFieldsHtml = `
         <div class="block-field-group">

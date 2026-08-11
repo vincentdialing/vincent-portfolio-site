@@ -984,8 +984,15 @@ function renderLevel3(project) {
                 if (!block.pages || block.pages.length === 0) return '';
                 const flipbookId = 'flipbook-' + Math.random().toString(36).substr(2, 9);
                 return `
-                  <div class="flipbook-wrapper" style="width: 100%; margin: 2.5rem 0; display: flex; justify-content: center; perspective: 1500px;">
+                  <div class="flipbook-wrapper" style="width: 100%; margin: 2.5rem 0; display: flex; justify-content: center; perspective: 1500px; position: relative;">
                     <div id="${flipbookId}" class="flipbook" data-pages='${JSON.stringify(block.pages).replace(/'/g, "&apos;")}'></div>
+                    <div class="flipbook-watermark-overlay">
+                      <span>VINCENT DIALING</span>
+                      <span>VINCENT DIALING</span>
+                      <span>VINCENT DIALING</span>
+                      <span>VINCENT DIALING</span>
+                      <span>VINCENT DIALING</span>
+                    </div>
                   </div>
                 `;
 

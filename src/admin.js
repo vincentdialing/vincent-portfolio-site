@@ -1648,6 +1648,8 @@ function renderDetailBlocks() {
         </div>
       `;
     }
+
+    return `
       <div class="detail-editor-block" data-index="${index}">
         <div class="block-header-row">
           <span class="block-badge-type ${block.type}">${block.type}</span>

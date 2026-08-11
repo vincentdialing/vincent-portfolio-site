@@ -1879,7 +1879,7 @@ function renderDetailBlocks() {
         for (let i = 1; i <= numPages; i++) {
           btn.innerHTML = `<span class="spinner"></span> Converting Page ${i}/${numPages}`;
           const page = await pdf.getPage(i);
-          const viewport = page.getViewport({ scale: 2.0 }); // High quality scale
+          const viewport = page.getViewport({ scale: 3.5 }); // Extra high quality scale
           
           const canvas = document.createElement('canvas');
           const context = canvas.getContext('2d', { willReadFrequently: true });
@@ -1892,11 +1892,11 @@ function renderDetailBlocks() {
           
           await page.render({ canvasContext: context, viewport: viewport }).promise;
           
-          // Convert to blob
-          const blob = await new Promise(res => canvas.toBlob(res, 'image/jpeg', 0.95));
+          // Convert to high-quality blob
+          const blob = await new Promise(res => canvas.toBlob(res, 'image/png'));
           
           // Upload to Supabase
-          const fileExt = 'jpg';
+          const fileExt = 'png';
           const fileName = `${Math.random().toString(36).substr(2, 9)}_${Date.now()}_page${i}.${fileExt}`;
           const filePath = `flipbooks/${fileName}`;
 

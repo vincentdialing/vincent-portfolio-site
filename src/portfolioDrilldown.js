@@ -1354,7 +1354,7 @@ function openImageLightbox(imagesInput, startIndex = 0) {
 // ==========================================
 function extractYouTubeId(url) {
     if (!url) return null;
-    const match = url.match(/(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=))([^&\n?#]+)/);
+    const match = url.match(/(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|shorts\/|watch\?v=|watch\?.+&v=))([^&\n?#]+)/);
     return match ? match[1] : null;
 }
 

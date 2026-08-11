@@ -1915,6 +1915,12 @@ function renderDetailBlocks() {
             .getPublicUrl(filePath);
 
           newUrls.push(publicUrl);
+          
+          // Debug: Show preview in admin panel
+          const debugImg = document.createElement('img');
+          debugImg.src = publicUrl;
+          debugImg.style = "width: 100px; height: auto; border: 1px solid #ccc; margin-right: 5px; margin-top: 5px;";
+          textarea.parentNode.appendChild(debugImg);
         }
 
         const currentVal = textarea.value.trim();

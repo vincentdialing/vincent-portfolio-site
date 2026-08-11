@@ -1391,7 +1391,7 @@ function getVideoMeta(url) {
         return {
             provider: 'youtube',
             embedSrc: `https://www.youtube-nocookie.com/embed/${youtubeId}?autoplay=1&rel=0&modestbranding=1&controls=1&color=white&iv_load_policy=3`,
-            thumbnail: `https://img.youtube.com/vi/${youtubeId}/maxresdefault.jpg`
+            thumbnail: `https://img.youtube.com/vi/${youtubeId}/hqdefault.jpg`
         };
     }
 

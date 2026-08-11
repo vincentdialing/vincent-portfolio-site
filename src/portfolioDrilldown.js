@@ -985,18 +985,7 @@ function renderLevel3(project) {
                 const flipbookId = 'flipbook-' + Math.random().toString(36).substr(2, 9);
                 return `
                   <div class="flipbook-wrapper" style="width: 100%; margin: 2.5rem 0; display: flex; justify-content: center; perspective: 1500px;">
-                    <div id="${flipbookId}" class="flipbook" data-pages='${JSON.stringify(block.pages).replace(/'/g, "&apos;")}'>
-                      <!-- Cover Page (Always first) -->
-                      <div class="flipbook-page flipbook-cover" style="padding: 0; overflow: hidden;">
-                        <img src="${block.pages[0]}" style="width: 100%; height: 100%; object-fit: cover; display: block;" alt="Cover">
-                      </div>
-                      <!-- Inner Pages -->
-                      ${block.pages.slice(1).map((url, i) => `
-                        <div class="flipbook-page ${i % 2 === 0 ? 'page-right' : 'page-left'}" style="padding: 0; overflow: hidden;">
-                          <img src="${url}" style="width: 100%; height: 100%; object-fit: cover; display: block;" alt="Page ${i + 2}">
-                        </div>
-                      `).join('')}
-                    </div>
+                    <div id="${flipbookId}" class="flipbook" data-pages='${JSON.stringify(block.pages).replace(/'/g, "&apos;")}'></div>
                   </div>
                 `;
 
@@ -1157,6 +1146,9 @@ function renderLevel3(project) {
     const flipbooks = detail.querySelectorAll('.flipbook');
     flipbooks.forEach(fb => {
         try {
+            const pagesData = JSON.parse(fb.dataset.pages || '[]');
+            if (pagesData.length === 0) return;
+
             // Wait for the modal animation to finish before measuring
             setTimeout(() => {
                 const width = Math.min(fb.parentElement.clientWidth / 2, 450); // max 450 per page
@@ -1166,18 +1158,21 @@ function renderLevel3(project) {
                     width: width,
                     height: height,
                     size: 'fixed',
-                    minWidth: 315,
+                    minWidth: 200,
                     maxWidth: 1000,
-                    minHeight: 420,
+                    minHeight: 280,
                     maxHeight: 1350,
                     showCover: true,
                     mobileScrollSupport: true,
                     maxShadowOpacity: 0.5,
                     drawShadow: true,
-                    flippingTime: 1000
+                    flippingTime: 1000,
+                    usePortrait: false,
+                    autoSize: false
                 });
 
-                pageFlip.loadFromHTML(fb.querySelectorAll('.flipbook-page'));
+                // Use loadFromImages — feeds URLs directly, most reliable method
+                pageFlip.loadFromImages(pagesData);
             }, 600); // Wait for GSAP modal enter animation
         } catch (err) {
             console.error('Failed to initialize flipbook:', err);

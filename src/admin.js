@@ -682,35 +682,33 @@ SERVICE: "${serviceTitle}"
 PROJECTS UNDER THIS SERVICE (${projects.length} total):
 ${projectSummaries}
 
-Write ONLY:
-1. DESCRIPTION: Exactly 2 sentences. Around 40-55 words total. Sentence 1 describes what the service covers and the types of deliverables (be specific — mention real content types, platforms, or audiences from the projects). Sentence 2 states the outcome or value for the client. Use one em dash (—) naturally. Do NOT use generic phrases like "leveraging expertise" or "driving engagement." Be vivid and specific. 
-
-CRITICAL: Do NOT mention or repeat the service title "${serviceTitle}" anywhere in the DESCRIPTION text. Repeating the title is redundant because it is already displayed prominently on the card. Start the description directly describing the work itself (e.g., "A curated collection of...", "Vivid visual design spanning...", etc.).
-
-Good example: "A curated collection of social media content spanning event campaigns, chorale season launches, and branded community graphics — crafted to build recognition and keep audiences consistently engaged. Each project is built around a distinct visual direction tailored to the client's identity and goals."
-
-2. BADGE: A short, punchy 2-3 word tag describing this service type (e.g. "Video Production", "Social Graphics", "Brand System", "UI/UX Design", "Merch Design"). Do NOT use "Case Study" — describe what it actually is based on the projects.
-
-Format EXACTLY:
----DESCRIPTION---
-[two sentences here]
----BADGE---
-[badge text here]`;
+Write the following details as a valid JSON object. Do not include markdown formatting or explanation, just the JSON:
+{
+  "description": "Exactly 2 sentences (40-55 words). Sentence 1 describes what the service covers based on the projects. Sentence 2 states the value for the client. Do NOT repeat the service title. Be vivid and specific.",
+  "badge": "A short, punchy 2-3 word tag describing this service type (e.g., 'Brand System', 'UI/UX Design'). Do NOT use 'Case Study'."
+}`;
 
       const groq = new Groq({ apiKey, dangerouslyAllowBrowser: true });
       const completion = await groq.chat.completions.create({
         model: 'openai/gpt-oss-120b',
         messages: [
-          { role: 'system', content: 'You are a client-facing portfolio copywriter. Write specific, vivid, compelling copy. Follow the format and word count exactly.' },
+          { role: 'system', content: 'You are a client-facing portfolio copywriter. Return strictly a JSON object.' },
           { role: 'user', content: prompt }
         ],
         temperature: 0.1,
         max_tokens: 512
       });
 
-      const content = completion.choices[0].message.content;
-      const description = extractSection(content, 'DESCRIPTION');
-      const badgeText = extractSection(content, 'BADGE');
+      let description = '';
+      let badgeText = '';
+      try {
+        const jsonStr = completion.choices[0].message.content.match(/\{[\s\S]*\}/)[0];
+        const data = JSON.parse(jsonStr);
+        description = data.description || '';
+        badgeText = data.badge || '';
+      } catch (e) {
+        console.error('Failed to parse Service JSON:', e, completion.choices[0].message.content);
+      }
       // Highlight stat = programmatic (never AI — it hallucinates numbers)
       const shortBio = computedStat;
       // Tools = programmatic merge of ALL project tools

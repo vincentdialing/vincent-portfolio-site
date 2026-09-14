@@ -5344,6 +5344,11 @@ body {
   border-radius: inherit;
 }
 
+/* Flipbook Watermark: Make it a bit more visible than the default 0.1 */
+.watermark-overlay.flipbook-watermark::after {
+  opacity: 0.25;
+}
+
 /* Lightbox Watermark: 5-point pattern by default (for square/landscape format)
    1 small logo in each corner, 1 big logo in the middle */
 .image-lightbox-overlay .lightbox-image-wrapper.watermark-overlay::after {

@@ -1,4 +1,5 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://vincentdialing.github.io/vincent-portfolio-site/sitemap.xml
+Sitemap: https://vincentdialing.vercel.app/sitemap.xml
+

@@ -698,7 +698,7 @@ Format EXACTLY:
 
       const groq = new Groq({ apiKey, dangerouslyAllowBrowser: true });
       const completion = await groq.chat.completions.create({
-        model: 'llama-3.3-70b-versatile',
+        model: 'llama-3.1-70b-versatile',
         messages: [
           { role: 'system', content: 'You are a client-facing portfolio copywriter. Write specific, vivid, compelling copy. Follow the format and word count exactly.' },
           { role: 'user', content: prompt }
@@ -937,7 +937,7 @@ Format your response exactly like this:
       }
     }
 
-    const selectedModel = useVisionModel ? 'meta-llama/llama-4-scout-17b-16e-instruct' : 'llama-3.3-70b-versatile';
+    const selectedModel = useVisionModel ? 'meta-llama/llama-4-scout-17b-16e-instruct' : 'llama-3.1-70b-versatile';
     console.log('Using Groq model:', selectedModel, '| Images:', imageUrls.length);
 
     let completion;
@@ -957,7 +957,7 @@ Format your response exactly like this:
         console.warn('Groq Vision model failed, falling back to text-only:', visionErr.message);
         showToast('Vision Fallback', 'Vision model unavailable. Using text-only generation.', 'warning');
         completion = await groq.chat.completions.create({
-          model: 'llama-3.3-70b-versatile',
+          model: 'llama-3.1-70b-versatile',
           messages: [
             { role: 'system', content: `You are a portfolio copywriter for Vincent Dialing, a Filipino creative professional. Write in his exact copy style. ${AI_COPY_STYLE_EXAMPLES}` },
             { role: 'user', content: userPromptText }

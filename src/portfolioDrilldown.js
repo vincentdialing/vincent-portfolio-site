@@ -1001,6 +1001,9 @@ function renderLevel3(project) {
         }
     }).join('');
 
+    // Check if project has a flipbook
+    const hasFlipbook = project.details.some(b => b.type === 'flipbook' && b.pages && b.pages.length > 0);
+
     // Build image gallery (bottom section)
     const imageGalleryHtml = imageBlocks.length > 0
         ? `<div class="detail-placeholder-gallery detail-image-gallery">
@@ -1023,14 +1026,14 @@ function renderLevel3(project) {
               </div>`;
         }).join('')}
            </div>`
-        : `<div class="detail-placeholder-gallery">
+        : (hasFlipbook ? '' : `<div class="detail-placeholder-gallery">
             <div class="gallery-item" style="background: ${project.gradient}; opacity: 0.6;">
               <span>Screenshot Placeholder</span>
             </div>
             <div class="gallery-item" style="background: ${project.gradient}; opacity: 0.4;">
               <span>Screenshot Placeholder</span>
             </div>
-           </div>`;
+           </div>`);
 
     // Check if project has any media (video/image) — if not, show placeholder gallery
     const hasMedia = project.details.some(b => b.type === 'video' || (b.type === 'image' && b.url));

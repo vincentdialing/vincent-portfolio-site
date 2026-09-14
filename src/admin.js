@@ -715,13 +715,45 @@ BADGE RULES:
 
       let description = '';
       let badgeText = '';
+      const rawContent = completion.choices[0].message.content;
+      console.log('🤖 Raw AI Service Response:', rawContent);
+
+      // Try JSON parsing first
       try {
-        const jsonStr = completion.choices[0].message.content.match(/\{[\s\S]*\}/)[0];
-        const data = JSON.parse(jsonStr);
-        description = data.description || '';
-        badgeText = data.badge || '';
+        const jsonMatch = rawContent.match(/\{[\s\S]*\}/);
+        if (jsonMatch) {
+          const data = JSON.parse(jsonMatch[0]);
+          description = data.description || data.desc || data.short_description || '';
+          badgeText = data.badge || data.badge_text || data.tag || '';
+        }
       } catch (e) {
-        console.error('Failed to parse Service JSON:', e, completion.choices[0].message.content);
+        console.warn('JSON parse failed, trying fallback:', e.message);
+      }
+
+      // Fallback: try extractSection format (---DESCRIPTION---)
+      if (!description) {
+        description = extractSection(rawContent, 'DESCRIPTION') || extractSection(rawContent, 'description');
+      }
+      if (!badgeText) {
+        badgeText = extractSection(rawContent, 'BADGE') || extractSection(rawContent, 'badge');
+      }
+
+      // Fallback 2: if still empty, use the raw content as description (strip any markdown)
+      if (!description && rawContent && rawContent.length > 20) {
+        const stripped = rawContent.replace(/```[\s\S]*?```/g, '').replace(/[#*_`]/g, '').trim();
+        if (stripped.length > 20 && stripped.length < 500) {
+          description = stripped;
+          console.log('Used raw content as fallback description');
+        }
+      }
+
+      // Show error with raw content if still nothing
+      if (!description && !badgeText) {
+        console.error('Could not extract description from AI. Raw:', rawContent);
+        resultsContainer.innerHTML += `<div class="ai-result-card" style="border-color: var(--warning);">
+          <span class="ai-result-label" style="color: var(--warning);">⚠️ AI returned unexpected format</span>
+          <p class="ai-result-text" style="font-size:0.8rem;opacity:0.7;word-break:break-all;">${rawContent.substring(0, 300)}</p>
+        </div>`;
       }
       // Highlight stat = programmatic (never AI — it hallucinates numbers)
       const shortBio = computedStat;

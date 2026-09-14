@@ -986,13 +986,7 @@ function renderLevel3(project) {
                 return `
                   <div class="flipbook-wrapper" style="width: 100%; margin: 2.5rem 0; display: flex; justify-content: center; perspective: 1500px; position: relative;">
                     <div id="${flipbookId}" class="flipbook" data-pages='${JSON.stringify(block.pages).replace(/'/g, "&apos;")}'></div>
-                    <div class="flipbook-watermark-overlay">
-                      <span>VINCENT DIALING</span>
-                      <span>VINCENT DIALING</span>
-                      <span>VINCENT DIALING</span>
-                      <span>VINCENT DIALING</span>
-                      <span>VINCENT DIALING</span>
-                    </div>
+                    <div class="watermark-overlay" style="position: absolute; inset: 0; pointer-events: none; z-index: 10;"></div>
                   </div>
                 `;
 

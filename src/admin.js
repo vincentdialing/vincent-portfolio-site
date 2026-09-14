@@ -682,11 +682,25 @@ SERVICE: "${serviceTitle}"
 PROJECTS UNDER THIS SERVICE (${projects.length} total):
 ${projectSummaries}
 
-Write the following details as a valid JSON object. Do not include markdown formatting or explanation, just the JSON:
+Write the following details as a valid JSON object. Do not include markdown formatting or explanation, just return the raw JSON:
 {
-  "description": "Exactly 2 sentences (40-55 words). Sentence 1 describes what the service covers based on the projects. Sentence 2 states the value for the client. Do NOT repeat the service title. Be vivid and specific.",
-  "badge": "A short, punchy 2-3 word tag describing this service type (e.g., 'Brand System', 'UI/UX Design'). Do NOT use 'Case Study'."
-}`;
+  "description": "Follow this EXACT writing flow and style...",
+  "badge": "A short 2-3 word tag..."
+}
+
+DESCRIPTION RULES:
+- Exactly 2-3 sentences, around 40-55 words total.
+- Sentence 1: Start with "A curated collection of..." or similar opener. List 3 specific deliverable types from the projects, separated by commas. Then use an em dash (—) followed by "crafted for/to" + who/what it's for.
+- Sentence 2: Start with "Each project is built around..." or similar. Describe the approach and end with the client outcome.
+- Do NOT repeat the service title "${serviceTitle}".
+- Do NOT use generic filler like "leveraging expertise" or "driving engagement."
+
+EXAMPLE of the exact style to follow:
+"A curated collection of promotional videos, event teasers, and real estate showcases — crafted for social media, property listings, and national events. Each project is built around a distinct visual direction tailored to the client's identity and goals, resulting in polished productions that garner significant engagement."
+
+BADGE RULES:
+- 2-3 word tag (e.g., "Video Production", "Brand System", "UI/UX Design"). Do NOT use "Case Study".`;
+
 
       const groq = new Groq({ apiKey, dangerouslyAllowBrowser: true });
       const completion = await groq.chat.completions.create({

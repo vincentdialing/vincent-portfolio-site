@@ -706,11 +706,12 @@ BADGE RULES:
       const completion = await groq.chat.completions.create({
         model: 'openai/gpt-oss-120b',
         messages: [
-          { role: 'system', content: 'You are a client-facing portfolio copywriter. Return strictly a JSON object.' },
+          { role: 'system', content: 'You are a client-facing portfolio copywriter. You MUST respond with ONLY a valid JSON object. No markdown, no explanation, no thinking, just the JSON.' },
           { role: 'user', content: prompt }
         ],
         temperature: 0.1,
-        max_tokens: 512
+        max_tokens: 512,
+        response_format: { type: 'json_object' }
       });
 
       let description = '';

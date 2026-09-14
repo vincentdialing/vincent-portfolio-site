@@ -638,42 +638,43 @@ function initServiceAIWriter() {
 
       if (error) throw error;
 
-      if (!projects || projects.length === 0) {
-        resultsContainer.innerHTML = `<p style="color:var(--text-muted);font-size:0.85rem;">No projects found under this service yet. Add some projects first, then generate.</p>`;
-        return;
+      let projectSummaries = 'No projects uploaded yet.';
+      let mergedTools = '';
+      let computedStat = '';
+
+      if (projects && projects.length > 0) {
+        // Build context from all projects
+        projectSummaries = projects.map((p, i) =>
+          `${i + 1}. "${p.title}" — ${p.category || ''} | Tools: ${Array.isArray(p.tools) ? p.tools.join(', ') : (p.tools || 'N/A')} | Desc: ${p.description || 'N/A'}`
+        ).join('\n');
+
+        // Collect all unique tools from ALL projects (programmatic, not AI)
+        mergedTools = [...new Set(
+          projects.flatMap(p => Array.isArray(p.tools) ? p.tools : (p.tools || '').split(',').map(t => t.trim()).filter(Boolean))
+        )].join(', ');
+
+        // Build a short, punchy highlight stat from real data
+        const uniqueCategories = [...new Set(projects.map(p => p.category).filter(Boolean))];
+        const projectCount = projects.length;
+        // Map raw category labels to short readable keywords
+        const areaKeywords = [...new Set(
+          uniqueCategories.flatMap(c =>
+            c.toLowerCase().includes('brand') ? ['branding'] :
+            c.toLowerCase().includes('event') ? ['events'] :
+            c.toLowerCase().includes('social') ? ['social content'] :
+            c.toLowerCase().includes('video') || c.toLowerCase().includes('edit') ? ['video production'] :
+            c.toLowerCase().includes('web') || c.toLowerCase().includes('ui') ? ['web & UI'] :
+            c.toLowerCase().includes('motion') ? ['motion graphics'] :
+            c.toLowerCase().includes('campaign') ? ['campaigns'] :
+            c.toLowerCase().includes('choral') || c.toLowerCase().includes('music') ? ['campaigns'] :
+            [c.split(' ').slice(0, 2).join(' ')]
+          )
+        )].slice(0, 3);
+        const areaPhrase = areaKeywords.length >= 2
+          ? areaKeywords.slice(0, -1).join(', ') + ', and ' + areaKeywords[areaKeywords.length - 1]
+          : areaKeywords[0] || 'creative projects';
+        computedStat = `${projectCount} project${projectCount !== 1 ? 's' : ''} across ${areaPhrase}.`;
       }
-
-      // Build context from all projects
-      const projectSummaries = projects.map((p, i) =>
-        `${i + 1}. "${p.title}" — ${p.category || ''} | Tools: ${Array.isArray(p.tools) ? p.tools.join(', ') : (p.tools || 'N/A')} | Desc: ${p.description || 'N/A'}`
-      ).join('\n');
-
-      // Collect all unique tools from ALL projects (programmatic, not AI)
-      const mergedTools = [...new Set(
-        projects.flatMap(p => Array.isArray(p.tools) ? p.tools : (p.tools || '').split(',').map(t => t.trim()).filter(Boolean))
-      )].join(', ');
-
-      // Build a short, punchy highlight stat from real data
-      const uniqueCategories = [...new Set(projects.map(p => p.category).filter(Boolean))];
-      const projectCount = projects.length;
-      // Map raw category labels to short readable keywords
-      const areaKeywords = [...new Set(
-        uniqueCategories.flatMap(c =>
-          c.toLowerCase().includes('brand') ? ['branding'] :
-          c.toLowerCase().includes('event') ? ['events'] :
-          c.toLowerCase().includes('social') ? ['social content'] :
-          c.toLowerCase().includes('video') || c.toLowerCase().includes('edit') ? ['video production'] :
-          c.toLowerCase().includes('web') || c.toLowerCase().includes('ui') ? ['web & UI'] :
-          c.toLowerCase().includes('motion') ? ['motion graphics'] :
-          c.toLowerCase().includes('campaign') ? ['campaigns'] :
-          c.toLowerCase().includes('choral') || c.toLowerCase().includes('music') ? ['campaigns'] :
-          [c.split(' ').slice(0, 2).join(' ')]
-        )
-      )].slice(0, 3);
-      const areaPhrase = areaKeywords.length >= 2
-        ? areaKeywords.slice(0, -1).join(', ') + ', and ' + areaKeywords[areaKeywords.length - 1]
-        : areaKeywords[0] || 'creative projects';
-      const computedStat = `${projectCount} project${projectCount !== 1 ? 's' : ''} across ${areaPhrase}.`;
 
       const prompt = `You are a portfolio copywriter for Vincent Dialing, a Filipino creative professional. Write copy that sounds polished, client-facing, and specific — the kind that makes someone want to hire him.
 

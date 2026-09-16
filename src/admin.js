@@ -989,7 +989,7 @@ Format your response exactly like this:
       }
     }
 
-    const selectedModel = useVisionModel ? 'meta-llama/llama-4-scout-17b-16e-instruct' : 'openai/gpt-oss-120b';
+    const selectedModel = useVisionModel ? 'qwen/qwen3.8-27b' : 'openai/gpt-oss-120b';
     console.log('Using Groq model:', selectedModel, '| Images:', imageUrls.length);
 
     let completion;
@@ -1215,9 +1215,7 @@ ${categoriesList}
     });
 
     const visionModels = [
-      'llama-3.2-11b-vision-preview',
-      'llama-3.2-90b-vision-preview',
-      'llama-3.2-11b-vision-instruct',
+      'qwen/qwen3.8-27b',
       'qwen/qwen3.6-27b'
     ];
 
@@ -1239,7 +1237,8 @@ ${categoriesList}
             }
           ],
           temperature: 0.1,
-          max_tokens: 2000
+          max_tokens: 2000,
+          reasoning_effort: 'none'
         });
         aiResponseText = completion.choices[0].message.content;
         console.log(`Groq Vision succeeded with model: ${model}`);
@@ -4770,9 +4769,7 @@ IMPORTANT: Only return the JSON object, no markdown fences, no explanation.`;
     });
 
     const visionModels = [
-      'llama-3.2-11b-vision-preview',
-      'llama-3.2-90b-vision-preview',
-      'llama-3.2-11b-vision-instruct',
+      'qwen/qwen3.8-27b',
       'qwen/qwen3.6-27b'
     ];
 
@@ -4797,7 +4794,8 @@ IMPORTANT: Only return the JSON object, no markdown fences, no explanation.`;
             }
           ],
           temperature: 0.1,
-          max_tokens: 2000
+          max_tokens: 2000,
+          reasoning_effort: 'none'
         });
         aiResponse = completion.choices[0].message.content;
         console.log(`Certificate scan succeeded with model: ${model}`);

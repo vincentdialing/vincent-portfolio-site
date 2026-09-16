@@ -2184,6 +2184,11 @@ function openProjectModal(projectId = null) {
     document.getElementById('project-db-id').value = '';
     document.getElementById('proj-key').readOnly = true;
     if (gradientPreview) gradientPreview.style.background = 'linear-gradient(135deg, #007bff 0%, #00d2ff 100%)';
+    // Trigger auto-fill for Project Key on new project modal open
+    const serviceKeySelect = document.getElementById('proj-service-key');
+    if (serviceKeySelect) {
+      serviceKeySelect.dispatchEvent(new Event('change'));
+    }
   }
 
   renderDetailBlocks();

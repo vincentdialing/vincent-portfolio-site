@@ -703,20 +703,26 @@ BADGE RULES:
 
 
       const groq = new Groq({ apiKey, dangerouslyAllowBrowser: true });
-      const completion = await groq.chat.completions.create({
-        model: 'openai/gpt-oss-120b',
-        messages: [
-          { role: 'system', content: 'You are a client-facing portfolio copywriter. You MUST respond with ONLY a valid JSON object. No markdown, no explanation, no thinking, just the JSON.' },
-          { role: 'user', content: prompt }
-        ],
-        temperature: 0.1,
-        max_tokens: 512,
-        response_format: { type: 'json_object' }
-      });
+      let rawContent = '';
+      try {
+        const completion = await groq.chat.completions.create({
+          model: 'openai/gpt-oss-120b',
+          messages: [
+            { role: 'system', content: 'Respond with only a JSON object. No markdown fences, no explanation.' },
+            { role: 'user', content: prompt }
+          ],
+          temperature: 0.1,
+          max_tokens: 512
+        });
+        rawContent = completion.choices[0]?.message?.content || '';
+      } catch (apiErr) {
+        console.error('Groq API error:', apiErr);
+        resultsContainer.innerHTML = `<div class="ai-result-card" style="border-color:var(--error);"><p class="ai-result-text" style="color:var(--error);font-size:0.85rem;">API Error: ${apiErr.message}</p></div>`;
+        return;
+      }
 
       let description = '';
       let badgeText = '';
-      const rawContent = completion.choices[0].message.content;
       console.log('🤖 Raw AI Service Response:', rawContent);
 
       // Try JSON parsing first

@@ -994,7 +994,10 @@ Format your response exactly like this:
       }
     }
 
-    const selectedModel = useVisionModel ? 'qwen/qwen3.8-27b' : 'openai/gpt-oss-120b';
+    // Groq currently does not support stable vision models on standard API keys.
+    // If vision is required, we attempt to use Llama 3.2 Vision Preview if available,
+    // otherwise it will catch and fallback to text-only `llama3-70b-8192`.
+    const selectedModel = useVisionModel ? 'llama-3.2-11b-vision-preview' : 'llama3-70b-8192';
     console.log('Using Groq model:', selectedModel, '| Images:', imageUrls.length);
 
     let completion;

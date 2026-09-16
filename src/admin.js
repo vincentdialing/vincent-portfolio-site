@@ -600,6 +600,34 @@ function initAIWriter() {
   }
 }
 
+// --- AI Generation & Groq Integration ---
+
+async function getBestGroqModel(groqClient) {
+  try {
+    const res = await groqClient.models.list();
+    const available = res.data.map(m => m.id);
+    // Prioritize high-quality text models, fallback to whatever is available
+    const preferred = [
+      'llama-3.3-70b-versatile',
+      'llama-3.1-70b-versatile',
+      'llama3-70b-8192',
+      'mixtral-8x7b-32768',
+      'llama-3.1-8b-instant',
+      'llama3-8b-8192',
+      'gemma2-9b-it',
+      'gemma-7b-it'
+    ];
+    for (const p of preferred) {
+      if (available.includes(p)) return p;
+    }
+    const fallback = available.find(m => !m.includes('whisper') && !m.includes('guard'));
+    return fallback || 'mixtral-8x7b-32768';
+  } catch (err) {
+    console.warn('Failed to list Groq models, using fallback', err);
+    return 'mixtral-8x7b-32768';
+  }
+}
+
 function initServiceAIWriter() {
   const btn = document.getElementById('service-ai-generate-btn');
   if (!btn) return;
@@ -705,8 +733,10 @@ BADGE RULES:
       const groq = new Groq({ apiKey, dangerouslyAllowBrowser: true });
       let rawContent = '';
       try {
+        const activeModel = await getBestGroqModel(groq);
+        console.log('Using active Groq model for Service AI:', activeModel);
         const completion = await groq.chat.completions.create({
-          model: 'mixtral-8x7b-32768',
+          model: activeModel,
           messages: [
             { role: 'system', content: 'Respond with only a JSON object. No markdown fences, no explanation.' },
             { role: 'user', content: prompt }
@@ -994,10 +1024,12 @@ Format your response exactly like this:
       }
     }
 
-    // Groq currently does not support stable vision models on standard API keys.
-    // If vision is required, we attempt to use Llama 3.2 Vision Preview if available,
-    // otherwise it will catch and fallback to text-only `llama3-70b-8192`.
-    const selectedModel = useVisionModel ? 'llama-3.2-11b-vision-preview' : 'mixtral-8x7b-32768';
+    let selectedModel = 'mixtral-8x7b-32768';
+    if (useVisionModel) {
+      selectedModel = 'llama-3.2-11b-vision-preview';
+    } else {
+      selectedModel = await getBestGroqModel(groq);
+    }
     console.log('Using Groq model:', selectedModel, '| Images:', imageUrls.length);
 
     let completion;
@@ -1014,10 +1046,11 @@ Format your response exactly like this:
     } catch (visionErr) {
       // If vision model fails, fallback to text-only
       if (useVisionModel) {
+        const fallbackModel = await getBestGroqModel(groq);
         console.warn('Groq Vision model failed, falling back to text-only:', visionErr.message);
         showToast('Vision Fallback', 'Vision model unavailable. Using text-only generation.', 'warning');
         completion = await groq.chat.completions.create({
-          model: 'mixtral-8x7b-32768',
+          model: fallbackModel,
           messages: [
             { role: 'system', content: `You are a portfolio copywriter for Vincent Dialing, a Filipino creative professional. Write in his exact copy style. ${AI_COPY_STYLE_EXAMPLES}` },
             { role: 'user', content: userPromptText }

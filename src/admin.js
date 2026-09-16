@@ -2226,7 +2226,6 @@ async function handleProjectSubmit(e) {
     details: currentDetailBlocks
   };
 
-  const submitBtn = document.getElementById('save-project-submit');
   submitBtn.disabled = true;
   submitBtn.textContent = 'Saving...';
 

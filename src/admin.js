@@ -949,7 +949,9 @@ Format your response exactly like this:
     let useVisionModel = false;
 
     if (imageUrls.length > 0) {
-      for (const url of imageUrls) {
+      // Limit to 3 images to comply with Qwen vision model constraints
+      const urlsToProcess = imageUrls.slice(0, 3);
+      for (const url of urlsToProcess) {
         try {
           const imgRes = await fetch(url);
           const blob = await imgRes.blob();
@@ -1142,7 +1144,7 @@ async function handleAICreateFromImage(files) {
 
     // 3. Compress & convert files to Base64 WebP for Llama Vision API (max 800px width)
     const base64Images = [];
-    const numImagesForAI = Math.min(files.length, 4);
+    const numImagesForAI = Math.min(files.length, 3);
     for (let i = 0; i < numImagesForAI; i++) {
       if (loadingText) loadingText.textContent = `Processing image ${i + 1} of ${numImagesForAI}...`;
       const base64Image = await new Promise((resolve, reject) => {

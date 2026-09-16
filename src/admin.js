@@ -706,7 +706,7 @@ BADGE RULES:
       let rawContent = '';
       try {
         const completion = await groq.chat.completions.create({
-          model: 'openai/gpt-oss-120b',
+          model: 'llama-3.1-70b-versatile',
           messages: [
             { role: 'system', content: 'Respond with only a JSON object. No markdown fences, no explanation.' },
             { role: 'user', content: prompt }
@@ -754,20 +754,21 @@ BADGE RULES:
         }
       }
 
-      // Show error with raw content if still nothing
+      let finalHTML = '';
       if (!description && !badgeText) {
         console.error('Could not extract description from AI. Raw:', rawContent);
-        resultsContainer.innerHTML += `<div class="ai-result-card" style="border-color: var(--warning);">
+        finalHTML += `<div class="ai-result-card" style="border-color: var(--warning);">
           <span class="ai-result-label" style="color: var(--warning);">⚠️ AI returned unexpected format</span>
           <p class="ai-result-text" style="font-size:0.8rem;opacity:0.7;word-break:break-all;">${rawContent.substring(0, 300)}</p>
         </div>`;
       }
+      
       // Highlight stat = programmatic (never AI — it hallucinates numbers)
       const shortBio = computedStat;
       // Tools = programmatic merge of ALL project tools
       const toolsList = mergedTools;
 
-      resultsContainer.innerHTML = `
+      finalHTML += `
         ${badgeText ? `
           <div class="ai-result-card">
             <div class="ai-result-card-header">
@@ -804,6 +805,8 @@ BADGE RULES:
           ✓ Apply All
         </button>
       `;
+
+      resultsContainer.innerHTML = finalHTML;
 
       // Wire apply buttons
       resultsContainer.querySelectorAll('.ai-apply-btn').forEach(applyBtn => {
@@ -1011,7 +1014,7 @@ Format your response exactly like this:
         console.warn('Groq Vision model failed, falling back to text-only:', visionErr.message);
         showToast('Vision Fallback', 'Vision model unavailable. Using text-only generation.', 'warning');
         completion = await groq.chat.completions.create({
-          model: 'openai/gpt-oss-120b',
+          model: 'llama-3.1-70b-versatile',
           messages: [
             { role: 'system', content: `You are a portfolio copywriter for Vincent Dialing, a Filipino creative professional. Write in his exact copy style. ${AI_COPY_STYLE_EXAMPLES}` },
             { role: 'user', content: userPromptText }

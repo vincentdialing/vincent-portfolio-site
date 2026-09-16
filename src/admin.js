@@ -706,7 +706,7 @@ BADGE RULES:
       let rawContent = '';
       try {
         const completion = await groq.chat.completions.create({
-          model: 'llama-3.1-8b-instant',
+          model: 'llama3-70b-8192',
           messages: [
             { role: 'system', content: 'Respond with only a JSON object. No markdown fences, no explanation.' },
             { role: 'user', content: prompt }
@@ -1014,7 +1014,7 @@ Format your response exactly like this:
         console.warn('Groq Vision model failed, falling back to text-only:', visionErr.message);
         showToast('Vision Fallback', 'Vision model unavailable. Using text-only generation.', 'warning');
         completion = await groq.chat.completions.create({
-          model: 'llama-3.1-8b-instant',
+          model: 'llama3-70b-8192',
           messages: [
             { role: 'system', content: `You are a portfolio copywriter for Vincent Dialing, a Filipino creative professional. Write in his exact copy style. ${AI_COPY_STYLE_EXAMPLES}` },
             { role: 'user', content: userPromptText }

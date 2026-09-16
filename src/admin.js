@@ -2197,6 +2197,8 @@ function openProjectModal(projectId = null) {
 
 async function handleProjectSubmit(e) {
   e.preventDefault();
+  const submitBtn = document.getElementById('save-project-submit');
+  if (submitBtn.disabled) return;
   saveBlockInputs();
 
   const id = document.getElementById('project-db-id').value;
@@ -2243,9 +2245,9 @@ async function handleProjectSubmit(e) {
 
     if (resultError) throw resultError;
 
+    await loadProjects();
     showToast('Success', `Project "${title}" saved successfully.`, 'success');
     closeModal('project-modal');
-    loadProjects();
   } catch (err) {
     console.error('Error saving project:', err);
     showToast('Save Failed', err.message || 'Row Level Security policy blocked this save.', 'error');

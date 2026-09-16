@@ -1660,6 +1660,7 @@ body {
 .detail-block-actions {
   display: flex;
   gap: 0.25rem;
+  flex-wrap: wrap;
 }
 
 .detail-blocks-list {

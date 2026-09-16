@@ -5333,8 +5333,8 @@ body {
     260px auto,
     80px auto, 80px auto;
 
-  opacity: 0.1;
-  /* 10% opacity as requested */
+  opacity: 1;
+  /* Full opacity for anti-theft protection */
   mix-blend-mode: screen;
   /* Blends gorgeously into images but NEVER disappears on black backgrounds */
   filter: brightness(0) invert(1);

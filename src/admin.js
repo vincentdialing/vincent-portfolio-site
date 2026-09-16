@@ -706,7 +706,7 @@ BADGE RULES:
       let rawContent = '';
       try {
         const completion = await groq.chat.completions.create({
-          model: 'llama3-70b-8192',
+          model: 'mixtral-8x7b-32768',
           messages: [
             { role: 'system', content: 'Respond with only a JSON object. No markdown fences, no explanation.' },
             { role: 'user', content: prompt }
@@ -997,7 +997,7 @@ Format your response exactly like this:
     // Groq currently does not support stable vision models on standard API keys.
     // If vision is required, we attempt to use Llama 3.2 Vision Preview if available,
     // otherwise it will catch and fallback to text-only `llama3-70b-8192`.
-    const selectedModel = useVisionModel ? 'llama-3.2-11b-vision-preview' : 'llama3-70b-8192';
+    const selectedModel = useVisionModel ? 'llama-3.2-11b-vision-preview' : 'mixtral-8x7b-32768';
     console.log('Using Groq model:', selectedModel, '| Images:', imageUrls.length);
 
     let completion;
@@ -1017,7 +1017,7 @@ Format your response exactly like this:
         console.warn('Groq Vision model failed, falling back to text-only:', visionErr.message);
         showToast('Vision Fallback', 'Vision model unavailable. Using text-only generation.', 'warning');
         completion = await groq.chat.completions.create({
-          model: 'llama3-70b-8192',
+          model: 'mixtral-8x7b-32768',
           messages: [
             { role: 'system', content: `You are a portfolio copywriter for Vincent Dialing, a Filipino creative professional. Write in his exact copy style. ${AI_COPY_STYLE_EXAMPLES}` },
             { role: 'user', content: userPromptText }

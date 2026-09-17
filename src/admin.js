@@ -6950,7 +6950,7 @@ function initResumeManager() {
     try {
       if (!supabase) throw new Error('Database not connected.');
       
-      const fileName = 'resume.pdf';
+      const fileName = 'Vincent_Dialing_Resume.pdf';
       const bucketName = 'portfolio';
       
       const { data, error } = await supabase.storage

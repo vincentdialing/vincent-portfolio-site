@@ -1010,12 +1010,12 @@ const handleSendMessage = async () => {
 
   if (typingIndicator) typingIndicator.classList.add('hidden');
 
-  // Speak and Show Answer (text shows when audio starts)
-  speak(response, () => {
-    addMessage(response, 'bot');
-    // Scroll to bottom after bot reply
-    chatMessages.scrollTop = chatMessages.scrollHeight;
-  });
+  // Show the text answer IMMEDIATELY
+  addMessage(response, 'bot');
+  chatMessages.scrollTop = chatMessages.scrollHeight;
+
+  // Play TTS in the background (non-blocking)
+  speak(response, () => {});
 };
 
 if (sendBtn && chatInput) {

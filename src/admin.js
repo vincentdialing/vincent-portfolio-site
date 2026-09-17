@@ -244,7 +244,8 @@ const TAB_CONFIGS = {
   uploads: { title: 'File Manager', subtitle: 'Upload static images directly to your Supabase Storage.', button: '' },
   certificates: { title: 'Certificates & Credentials', subtitle: 'Manage professional certificates and credentials.', button: 'Add Certificate' },
   reviews: { title: 'Client Reviews', subtitle: 'Manage client feedback, ratings, and profile avatars.', button: 'Add Review' },
-  config: { title: 'Supabase Credentials', subtitle: 'Configure credentials to authenticate your write sessions.', button: '' }
+  config: { title: 'Supabase Credentials', subtitle: 'Configure credentials to authenticate your write sessions.', button: '' },
+  resume: { title: 'Resume Manager', subtitle: 'Upload and manage your CV/Resume PDF.', button: '' }
 };
 
 const TAB_TO_URL = {
@@ -256,7 +257,8 @@ const TAB_TO_URL = {
   uploads: 'uploads',
   certificates: 'certificates',
   reviews: 'reviews',
-  config: 'config'
+  config: 'config',
+  resume: 'resume'
 };
 
 const URL_TO_TAB = {
@@ -272,7 +274,9 @@ const URL_TO_TAB = {
   certificates: 'certificates',
   reviews: 'reviews',
   config: 'config',
-  credentials: 'config'
+  credentials: 'config',
+  resume: 'resume',
+  resumemanager: 'resume'
 };
 
 let activeTab = 'projects';

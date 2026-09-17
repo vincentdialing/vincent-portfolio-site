@@ -109,19 +109,23 @@ function fallbackSpeak(text, onStart, onEnd) {
     // Get voices (use cached or try fresh)
     const voices = cachedVoices.length > 0 ? cachedVoices : window.speechSynthesis.getVoices();
 
-    // Try to find a good English male voice
+    // Strongly prefer a male English voice
     const preferred = voices.find(v =>
+        /en/i.test(v.lang || '') && /daniel|aaron|james|david|thomas|fred|alex|tom/i.test(v.name || '')
+    ) || voices.find(v =>
         /en/i.test(v.lang || '') && /male/i.test(v.name || '')
     ) || voices.find(v =>
-        /en-US|en-GB/i.test(v.lang || '')
-    ) || voices[0]; // Just use whatever is available
+        /en-US|en-GB|en-AU/i.test(v.lang || '') && !/female|samantha|karen|kate|moira|fiona|tessa|victoria|zoe/i.test(v.name || '')
+    ) || voices.find(v =>
+        /en/i.test(v.lang || '')
+    ) || voices[0];
 
     if (preferred) {
         utterance.voice = preferred;
         console.log('🎤 Using voice:', preferred.name);
     }
 
-    utterance.pitch = 1.0;
+    utterance.pitch = 0.95;
     utterance.rate = 1.0;
     utterance.volume = 1.0;
 

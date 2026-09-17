@@ -6994,9 +6994,9 @@ async function initAIAtsGenerator() {
   const generateBtn = document.getElementById('generate-ats-btn');
   const nicheInput = document.getElementById('ats-niche-input');
   const resultContainer = document.getElementById('ats-result-container');
-  const resultTextarea = document.getElementById('ats-result-textarea');
-  const copyBtn = document.getElementById('ats-copy-btn');
+  const resultPreview = document.getElementById('ats-result-preview');
   const downloadBtn = document.getElementById('ats-download-btn');
+  let currentHtml = '';
 
   if (!generateBtn) return;
 
@@ -7065,10 +7065,13 @@ I am providing you with the full text scraped from my portfolio website and data
 Using ONLY this information, generate a professional, highly-optimized, ATS-friendly resume tailored specifically for the role of: "${niche}".
 
 Requirements:
-- Format strictly in clean Markdown (use ## for sections, bolding, bullet points).
+- Format strictly in clean, semantic HTML. Do NOT output markdown.
+- Use ONLY standard tags: <div>, <h1>, <h2>, <h3>, <p>, <ul>, <li>, <strong>, <em>.
+- The outermost wrapper MUST be exactly: <div class="ats-resume-container" style="font-family: Arial, Helvetica, sans-serif; line-height: 1.6; color: #111; max-width: 800px; margin: 0 auto; padding: 2rem; background: #fff;">
+- Add professional inline CSS for styling. For example: Use <h1 style="text-align: center; font-size: 24px; margin-bottom: 5px; color: #000;"> for the name, <h2 style="font-size: 18px; border-bottom: 2px solid #000; padding-bottom: 5px; margin-top: 20px; text-transform: uppercase;"> for section headers.
 - Include standard ATS sections: Professional Summary, Core Competencies/Skills, Professional Experience (infer from projects/services if needed), and Education/Certificates.
 - Do NOT make up fake companies or dates if they aren't provided; generalize them as "Freelance / Independent Projects".
-- Make the tone professional and impactful.
+- Output ONLY the raw HTML. Do not wrap in markdown \`\`\`html fences.
 
 Here is the scraped portfolio content:
 ${scrapedContext}
@@ -7077,19 +7080,21 @@ ${scrapedContext}
       const completion = await groq.chat.completions.create({
         model: activeModel,
         messages: [
-          { role: 'system', content: 'You are an expert ATS resume writer. Output only the markdown resume.' },
+          { role: 'system', content: 'You are an expert ATS resume writer. Output ONLY the raw HTML resume. Do not include markdown fences.' },
           { role: 'user', content: prompt }
         ],
-        temperature: 0.4,
-        max_tokens: 2500,
+        temperature: 0.3,
+        max_tokens: 3000,
       });
 
-      const generatedResume = completion.choices[0]?.message?.content || '';
+      let generatedResume = completion.choices[0]?.message?.content || '';
+      generatedResume = generatedResume.replace(/```html/g, '').replace(/```/g, '').trim();
 
       if (!generatedResume) throw new Error('AI returned empty response.');
 
       // 4. Display Results
-      resultTextarea.value = generatedResume.trim();
+      currentHtml = generatedResume;
+      resultPreview.innerHTML = generatedResume;
       resultContainer.classList.remove('hidden');
       showToast('Success', 'ATS Resume generated successfully!', 'success');
 
@@ -7102,23 +7107,50 @@ ${scrapedContext}
     }
   });
 
-  // Copy Button
-  copyBtn.addEventListener('click', () => {
-    navigator.clipboard.writeText(resultTextarea.value).then(() => {
-      showToast('Copied', 'Resume copied to clipboard!', 'success');
-    });
-  });
-
-  // Download Button
+  // Download PDF Button
   downloadBtn.addEventListener('click', () => {
-    const text = resultTextarea.value;
-    const blob = new Blob([text], { type: 'text/plain' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    const nicheText = nicheInput.value.replace(/[^a-z0-9]/gi, '_').toLowerCase();
-    a.href = url;
-    a.download = `Vincent_Dialing_ATS_Resume_${nicheText || 'Generated'}.txt`;
-    a.click();
-    URL.revokeObjectURL(url);
+    if (!currentHtml) return;
+    
+    // Create a hidden iframe
+    const iframe = document.createElement('iframe');
+    iframe.style.position = 'fixed';
+    iframe.style.right = '0';
+    iframe.style.bottom = '0';
+    iframe.style.width = '0';
+    iframe.style.height = '0';
+    iframe.style.border = '0';
+    document.body.appendChild(iframe);
+    
+    // Write the HTML to the iframe
+    const doc = iframe.contentWindow.document;
+    doc.open();
+    doc.write(`
+      <html>
+        <head>
+          <title>Vincent_Dialing_ATS_Resume_${nicheInput.value.replace(/[^a-z0-9]/gi, '_').toLowerCase()}</title>
+          <style>
+            @media print {
+              @page { margin: 1cm; size: auto; }
+              body { margin: 0; padding: 0; background: white; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+            }
+          </style>
+        </head>
+        <body>
+          ${currentHtml}
+        </body>
+      </html>
+    `);
+    doc.close();
+    
+    // Trigger print dialog on iframe load
+    iframe.onload = () => {
+      iframe.contentWindow.focus();
+      iframe.contentWindow.print();
+      
+      // Cleanup after print dialog closes (some delay needed)
+      setTimeout(() => {
+        document.body.removeChild(iframe);
+      }, 5000);
+    };
   });
 }

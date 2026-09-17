@@ -1775,3 +1775,54 @@ const attachCursorGradient = (element, ease = 0.08) => {
 attachCursorGradient(ctaBtn, 0.08);
 attachCursorGradient(navContactBtn, 0.12);
 attachCursorGradient(navLogoBtn, 0.12);
+
+// ==========================================
+// RESUME MODAL LOGIC
+// ==========================================
+function initResumeModal() {
+  const resumeCard = document.getElementById('resume-card');
+  const resumeModal = document.getElementById('resume-modal');
+  const resumeCloseBtn = document.getElementById('resume-modal-close');
+  const resumeBackdrop = document.getElementById('resume-modal-backdrop');
+  const resumeIframe = document.getElementById('resume-modal-iframe');
+  const resumeDownloadBtn = document.getElementById('resume-modal-download-btn');
+
+  if (!resumeCard || !resumeModal) return;
+
+  const openResumeModal = () => {
+    // Generate the public URL for the uploaded resume
+    // We use a query parameter to bust cache if the admin re-uploaded recently
+    const resumeUrl = `${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/portfolio/resume.pdf?v=${Date.now()}`;
+    
+    if (resumeIframe) resumeIframe.src = resumeUrl;
+    if (resumeDownloadBtn) resumeDownloadBtn.href = resumeUrl;
+    
+    resumeModal.classList.add('is-open');
+    resumeModal.setAttribute('aria-hidden', 'false');
+    document.body.style.overflow = 'hidden';
+  };
+
+  const closeResumeModal = () => {
+    resumeModal.classList.remove('is-open');
+    resumeModal.setAttribute('aria-hidden', 'true');
+    document.body.style.overflow = '';
+    // Optional: clear iframe to stop it loading in background
+    if (resumeIframe) resumeIframe.src = '';
+  };
+
+  resumeCard.addEventListener('click', openResumeModal);
+  if (resumeCloseBtn) resumeCloseBtn.addEventListener('click', closeResumeModal);
+  if (resumeBackdrop) resumeBackdrop.addEventListener('click', closeResumeModal);
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && resumeModal.classList.contains('is-open')) {
+      closeResumeModal();
+    }
+  });
+}
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initResumeModal);
+} else {
+  initResumeModal();
+}

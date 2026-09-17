@@ -6907,3 +6907,73 @@ function initServiceMockupGenerator() {
     });
   }
 }
+
+// ==========================================
+// RESUME UPLOAD LOGIC
+// ==========================================
+function initResumeManager() {
+  const uploadInput = document.getElementById('resume-upload-input');
+  const uploadLabel = document.getElementById('resume-upload-btn-label');
+  const saveBtn = document.getElementById('save-resume-btn');
+  
+  if (!uploadInput || !saveBtn) return;
+  
+  uploadInput.addEventListener('change', (e) => {
+    if (e.target.files.length > 0) {
+      uploadLabel.textContent = e.target.files[0].name;
+    } else {
+      uploadLabel.textContent = 'Choose PDF...';
+    }
+  });
+
+  saveBtn.addEventListener('click', async () => {
+    const file = uploadInput.files[0];
+    if (!file) {
+      showToast('Error', 'Please select a PDF file first.', 'error');
+      return;
+    }
+    
+    if (file.type !== 'application/pdf') {
+      showToast('Error', 'Only PDF files are allowed.', 'error');
+      return;
+    }
+    
+    const originalText = saveBtn.textContent;
+    saveBtn.textContent = 'Uploading...';
+    saveBtn.disabled = true;
+    
+    try {
+      if (!supabase) throw new Error('Database not connected.');
+      
+      const fileName = 'resume.pdf';
+      const bucketName = 'portfolio';
+      
+      const { data, error } = await supabase.storage
+        .from(bucketName)
+        .upload(fileName, file, {
+          cacheControl: '0',
+          upsert: true,
+          contentType: 'application/pdf'
+        });
+        
+      if (error) throw error;
+      
+      showToast('Success', 'Resume updated successfully! Changes will reflect on the main site.', 'success');
+      
+      uploadInput.value = '';
+      uploadLabel.textContent = 'Choose PDF...';
+    } catch (err) {
+      console.error('Resume upload error:', err);
+      showToast('Upload Failed', err.message, 'error');
+    } finally {
+      saveBtn.textContent = originalText;
+      saveBtn.disabled = false;
+    }
+  });
+}
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', () => setTimeout(initResumeManager, 500));
+} else {
+  setTimeout(initResumeManager, 500);
+}

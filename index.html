@@ -308,7 +308,7 @@
             <line x1="12" y1="19" x2="12" y2="23"></line>
             <line x1="8" y1="23" x2="16" y2="23"></line>
           </svg>
-          Ask about Vincent
+          Ask Vincent
         </button>
       </div>
     </div>
@@ -1061,6 +1061,11 @@
         <div class="message bot welcome-message">
           Hi! I'm Vincent. Ask me anything about my work or simply talk to me!
         </div>
+        <div id="suggested-questions" class="suggested-questions">
+          <button class="suggested-q-btn" data-question="What are your core skills?">What are your core skills?</button>
+          <button class="suggested-q-btn" data-question="Can you describe your UI/UX workflow?">Can you describe your UI/UX workflow?</button>
+          <button class="suggested-q-btn" data-question="How do you approach Social Media Management?">How do you approach Social Media Management?</button>
+        </div>
       </div>
 
       <!-- Typing Indicator (3 Dots) -->
@@ -1068,14 +1073,6 @@
         <span>.</span><span>.</span><span>.</span>
       </div>
 
-      
-      <!-- Suggested Questions -->
-      <div id="suggested-questions" style="display: flex; flex-direction: column; gap: 8px; margin: 0 20px 10px 20px;">
-        <button class="suggested-q-btn" style="background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: #fff; padding: 10px 15px; border-radius: 20px; text-align: left; font-size: 0.9rem; cursor: pointer; transition: background 0.3s;" onmouseover="this.style.background='rgba(255,255,255,0.2)'" onmouseout="this.style.background='rgba(255,255,255,0.1)'" onclick="document.getElementById('chat-input').value = this.innerText; document.getElementById('send-btn').click(); this.parentElement.style.display = 'none';">What are your core skills?</button>
-        <button class="suggested-q-btn" style="background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: #fff; padding: 10px 15px; border-radius: 20px; text-align: left; font-size: 0.9rem; cursor: pointer; transition: background 0.3s;" onmouseover="this.style.background='rgba(255,255,255,0.2)'" onmouseout="this.style.background='rgba(255,255,255,0.1)'" onclick="document.getElementById('chat-input').value = this.innerText; document.getElementById('send-btn').click(); this.parentElement.style.display = 'none';">Can you describe your UI/UX workflow?</button>
-        <button class="suggested-q-btn" style="background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: #fff; padding: 10px 15px; border-radius: 20px; text-align: left; font-size: 0.9rem; cursor: pointer; transition: background 0.3s;" onmouseover="this.style.background='rgba(255,255,255,0.2)'" onmouseout="this.style.background='rgba(255,255,255,0.1)'" onclick="document.getElementById('chat-input').value = this.innerText; document.getElementById('send-btn').click(); this.parentElement.style.display = 'none';">How do you approach Social Media Management?</button>
-      </div>
-      
       <!-- Input Area (Positioned above Wave) -->
 
       <div class="chat-input-area">
@@ -1092,19 +1089,6 @@
       <!-- Siri Wave Canvas -->
       <div class="wave-container">
         <canvas id="siri-wave"></canvas>
-      </div>
-
-      <!-- Mic Button (Bottom Center) -->
-      <div class="mic-container">
-        <button id="voice-btn" class="icon-btn" aria-label="Voice Input">
-          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
-            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path>
-            <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
-            <line x1="12" y1="19" x2="12" y2="23"></line>
-            <line x1="8" y1="23" x2="16" y2="23"></line>
-          </svg>
-        </button>
       </div>
     </div>
   </div>

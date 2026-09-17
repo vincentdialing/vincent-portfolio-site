@@ -937,11 +937,13 @@ if (waveCanvas && waveContainer) {
 if (chatWindow && chatClose) {
   const closeChat = () => {
     chatWindow.classList.add('hidden');
+    document.body.style.overflow = '';
     if (siriWave) {
       siriWave.setAmplitude(0);
       siriWave.stop();
     }
     window.speechSynthesis.cancel();
+    // Chat history is preserved — only resets on page reload
   };
   chatClose.addEventListener('click', closeChat);
 }
@@ -973,63 +975,7 @@ const addMessage = (text, type) => {
   }
 };
 
-// Handle Voice Input
-if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
-  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-  const recognition = new SpeechRecognition();
-
-  recognition.continuous = false;
-  recognition.interimResults = false;
-  recognition.lang = "en-US";
-
-  voiceBtn.addEventListener('click', () => {
-    recognition.start();
-    voiceBtn.classList.add('listening');
-    if (siriWave) {
-      waveContainer.classList.add('active');
-      siriWave.setAmplitude(0.4); // Listening state
-    }
-  });
-
-  recognition.onresult = async (event) => {
-    const transcript = event.results[0][0].transcript;
-    voiceBtn.classList.remove('listening');
-    if (siriWave) siriWave.setAmplitude(0.1); // Back to idle
-
-    // Clear previous for single-interaction focus
-    chatMessages.innerHTML = '';
-
-    // Show User Message
-    addMessage(transcript, 'user');
-
-    // Show Typing Indicator
-    if (typingIndicator) typingIndicator.classList.remove('hidden');
-
-    // Simulate Thinking/Network
-    // setTimeout(async () => {
-    const response = await findAnswer(transcript);
-
-    // Hide Indicator
-    if (typingIndicator) typingIndicator.classList.add('hidden');
-
-    // Speak and Show Answer (text shows when audio starts)
-    speak(response, () => {
-      addMessage(response, 'bot');
-    });
-
-    // }, 800);
-  };
-
-  recognition.onerror = (event) => {
-    voiceBtn.classList.remove('listening');
-    if (siriWave) siriWave.setAmplitude(0.1);
-    console.error('Speech recognition error', event.error);
-  };
-
-} else {
-  if (voiceBtn) voiceBtn.style.display = 'none';
-  console.log('Web Speech API not supported.');
-}
+// Voice input removed — type-only chat
 
 // Voice Output
 // Old Voice Output Logic removed
@@ -1047,18 +993,15 @@ const handleSendMessage = async () => {
 
   chatInput.value = ''; // Clear input
 
-  // Clear previous messages
-  chatMessages.innerHTML = '';
+  // Hide suggested questions once user starts chatting
+  const suggestedQ = document.getElementById('suggested-questions');
+  if (suggestedQ) suggestedQ.style.display = 'none';
 
-  // Show User Message
+  // Show User Message (append, don't clear history)
   addMessage(text, 'user');
 
-  // Hide Input Area while AI processes/speaks
-  if (inputArea) inputArea.classList.add('input-hidden');
-  if (siriWave) {
-    waveContainer.classList.add('active'); // Show wave area even if not speaking yet
-    siriWave.setAmplitude(0.2); // Subtle waiting
-  }
+  // Scroll to bottom
+  chatMessages.scrollTop = chatMessages.scrollHeight;
 
   // Simulate Thinking
   if (typingIndicator) typingIndicator.classList.remove('hidden');
@@ -1070,6 +1013,8 @@ const handleSendMessage = async () => {
   // Speak and Show Answer (text shows when audio starts)
   speak(response, () => {
     addMessage(response, 'bot');
+    // Scroll to bottom after bot reply
+    chatMessages.scrollTop = chatMessages.scrollHeight;
   });
 };
 
@@ -1079,6 +1024,17 @@ if (sendBtn && chatInput) {
     if (e.key === 'Enter') handleSendMessage();
   });
 }
+
+// Suggested Question Buttons
+document.querySelectorAll('.suggested-q-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const question = btn.getAttribute('data-question');
+    if (chatInput) {
+      chatInput.value = question;
+      handleSendMessage();
+    }
+  });
+});
 // ==========================================
 // ElevenLabs Text-to-Speech
 // ==========================================
@@ -1169,11 +1125,14 @@ let contentIndex = [];
 
 const buildContentIndex = () => {
   const sectionConfigs = [
+    { id: 'hero', label: 'Hero', selector: '.hero' },
     { id: 'about', label: 'About', selector: '.about-section' },
+    { id: 'services', label: 'Services', selector: '.bento-grid' },
     { id: 'works', label: 'Works', selector: '#works' },
     { id: 'certificates', label: 'Certificates', selector: '#certificates' },
     { id: 'testimonials', label: 'Testimonials', selector: '#testimonials' },
-    { id: 'contact', label: 'Contact', selector: '#contact' }
+    { id: 'contact', label: 'Contact', selector: '#contact' },
+    { id: 'footer', label: 'Footer', selector: '.footer-bar' }
   ];
 
   contentIndex = [];
@@ -1185,7 +1144,7 @@ const buildContentIndex = () => {
     const paragraphs = Array.from(root.querySelectorAll('p, h2, h3'))
       .map(node => node.innerText || node.textContent || '')
       .map(text => text.trim())
-      .filter(text => text.length > 40);
+      .filter(text => text.length > 15);
 
     paragraphs.forEach(text => {
       contentIndex.push({
@@ -1208,7 +1167,8 @@ const findFromContentIndex = (query) => {
   if (!contentIndex.length) return null;
 
   const q = query.toLowerCase();
-  const tokens = q.split(/\s+/).filter(Boolean);
+  const stopWords = new Set(['what','is','are','the','a','an','your','you','do','how','can','does','about','tell','me','i','my','to','and','or','of','in','for','with','this','that','it']);
+  const tokens = q.split(/\s+/).filter(t => t.length >= 2 && !stopWords.has(t));
   let best = null;
   let bestScore = 0;
 
@@ -1217,8 +1177,12 @@ const findFromContentIndex = (query) => {
     let score = 0;
 
     tokens.forEach(t => {
-      if (t.length < 3) return;
       if (textLower.includes(t)) score += 1;
+    });
+
+    // Bonus for section label match
+    tokens.forEach(t => {
+      if (entry.sectionLabel.toLowerCase().includes(t)) score += 0.5;
     });
 
     if (score > bestScore) {
@@ -1255,12 +1219,13 @@ const findAnswer = (query) => {
 // Hero Section Integration
 // ==========================================
 const heroSpeakBtn = document.getElementById('hero-speak-btn');
-if (heroSpeakBtn && chatWindow && voiceBtn) {
+if (heroSpeakBtn && chatWindow) {
   heroSpeakBtn.addEventListener('click', (e) => {
     e.preventDefault();
 
     // 1. Open Chat Interface
     chatWindow.classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
     if (siriWave) {
       siriWave.start();
       siriWave.setAmplitude(0.1);

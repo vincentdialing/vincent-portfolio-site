@@ -839,12 +839,14 @@ function openCertificateModal(tile) {
   }
 
   certificateModal.classList.add('is-open');
+  document.body.style.overflow = 'hidden';
   certificateModal.setAttribute('aria-hidden', 'false');
 }
 
 function closeCertificateModal() {
   if (!certificateModal) return;
   certificateModal.classList.remove('is-open');
+  document.body.style.overflow = '';
   certificateModal.setAttribute('aria-hidden', 'true');
 
   if (lastFocusedTile) {
@@ -1813,12 +1815,14 @@ function initResumeModal() {
     if (resumeDownloadBtn) resumeDownloadBtn.href = resumeUrl;
     
     resumeModal.classList.add('is-open');
+    document.body.style.overflow = 'hidden';
     resumeModal.setAttribute('aria-hidden', 'false');
     document.body.style.overflow = 'hidden';
   };
 
   const closeResumeModal = () => {
     resumeModal.classList.remove('is-open');
+    document.body.style.overflow = '';
     resumeModal.setAttribute('aria-hidden', 'true');
     document.body.style.overflow = '';
     // Optional: clear iframe to stop it loading in background

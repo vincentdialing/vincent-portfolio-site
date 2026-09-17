@@ -949,6 +949,16 @@ if (chatWindow && chatClose) {
   chatClose.addEventListener('click', closeChat);
 }
 
+// Prevent background scrolling on iOS when chat is open
+if (chatWidget) {
+  chatWidget.addEventListener('touchmove', (e) => {
+    // Only allow scrolling if we are touching inside the chat-messages area
+    if (!e.target.closest('.chat-messages')) {
+      e.preventDefault();
+    }
+  }, { passive: false });
+}
+
 // Add Message to Chat
 const addMessage = (text, type) => {
   const messageDiv = document.createElement('div');
@@ -961,14 +971,16 @@ const addMessage = (text, type) => {
 
   if (type === 'user') {
     messageDiv.innerText = formattedText;
+    chatMessages.scrollTop = chatMessages.scrollHeight;
   } else if (type === 'bot') {
     // Typewriter effect
     let i = 0;
-    const speed = 35;
+    const speed = 25; // Slightly faster for better UX
     function typeChar() {
       if (i < formattedText.length) {
         messageDiv.textContent += formattedText.charAt(i);
         i++;
+        chatMessages.scrollTop = chatMessages.scrollHeight;
         setTimeout(typeChar, speed);
       }
     }
@@ -1013,13 +1025,13 @@ const handleSendMessage = async () => {
 
   // Show the text answer IMMEDIATELY
   addMessage(response, 'bot');
-  chatMessages.scrollTop = chatMessages.scrollHeight;
 
-  // Show new suggested questions after a brief delay
+  // Show new suggested questions after the typewriter effect finishes
+  const typingDuration = response.length * 25; // 25ms per char
   setTimeout(() => {
     showSuggestedQuestions();
     chatMessages.scrollTop = chatMessages.scrollHeight;
-  }, 500);
+  }, typingDuration + 300);
 
   // Play TTS in the background (non-blocking)
   try { speak(response, () => {}); } catch(e) { console.log('TTS error:', e); }
@@ -1067,6 +1079,11 @@ function showSuggestedQuestions() {
 
   container.innerHTML = '';
   container.style.display = 'flex';
+  
+  // Move it to the very bottom of the chat list
+  if (chatMessages) {
+    chatMessages.appendChild(container);
+  }
 
   picked.forEach(q => {
     const btn = document.createElement('button');

@@ -3964,6 +3964,7 @@ nav.floating-nav {
   background: rgba(0, 0, 0, 0.6);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
+  overscroll-behavior: none;
 }
 
 .chat-window {
@@ -3987,6 +3988,7 @@ nav.floating-nav {
   pointer-events: auto;
   transition: all 0.3s ease;
   position: relative;
+  overscroll-behavior: none;
 }
 
 /* Bottom Glow Effect */
@@ -4067,6 +4069,8 @@ nav.floating-nav {
   text-align: center;
   scrollbar-width: none;
   gap: 8px;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
 }
 
 .chat-messages::-webkit-scrollbar {

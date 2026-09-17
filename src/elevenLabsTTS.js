@@ -1,14 +1,21 @@
-// ElevenLabs Text-to-Speech Service with Streaming
+// ElevenLabs Text-to-Speech Service with robust fallback
 const ELEVENLABS_API_KEY = '5710f39af47a45a7a9e7558acb34d2be3ef5613538c949cef23e4f30580bb0cd';
 
 // User's selected ElevenLabs voice.
-// Tip: replace this ID in your own project with a
-// Filipino / Taglish, young-male style voice from your ElevenLabs account.
 const VOICE_ID = 'wNl2YBRc8v5uIcq6gOxd';
+
+// Pre-load browser voices (they load async in many browsers)
+let cachedVoices = [];
+if ('speechSynthesis' in window) {
+  cachedVoices = window.speechSynthesis.getVoices();
+  window.speechSynthesis.onvoiceschanged = () => {
+    cachedVoices = window.speechSynthesis.getVoices();
+  };
+}
 
 /**
  * Convert text to speech using ElevenLabs Streaming API
- * Starts playing audio as chunks arrive for faster response
+ * Falls back to browser speech synthesis if ElevenLabs fails
  */
 export async function speakWithElevenLabs(text, onStart, onEnd, onThinking) {
     console.log('🎤 ElevenLabs: Starting stream...');
@@ -17,6 +24,9 @@ export async function speakWithElevenLabs(text, onStart, onEnd, onThinking) {
     if (onThinking) onThinking();
 
     try {
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 8000); // 8s timeout
+
         const response = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${VOICE_ID}/stream`, {
             method: 'POST',
             headers: {
@@ -33,13 +43,16 @@ export async function speakWithElevenLabs(text, onStart, onEnd, onThinking) {
                     style: 0.0,
                     use_speaker_boost: true
                 }
-            })
+            }),
+            signal: controller.signal
         });
+
+        clearTimeout(timeout);
 
         if (!response.ok) {
             const errorText = await response.text();
             console.error('🎤 ElevenLabs ERROR:', response.status, errorText);
-            fallbackSpeak(text, onEnd);
+            fallbackSpeak(text, onStart, onEnd);
             return null;
         }
 
@@ -72,43 +85,65 @@ export async function speakWithElevenLabs(text, onStart, onEnd, onThinking) {
 
     } catch (error) {
         console.error('🎤 ElevenLabs Error:', error);
-        fallbackSpeak(text, onEnd);
+        fallbackSpeak(text, onStart, onEnd);
         return null;
     }
 }
 
-// Fallback to browser speech synthesis
-function fallbackSpeak(text, onEnd) {
+// Fallback to browser speech synthesis (always works)
+function fallbackSpeak(text, onStart, onEnd) {
     console.log('🎤 Using fallback browser speech...');
-    if ('speechSynthesis' in window) {
-        const utterance = new SpeechSynthesisUtterance(text);
-        // Prefer a Filipino / Taglish, young-male style voice if available
-        const voices = window.speechSynthesis.getVoices();
-        const preferred = voices.find(v =>
-            /fil|ph|tagalog/i.test(v.lang || '') &&
-            /male|guy|boy/i.test(v.name || '')
-        ) || voices.find(v =>
-            /en-PH/i.test(v.lang || '') &&
-            /male|guy|boy/i.test(v.name || '')
-        ) || voices.find(v =>
-            /en/i.test(v.lang || '') &&
-            /male|guy|boy|young/i.test(v.name || '')
-        );
 
-        if (preferred) {
-            utterance.voice = preferred;
-        }
-
-        // Slightly higher pitch + a bit faster rate to feel like early 20s
-        utterance.pitch = 1.15;
-        utterance.rate = 1.05;
-        utterance.onend = () => {
-            if (onEnd) onEnd();
-        };
-        window.speechSynthesis.speak(utterance);
-    } else {
+    if (!('speechSynthesis' in window)) {
+        console.log('🎤 No speech synthesis available');
+        if (onStart) onStart();
         if (onEnd) onEnd();
+        return;
     }
+
+    // Cancel any ongoing speech
+    window.speechSynthesis.cancel();
+
+    const utterance = new SpeechSynthesisUtterance(text);
+
+    // Get voices (use cached or try fresh)
+    const voices = cachedVoices.length > 0 ? cachedVoices : window.speechSynthesis.getVoices();
+
+    // Try to find a good English male voice
+    const preferred = voices.find(v =>
+        /en/i.test(v.lang || '') && /male/i.test(v.name || '')
+    ) || voices.find(v =>
+        /en-US|en-GB/i.test(v.lang || '')
+    ) || voices[0]; // Just use whatever is available
+
+    if (preferred) {
+        utterance.voice = preferred;
+        console.log('🎤 Using voice:', preferred.name);
+    }
+
+    utterance.pitch = 1.0;
+    utterance.rate = 1.0;
+    utterance.volume = 1.0;
+
+    utterance.onstart = () => {
+        console.log('🎤 Browser speech started');
+        if (onStart) onStart();
+    };
+
+    utterance.onend = () => {
+        console.log('🎤 Browser speech finished');
+        if (onEnd) onEnd();
+    };
+
+    utterance.onerror = (e) => {
+        console.error('🎤 Browser speech error:', e);
+        if (onEnd) onEnd();
+    };
+
+    // Chrome bug workaround: speechSynthesis needs a small delay sometimes
+    setTimeout(() => {
+        window.speechSynthesis.speak(utterance);
+    }, 100);
 }
 
 export { VOICE_ID };

@@ -938,6 +938,7 @@ if (chatWindow && chatClose) {
   const closeChat = () => {
     chatWindow.classList.add('hidden');
     document.body.style.overflow = '';
+    if (chatWidget) chatWidget.classList.remove('chat-active');
     if (siriWave) {
       siriWave.setAmplitude(0);
       siriWave.stop();
@@ -1014,8 +1015,14 @@ const handleSendMessage = async () => {
   addMessage(response, 'bot');
   chatMessages.scrollTop = chatMessages.scrollHeight;
 
+  // Show new suggested questions after a brief delay
+  setTimeout(() => {
+    showSuggestedQuestions();
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+  }, 500);
+
   // Play TTS in the background (non-blocking)
-  speak(response, () => {});
+  try { speak(response, () => {}); } catch(e) { console.log('TTS error:', e); }
 };
 
 if (sendBtn && chatInput) {
@@ -1025,16 +1032,57 @@ if (sendBtn && chatInput) {
   });
 }
 
-// Suggested Question Buttons
-document.querySelectorAll('.suggested-q-btn').forEach(btn => {
-  btn.addEventListener('click', () => {
-    const question = btn.getAttribute('data-question');
-    if (chatInput) {
-      chatInput.value = question;
-      handleSendMessage();
-    }
+// ==========================================
+// Suggested Questions System (6 pool, show 3 random)
+// ==========================================
+const allSuggestedQuestions = [
+  "What are your core skills?",
+  "Can you describe your UI/UX workflow?",
+  "How do you approach Social Media Management?",
+  "What tools and technologies do you use?",
+  "Tell me about your work experience.",
+  "How can I work with you?"
+];
+let usedQuestions = new Set();
+
+function showSuggestedQuestions() {
+  const container = document.getElementById('suggested-questions');
+  if (!container) return;
+
+  // Get available questions (not yet used)
+  let available = allSuggestedQuestions.filter(q => !usedQuestions.has(q));
+
+  // If all used, reset
+  if (available.length < 3) {
+    usedQuestions.clear();
+    available = [...allSuggestedQuestions];
+  }
+
+  // Shuffle and pick 3
+  const shuffled = available.sort(() => Math.random() - 0.5);
+  const picked = shuffled.slice(0, 3);
+
+  container.innerHTML = '';
+  container.style.display = 'flex';
+
+  picked.forEach(q => {
+    const btn = document.createElement('button');
+    btn.className = 'suggested-q-btn';
+    btn.textContent = q;
+    btn.addEventListener('click', () => {
+      usedQuestions.add(q);
+      container.style.display = 'none';
+      if (chatInput) {
+        chatInput.value = q;
+        handleSendMessage();
+      }
+    });
+    container.appendChild(btn);
   });
-});
+}
+
+// Show initial suggested questions
+showSuggestedQuestions();
 // ==========================================
 // ElevenLabs Text-to-Speech
 // ==========================================
@@ -1055,40 +1103,36 @@ const hideThinking = () => {
   if (thinkingMsg) thinkingMsg.remove();
 };
 
-// Speak with synced text display
+// Speak with TTS (non-blocking, text already shown)
 const speak = (text, onShowText) => {
-  // Start visual feedback immediately - wave animation during loading
+  // Start visual feedback
   if (siriWave) {
     waveContainer.classList.add('active');
-    siriWave.setAmplitude(0.8); // Medium amplitude while thinking
+    siriWave.setAmplitude(0.5);
   }
-  if (inputArea) inputArea.classList.add('input-hidden');
 
   // Use ElevenLabs for natural voice
-  speakWithElevenLabs(
-    text,
-    // onStart - when audio starts playing, show the text
-    () => {
-      hideThinking();
-      if (siriWave) siriWave.setAmplitude(1.5); // Full amplitude when speaking
-      if (threeOrb) threeOrb.setTalking(true);
-      // Show the text answer NOW when audio starts
-      if (onShowText) onShowText();
-    },
-    // onEnd - reset visuals
-    () => {
-      hideThinking();
-      if (threeOrb) threeOrb.setTalking(false);
-      if (siriWave) {
-        siriWave.setAmplitude(0.1);
-      }
-      if (inputArea) inputArea.classList.remove('input-hidden');
-    },
-    // onThinking - show thinking message
-    () => {
-      showThinking();
-    }
-  );
+  try {
+    speakWithElevenLabs(
+      text,
+      // onStart
+      () => {
+        if (siriWave) siriWave.setAmplitude(1.2);
+        if (threeOrb) threeOrb.setTalking(true);
+        if (onShowText) onShowText();
+      },
+      // onEnd
+      () => {
+        if (threeOrb) threeOrb.setTalking(false);
+        if (siriWave) siriWave.setAmplitude(0.1);
+      },
+      // onThinking
+      () => {}
+    );
+  } catch(e) {
+    console.log('TTS failed, text already shown:', e);
+    if (siriWave) siriWave.setAmplitude(0.1);
+  }
 };
 
 // ------------------------------------------
@@ -1226,6 +1270,7 @@ if (heroSpeakBtn && chatWindow) {
     // 1. Open Chat Interface
     chatWindow.classList.remove('hidden');
     document.body.style.overflow = 'hidden';
+    if (chatWidget) chatWidget.classList.add('chat-active');
     if (siriWave) {
       siriWave.start();
       siriWave.setAmplitude(0.1);

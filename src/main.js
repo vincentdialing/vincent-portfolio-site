@@ -1037,11 +1037,14 @@ if (sendBtn && chatInput) {
 // ==========================================
 const allSuggestedQuestions = [
   "What are your core skills?",
-  "Can you describe your UI/UX workflow?",
-  "How do you approach Social Media Management?",
-  "What tools and technologies do you use?",
   "Tell me about your work experience.",
-  "How can I work with you?"
+  "What tools do you use?",
+  "What's your education background?",
+  "Are you available for remote work?",
+  "How do you approach social media?",
+  "Tell me about your video editing work.",
+  "What certifications do you have?",
+  "How can I contact you?"
 ];
 let usedQuestions = new Set();
 
@@ -1139,29 +1142,57 @@ const speak = (text, onShowText) => {
 // Knowledge Base + Live Site Content Index
 // ------------------------------------------
 const knowledgeBase = {
-  greetings: ["hello", "hi", "hey", "greetings"],
-  skills: ["skills", "expertise", "stack", "tech", "technologies", "react", "design"],
-  projects: ["projects", "work", "portfolio", "case studies", "featured"],
-  contact: ["contact", "email", "reach", "hire", "touch"],
-  services: ["services", "what", "do", "offer", "help"],
-  about: ["about", "who", "vincent", "background", "experience"],
-  coreSkills: ["what are your core skills", "core skills", "core"],
-  uiuxWorkflow: ["ui/ux workflow", "describe your ui/ux workflow", "workflow"],
-  smmApproach: ["social media management", "approach social media"]
+  greetings: ["hello", "hi", "hey", "greetings", "good morning", "good evening"],
+  skills: ["skills", "expertise", "stack", "tech", "technologies", "proficient", "good at"],
+  projects: ["projects", "work", "portfolio", "case studies", "featured", "clients"],
+  contact: ["contact", "email", "reach", "hire", "touch", "message"],
+  services: ["services", "offer", "help", "provide"],
+  about: ["about", "who", "vincent", "background"],
+  experience: ["experience", "career", "worked", "companies", "jobs", "roles"],
+  education: ["education", "degree", "school", "university", "college", "graduated"],
+  tools: ["tools", "software", "adobe", "figma", "photoshop", "illustrator", "premiere", "canva"],
+  coreSkills: ["what are your core skills", "core skills", "main skills", "strongest"],
+  uiuxWorkflow: ["ui/ux", "ux", "user experience", "user interface", "wireframe", "prototype"],
+  smmApproach: ["social media", "smm", "organic growth", "content strategy", "marketing"],
+  videoEditing: ["video", "editing", "premiere pro", "after effects", "motion", "reels"],
+  creon: ["creon", "creon motion", "youtube", "thumbnails"],
+  imperate: ["imperate", "realty", "real estate"],
+  harmonia: ["harmonia", "chorale", "choir"],
+  devcon: ["devcon", "developer community"],
+  gdsc: ["gdsc", "google developer", "student clubs"],
+  mugna: ["mugna", "internship", "intern"],
+  freelance: ["freelance", "self-employed", "independent", "clients"],
+  remote: ["remote", "work setup", "availability", "schedule", "night shift", "internet"],
+  certifications: ["certifications", "certificates", "certified", "nasa", "workshop"],
+  languages: ["language", "speak", "english", "bisaya", "cebuano", "filipino", "hiligaynon"]
 };
 
-// Base responses (used when no good match from scraped content)
+// Base responses — based on Vincent's actual resume
 const responses = {
-  default: "I can answer questions about my work, skills, or how we can collaborate. What would you like to know?",
-  greetings: "Hi there! I'm Vincent. I can tell you about my skills, show you my focused projects, or we can discuss working together.",
-  skills: "I specialize in React, TypeScript, and modern CSS for development. For design, I use tools like Figma and Adobe Creative Suite.",
-  projects: "My featured work includes content design, video editing, UI/UX design, web development, and more — all showcased on this page.",
-  contact: "You can reach me via the “Let’s get in touch” section or connect with me on LinkedIn and GitHub in the footer.",
-  services: "I offer a mix of front-end development, UI/UX, graphic design, and digital marketing so I can help from strategy to execution.",
-  about: "I'm a multi-disciplinary creative based in Davao City who blends design, development, and marketing to build premium digital experiences.",
-  coreSkills: "My core skills revolve around UI/UX Design, Frontend Development, Graphic Design, and Social Media Management. I blend design with code to create complete digital experiences.",
-  uiuxWorkflow: "My UI/UX workflow starts with user research and wireframing to establish a solid foundation. Then, I move to Figma for high-fidelity prototyping and interactive testing before handing off clean, developer-ready assets.",
-  smmApproach: "For Social Media Management, I focus on end-to-end strategy. I handle everything from designing engaging visual content and planning content calendars, to data-driven community engagement that drives organic growth."
+  default: "I can tell you about my skills, experience, tools, or how to work with me. Just ask!",
+  greetings: "Hey! I'm Vincent — a Graphic Designer, Video Editor, and Social Media Manager based in Davao City. What would you like to know about me?",
+  skills: "I specialize in Graphic Design, Video Editing, Social Media Management, and UI/UX Design. I've produced 350+ digital designs across B2B, SaaS, and branded content — all with proven organic growth results.",
+  projects: "I've worked on everything from YouTube thumbnails and documentary-style videos at Creon Motion, to UI/UX design for Imperate Realty, and full creative direction for Harmonia Chorale and DEVCON Davao. Check out my portfolio right here on this page!",
+  contact: "You can reach me at dialingvincent@gmail.com or +63 945 354 4181. Connect with me on LinkedIn or just scroll down to the contact section!",
+  services: "I offer Graphic Design, Video Editing, Social Media Management, UI/UX Design, and Frontend Development. From brand identity to full content strategy — I handle it end-to-end.",
+  about: "I'm Vincent Dialing, a multi-disciplinary creative from Davao City. BS in IT Major in Business Technology Management at USeP, Magna Cum Laude. I blend design, development, and marketing with 4+ years of professional experience.",
+  experience: "I've held roles at Creon Motion (Visual Assets Creator), Imperate Realty (UI/UX Designer), Harmonia Chorale (Head Creatives), Candice & Leona Salon (SMM), Mugna Technologies (Digital Marketing Intern), DEVCON Davao (Design Lead), and GDSC USeP (Branding Manager). I've also been freelancing since 2019.",
+  education: "I graduated from the University of Southeastern Philippines with a BS in Information Technology, Major in Business Technology Management — Magna Cum Laude. I was also recognized as Student Leadership Excellence Awardee and 2nd Best University Student Artist of Class 2026.",
+  tools: "For design: Adobe Photoshop, Illustrator, After Effects, Premiere Pro, Figma, and Canva. For development: JavaScript, Tailwind CSS, Supabase, and GitHub. I also use AI tools like ChatGPT, Claude, and Gemini for productivity.",
+  coreSkills: "My core skills are Graphic Design, Social Media Management, Video Editing, and UI/UX Design. I've produced 500+ creative assets, driven 100% organic audience growth, and managed 15+ weekly deliverables across distributed teams.",
+  uiuxWorkflow: "I design web interfaces in Figma using user-centered principles. My workflow goes from client discovery calls to wireframes, prototypes, and final UI — all validated through usability testing. I did this hands-on for Imperate Realty across 4 main pages.",
+  smmApproach: "I focus on 100% organic growth with zero ad spend. At Harmonia Chorale, I produced 150+ designs that drove massive audience growth. I manage everything from content calendars and daily engagement to campaign execution and analytics.",
+  videoEditing: "I produce both short-form and long-form video content. At Creon Motion, I created visual assets and motion elements for documentary-style YouTube videos that reached 100K+ views across channels with 50K+ subscribers.",
+  creon: "At Creon Motion, I designed 15+ graphic assets weekly for YouTube thumbnails, LinkedIn content, and social media. I also directed visual and creative direction for documentary-style videos, with a 2-day turnaround on asset packages.",
+  imperate: "At Imperate Realty, I served as UI/UX Designer and Social Media Manager for 7 months. I designed web interfaces in Figma, created 25+ digital assets for property listings, and conducted user experience research and usability testing.",
+  harmonia: "At Harmonia Polifonica Chorale, I was Head Creatives and Lead Social Media Manager for nearly 4 years. I produced 150+ digital designs, grew the page organically with zero ad spend, directed video productions, and launched their website which generated 25+ client inquiries.",
+  devcon: "As Design Lead at DEVCON Davao, I direct design strategy and visual identity for community initiatives. I manage a team of 3 designers and have directed visual branding for 6 events reaching 100+ attendees.",
+  gdsc: "As Branding Manager at GDSC USeP, I directed brand development and social media strategy. I built brand guidelines applied across 10+ campaigns, rebranded the visual identity for 2 major events, and designed their first official website.",
+  mugna: "At Mugna Technologies, I interned as a Digital Marketing Specialist. I executed social media campaigns for B2B software solutions, managed 15+ posts and campaigns, and served as a core team member on their flagship project.",
+  freelance: "I've been freelancing since 2019 — that's 7 years. I've delivered custom designs, brand identity packages, and digital assets for 50+ clients, producing 500+ creative assets with a 100% on-time completion rate.",
+  remote: "I'm fully set up for remote work. I have Converge Fiber 200 Mbps internet with a Globe backup, a MacBook Pro, and a quiet dedicated workspace. I'm available full-time with flexible hours, including night shifts (8PM–6AM).",
+  certifications: "I'm certified in UI/UX Design from DEVCON Davao's 16-hour workshop, I'm a NASA Galactic Problem Solver and UI/UX Designer from the International Space Apps Challenge, and I presented at CHED RAISE 2026 in Iloilo.",
+  languages: "I speak English (proficient), Filipino (fluent), Bisaya/Cebuano (native), and Hiligaynon (native)."
 };
 
 // Lightweight index of text scraped from the live page

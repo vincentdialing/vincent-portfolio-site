@@ -6957,7 +6957,8 @@ function initResumeManager() {
         .upload(fileName, file, {
           cacheControl: '0',
           upsert: true,
-          contentType: 'application/pdf'
+          contentType: 'application/pdf',
+          contentDisposition: 'inline'
         });
         
       if (error) throw error;

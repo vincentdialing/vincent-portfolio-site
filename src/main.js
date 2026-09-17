@@ -1793,8 +1793,9 @@ function initResumeModal() {
     // Generate the public URL for the uploaded resume
     // We use a query parameter to bust cache if the admin re-uploaded recently
     const resumeUrl = `${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/portfolio/resume.pdf?v=${Date.now()}`;
+    const previewUrl = `https://docs.google.com/viewer?url=${encodeURIComponent(resumeUrl)}&embedded=true`;
     
-    if (resumeIframe) resumeIframe.src = resumeUrl;
+    if (resumeIframe) resumeIframe.src = previewUrl;
     if (resumeDownloadBtn) resumeDownloadBtn.href = resumeUrl;
     
     resumeModal.classList.add('is-open');

@@ -308,7 +308,7 @@
             <line x1="12" y1="19" x2="12" y2="23"></line>
             <line x1="8" y1="23" x2="16" y2="23"></line>
           </svg>
-          Speak with Vincent
+          Ask about Vincent
         </button>
       </div>
     </div>
@@ -1068,7 +1068,16 @@
         <span>.</span><span>.</span><span>.</span>
       </div>
 
+      
+      <!-- Suggested Questions -->
+      <div id="suggested-questions" style="display: flex; flex-direction: column; gap: 8px; margin: 0 20px 10px 20px;">
+        <button class="suggested-q-btn" style="background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: #fff; padding: 10px 15px; border-radius: 20px; text-align: left; font-size: 0.9rem; cursor: pointer; transition: background 0.3s;" onmouseover="this.style.background='rgba(255,255,255,0.2)'" onmouseout="this.style.background='rgba(255,255,255,0.1)'" onclick="document.getElementById('chat-input').value = this.innerText; document.getElementById('send-btn').click(); this.parentElement.style.display = 'none';">What are your core skills?</button>
+        <button class="suggested-q-btn" style="background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: #fff; padding: 10px 15px; border-radius: 20px; text-align: left; font-size: 0.9rem; cursor: pointer; transition: background 0.3s;" onmouseover="this.style.background='rgba(255,255,255,0.2)'" onmouseout="this.style.background='rgba(255,255,255,0.1)'" onclick="document.getElementById('chat-input').value = this.innerText; document.getElementById('send-btn').click(); this.parentElement.style.display = 'none';">Can you describe your UI/UX workflow?</button>
+        <button class="suggested-q-btn" style="background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: #fff; padding: 10px 15px; border-radius: 20px; text-align: left; font-size: 0.9rem; cursor: pointer; transition: background 0.3s;" onmouseover="this.style.background='rgba(255,255,255,0.2)'" onmouseout="this.style.background='rgba(255,255,255,0.1)'" onclick="document.getElementById('chat-input').value = this.innerText; document.getElementById('send-btn').click(); this.parentElement.style.display = 'none';">How do you approach Social Media Management?</button>
+      </div>
+      
       <!-- Input Area (Positioned above Wave) -->
+
       <div class="chat-input-area">
         <input type="text" id="chat-input" placeholder="Type or ask..." autocomplete="off" />
         <button id="send-btn" class="icon-btn" aria-label="Send Message">

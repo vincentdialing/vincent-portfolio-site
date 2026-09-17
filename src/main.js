@@ -1144,7 +1144,10 @@ const knowledgeBase = {
   projects: ["projects", "work", "portfolio", "case studies", "featured"],
   contact: ["contact", "email", "reach", "hire", "touch"],
   services: ["services", "what", "do", "offer", "help"],
-  about: ["about", "who", "vincent", "background", "experience"]
+  about: ["about", "who", "vincent", "background", "experience"],
+  coreSkills: ["what are your core skills", "core skills", "core"],
+  uiuxWorkflow: ["ui/ux workflow", "describe your ui/ux workflow", "workflow"],
+  smmApproach: ["social media management", "approach social media"]
 };
 
 // Base responses (used when no good match from scraped content)
@@ -1155,7 +1158,10 @@ const responses = {
   projects: "My featured work includes content design, video editing, UI/UX design, web development, and more — all showcased on this page.",
   contact: "You can reach me via the “Let’s get in touch” section or connect with me on LinkedIn and GitHub in the footer.",
   services: "I offer a mix of front-end development, UI/UX, graphic design, and digital marketing so I can help from strategy to execution.",
-  about: "I'm a multi-disciplinary creative based in Davao City who blends design, development, and marketing to build premium digital experiences."
+  about: "I'm a multi-disciplinary creative based in Davao City who blends design, development, and marketing to build premium digital experiences.",
+  coreSkills: "My core skills revolve around UI/UX Design, Frontend Development, Graphic Design, and Social Media Management. I blend design with code to create complete digital experiences.",
+  uiuxWorkflow: "My UI/UX workflow starts with user research and wireframing to establish a solid foundation. Then, I move to Figma for high-fidelity prototyping and interactive testing before handing off clean, developer-ready assets.",
+  smmApproach: "For Social Media Management, I focus on end-to-end strategy. I handle everything from designing engaging visual content and planning content calendars, to data-driven community engagement that drives organic growth."
 };
 
 // Lightweight index of text scraped from the live page

@@ -245,6 +245,7 @@ const TAB_CONFIGS = {
   certificates: { title: 'Certificates & Credentials', subtitle: 'Manage professional certificates and credentials.', button: 'Add Certificate' },
   reviews: { title: 'Client Reviews', subtitle: 'Manage client feedback, ratings, and profile avatars.', button: 'Add Review' },
   config: { title: 'Supabase Credentials', subtitle: 'Configure credentials to authenticate your write sessions.', button: '' },
+  resume: { title: 'Resume Manager', subtitle: 'Upload and manage your CV/Resume PDF.', button: '' },
   resume: { title: 'Resume Manager', subtitle: 'Upload and manage your CV/Resume PDF.', button: '' }
 };
 
@@ -6988,8 +6989,6 @@ if (document.readyState === 'loading') {
 }
 
 // ==========================================
-// AI ATS RESUME GENERATOR LOGIC
-// ==========================================
 async function initAIAtsGenerator() {
   const generateBtn = document.getElementById('generate-ats-btn');
   const nicheInput = document.getElementById('ats-niche-input');
@@ -7014,77 +7013,110 @@ async function initAIAtsGenerator() {
     }
 
     const originalBtnText = generateBtn.innerHTML;
-    generateBtn.innerHTML = 'Scraping Portfolio & Generating...';
+    generateBtn.innerHTML = 'Scraping Portfolio & Generating PDF Layout...';
     generateBtn.disabled = true;
     resultContainer.classList.add('hidden');
 
     try {
-      if (!supabase) throw new Error('Database not connected. Cannot fetch portfolio data.');
+      if (!supabase) throw new Error('Database not connected.');
 
-      // 1. Scrape Static Text from index.html
+      // Scrape Static Text from index.html
       const htmlRes = await fetch('/');
       const htmlText = await htmlRes.text();
       const parser = new DOMParser();
       const doc = parser.parseFromString(htmlText, 'text/html');
-      
-      // Clean up scripts/styles before extracting text
       doc.querySelectorAll('script, style, noscript').forEach(el => el.remove());
       const staticText = doc.body.innerText.replace(/\s+/g, ' ').trim();
 
-      // 2. Scrape Dynamic Content from Supabase
+      // Scrape Dynamic Content from Supabase
       const { data: projects } = await supabase.from('portfolio_projects').select('title, category, short_description, full_description');
       const { data: services } = await supabase.from('portfolio_services').select('name, short_description, full_description');
-      const { data: certs } = await supabase.from('certificates').select('title, issuer, date');
-
-      const dynamicContent = `
-PROJECTS:
-${projects ? projects.map(p => `- ${p.title} (${p.category}): ${p.short_description}`).join('\n') : 'None'}
-
-SERVICES/SKILLS:
-${services ? services.map(s => `- ${s.name}: ${s.short_description}`).join('\n') : 'None'}
-
-CERTIFICATES:
-${certs ? certs.map(c => `- ${c.title} by ${c.issuer} (${c.date})`).join('\n') : 'None'}
-      `;
-
+      
       const scrapedContext = `
---- STATIC WEBSITE TEXT ---
-${staticText.substring(0, 3000)} // Limiting static text to avoid massive token counts
-
---- DYNAMIC PORTFOLIO CONTENT ---
-${dynamicContent}
+--- STATIC PORTFOLIO TEXT ---
+${staticText.substring(0, 2000)}
+--- RECENT PROJECTS ---
+${projects ? projects.map(p => `- ${p.title} (${p.category}): ${p.short_description}`).join('\n') : 'None'}
+--- SERVICES ---
+${services ? services.map(s => `- ${s.name}: ${s.short_description}`).join('\n') : 'None'}
       `;
 
-      // 3. Call Groq AI
       const groq = new Groq({ apiKey, dangerouslyAllowBrowser: true });
       const activeModel = await getBestGroqModel(groq);
       
       const prompt = `
-You are an expert ATS (Applicant Tracking System) Resume Writer.
-I am providing you with the full text scraped from my portfolio website and database.
-Using ONLY this information, generate a professional, highly-optimized, ATS-friendly resume tailored specifically for the role of: "${niche}".
+You are an expert ATS Resume Writer and HTML Designer.
+Generate a highly-optimized, professional ATS-friendly resume tailored strictly for the role of: "${niche}".
 
-Requirements:
-- Format strictly in clean, semantic HTML. Do NOT output markdown.
-- Use ONLY standard tags: <div>, <h1>, <h2>, <h3>, <p>, <ul>, <li>, <strong>, <em>.
-- The outermost wrapper MUST be exactly: <div class="ats-resume-container" style="font-family: Arial, Helvetica, sans-serif; line-height: 1.6; color: #111; max-width: 800px; margin: 0 auto; padding: 2rem; background: #fff;">
-- Add professional inline CSS for styling. For example: Use <h1 style="text-align: center; font-size: 24px; margin-bottom: 5px; color: #000;"> for the name, <h2 style="font-size: 18px; border-bottom: 2px solid #000; padding-bottom: 5px; margin-top: 20px; text-transform: uppercase;"> for section headers.
-- Include standard ATS sections: Professional Summary, Core Competencies/Skills, Professional Experience (infer from projects/services if needed), and Education/Certificates.
-- Do NOT make up fake companies or dates if they aren't provided; generalize them as "Freelance / Independent Projects".
+BASE PERSONAL INFO (Always include this EXACTLY):
+Name: VINCENT B. DIALING
+Email: dialingvincent@gmail.com | Phone: +63 945 354 4181 | Location: Davao City, Philippines
+Links: https://www.linkedin.com/in/vincentdialing/ | https://vincentdialing.vercel.app/
+
+EDUCATION:
+Bachelor of Science in Information Technology major in Business Technology Management
+University of Southeastern Philippines | Davao City, Philippines | 2026
+Magna Cum Laude
+Student Leadership Excellence Awardee | Student Service Awardee
+2nd Best University Student Artist of Class 2026
+
+TECH PROFICIENCY:
+Design & Content: Adobe Photoshop, Illustrator, Premiere Pro, After Effects, Canva, Figma, Affinity, CapCut, Procreate, Lightroom
+AI & Automation: ChatGPT, Claude, Gemini, Grok, Google Apps Script
+Web & Development: JavaScript, Tailwind CSS, Supabase, VS Code, GitHub, Google Antigravity, Cursor, Claude Opus
+Productivity & Admin: Google Workspace, Microsoft Office
+Communication & Collaboration: Slack, Notion, Zoom, Google Meet
+Social & Marketing: Meta Business Suite, Google Ads
+Project Management: Trello, ClickUp, Monday.com
+File Management: Google Drive, Dropbox, MEGA
+
+CERTIFICATES:
+- UI/UX Design – 16-Hour Blooming Fridays Workshop – DEVCON Davao
+- Galactic Problem Solver, UI/UX Designer – NASA Space Apps Challenge – Oct 2025
+- Video Presentation Creator, Project HUSAY – CHED RAISE 2026 – Feb 2026
+
+REMOTE WORK READINESS:
+Internet: Converge Fiber 200 Mbps | Backup: Globe Prepaid Wifi
+Equipment: MacBook Pro 2019
+Workspace: Quiet, dedicated room
+Availability: Full-time, flexible (able to work night shift schedules 8PM–6AM)
+
+LANGUAGES:
+English: Proficient | Filipino: Fluent | Bisaya/Cebuano: Native | Hiligaynon: Native
+
+BASE EXPERIENCE (Adapt bullet points to fit the "${niche}" role based on this history, do NOT make up fake companies):
+1. Visual Assets Creator @ Creon Motion | Jan 2025 – Sep 2026 (Remote)
+2. UI/UX Designer & Social Media Manager @ Imperate Realty | Aug 2024 – Mar 2025 (Part-time, Remote)
+3. Head Creatives and Lead Social Media Manager @ Harmonia Polifonica Chorale | Aug 2022 – Jul 2026 (Full-time, Hybrid)
+4. Social Media Manager @ Candice and Leona Salon & Wellness Spa | Jan 2024 – Feb 2025 (Part-time, Remote)
+5. Digital Marketing Specialist @ Mugna Technologies | Jun 2025 – Oct 2025 (Internship, Hybrid)
+6. Design Lead @ DEVCON Davao | Oct 2024 – May 2026
+7. Branding Manager @ Google Developer Student Clubs – USeP Obrero | Aug 2023 – Oct 2024
+
+REQUIREMENTS FOR HTML LAYOUT:
+- Format strictly in clean HTML. Do NOT output markdown.
+- The outermost wrapper MUST be: <div class="ats-resume-container" style="font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; line-height: 1.4; color: #111; max-width: 850px; margin: 0 auto; padding: 2rem 3rem; background: #fff;">
+- HEADER: The name MUST be <h1 style="font-size: 28px; font-weight: 700; margin: 0 0 5px 0; text-transform: uppercase; color: #000; letter-spacing: 1px;">VINCENT B. DIALING</h1>
+- CONTACT INFO: Must be italicized and centered/left-aligned neatly: <p style="font-size: 13px; font-style: italic; margin: 0; color: #444;">dialingvincent@gmail.com | +63 945 354 4181 | Davao City, Philippines<br>https://www.linkedin.com/in/vincentdialing/ | https://vincentdialing.vercel.app/</p>
+- SECTION HEADERS: MUST be styled EXACTLY like this: <h2 style="font-size: 15px; font-weight: 700; text-transform: uppercase; margin: 20px 0 10px 0; padding-bottom: 4px; border-bottom: 2px solid #20c997; color: #000; letter-spacing: 0.5px;">SECTION NAME</h2> (Note the #20c997 teal bottom border).
+- JOB TITLES: <h3 style="font-size: 14px; font-weight: 700; margin: 0 0 2px 0;"><strong>Job Title</strong></h3>
+- COMPANY & DATE: <p style="font-size: 13px; font-style: italic; margin: 0 0 8px 0; color: #444;">Company Name | Date Range</p>
+- BULLET POINTS: Use standard <ul> and <li style="font-size: 13px; margin-bottom: 4px;">.
+- Ensure the layout matches exactly the provided aesthetic (Teal lines under headers, clean bold uppercase headers, italicized meta-data).
 - Output ONLY the raw HTML. Do not wrap in markdown \`\`\`html fences.
 
-Here is the scraped portfolio content:
+SCRAPED RECENT PORTFOLIO DATA (Use to enrich bullet points and summary):
 ${scrapedContext}
       `;
 
       const completion = await groq.chat.completions.create({
         model: activeModel,
         messages: [
-          { role: 'system', content: 'You are an expert ATS resume writer. Output ONLY the raw HTML resume. Do not include markdown fences.' },
+          { role: 'system', content: 'You are an expert ATS resume writer and HTML designer. Output ONLY raw HTML. No markdown.' },
           { role: 'user', content: prompt }
         ],
         temperature: 0.3,
-        max_tokens: 3000,
+        max_tokens: 4000,
       });
 
       let generatedResume = completion.choices[0]?.message?.content || '';
@@ -7092,11 +7124,10 @@ ${scrapedContext}
 
       if (!generatedResume) throw new Error('AI returned empty response.');
 
-      // 4. Display Results
       currentHtml = generatedResume;
       resultPreview.innerHTML = generatedResume;
       resultContainer.classList.remove('hidden');
-      showToast('Success', 'ATS Resume generated successfully!', 'success');
+      showToast('Success', 'PDF Layout generated successfully!', 'success');
 
     } catch (err) {
       console.error('ATS Generator Error:', err);
@@ -7111,7 +7142,6 @@ ${scrapedContext}
   downloadBtn.addEventListener('click', () => {
     if (!currentHtml) return;
     
-    // Create a hidden iframe
     const iframe = document.createElement('iframe');
     iframe.style.position = 'fixed';
     iframe.style.right = '0';
@@ -7121,7 +7151,6 @@ ${scrapedContext}
     iframe.style.border = '0';
     document.body.appendChild(iframe);
     
-    // Write the HTML to the iframe
     const doc = iframe.contentWindow.document;
     doc.open();
     doc.write(`
@@ -7130,8 +7159,9 @@ ${scrapedContext}
           <title>Vincent_Dialing_ATS_Resume_${nicheInput.value.replace(/[^a-z0-9]/gi, '_').toLowerCase()}</title>
           <style>
             @media print {
-              @page { margin: 1cm; size: auto; }
+              @page { margin: 0.5in; size: letter; }
               body { margin: 0; padding: 0; background: white; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+              .ats-resume-container { padding: 0 !important; width: 100% !important; max-width: 100% !important; }
             }
           </style>
         </head>
@@ -7142,15 +7172,10 @@ ${scrapedContext}
     `);
     doc.close();
     
-    // Trigger print dialog on iframe load
     iframe.onload = () => {
       iframe.contentWindow.focus();
       iframe.contentWindow.print();
-      
-      // Cleanup after print dialog closes (some delay needed)
-      setTimeout(() => {
-        document.body.removeChild(iframe);
-      }, 5000);
+      setTimeout(() => document.body.removeChild(iframe), 5000);
     };
   });
 }

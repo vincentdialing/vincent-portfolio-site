@@ -6978,7 +6978,147 @@ function initResumeManager() {
 }
 
 if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', () => setTimeout(initResumeManager, 500));
+  document.addEventListener('DOMContentLoaded', () => {
+    setTimeout(initResumeManager, 500);
+    setTimeout(initAIAtsGenerator, 500);
+  });
 } else {
   setTimeout(initResumeManager, 500);
+  setTimeout(initAIAtsGenerator, 500);
+}
+
+// ==========================================
+// AI ATS RESUME GENERATOR LOGIC
+// ==========================================
+async function initAIAtsGenerator() {
+  const generateBtn = document.getElementById('generate-ats-btn');
+  const nicheInput = document.getElementById('ats-niche-input');
+  const resultContainer = document.getElementById('ats-result-container');
+  const resultTextarea = document.getElementById('ats-result-textarea');
+  const copyBtn = document.getElementById('ats-copy-btn');
+  const downloadBtn = document.getElementById('ats-download-btn');
+
+  if (!generateBtn) return;
+
+  generateBtn.addEventListener('click', async () => {
+    const niche = nicheInput.value.trim();
+    if (!niche) {
+      showToast('Error', 'Please enter the niche or role you are applying for.', 'error');
+      return;
+    }
+
+    const apiKey = getGroqApiKey();
+    if (!apiKey) {
+      showToast('Error', 'Please configure your Groq API key in the Settings tab.', 'error');
+      return;
+    }
+
+    const originalBtnText = generateBtn.innerHTML;
+    generateBtn.innerHTML = 'Scraping Portfolio & Generating...';
+    generateBtn.disabled = true;
+    resultContainer.classList.add('hidden');
+
+    try {
+      if (!supabase) throw new Error('Database not connected. Cannot fetch portfolio data.');
+
+      // 1. Scrape Static Text from index.html
+      const htmlRes = await fetch('/');
+      const htmlText = await htmlRes.text();
+      const parser = new DOMParser();
+      const doc = parser.parseFromString(htmlText, 'text/html');
+      
+      // Clean up scripts/styles before extracting text
+      doc.querySelectorAll('script, style, noscript').forEach(el => el.remove());
+      const staticText = doc.body.innerText.replace(/\s+/g, ' ').trim();
+
+      // 2. Scrape Dynamic Content from Supabase
+      const { data: projects } = await supabase.from('portfolio_projects').select('title, category, short_description, full_description');
+      const { data: services } = await supabase.from('portfolio_services').select('name, short_description, full_description');
+      const { data: certs } = await supabase.from('certificates').select('title, issuer, date');
+
+      const dynamicContent = `
+PROJECTS:
+${projects ? projects.map(p => `- ${p.title} (${p.category}): ${p.short_description}`).join('\n') : 'None'}
+
+SERVICES/SKILLS:
+${services ? services.map(s => `- ${s.name}: ${s.short_description}`).join('\n') : 'None'}
+
+CERTIFICATES:
+${certs ? certs.map(c => `- ${c.title} by ${c.issuer} (${c.date})`).join('\n') : 'None'}
+      `;
+
+      const scrapedContext = `
+--- STATIC WEBSITE TEXT ---
+${staticText.substring(0, 3000)} // Limiting static text to avoid massive token counts
+
+--- DYNAMIC PORTFOLIO CONTENT ---
+${dynamicContent}
+      `;
+
+      // 3. Call Groq AI
+      const groq = new Groq({ apiKey, dangerouslyAllowBrowser: true });
+      const activeModel = await getBestGroqModel(groq);
+      
+      const prompt = `
+You are an expert ATS (Applicant Tracking System) Resume Writer.
+I am providing you with the full text scraped from my portfolio website and database.
+Using ONLY this information, generate a professional, highly-optimized, ATS-friendly resume tailored specifically for the role of: "${niche}".
+
+Requirements:
+- Format strictly in clean Markdown (use ## for sections, bolding, bullet points).
+- Include standard ATS sections: Professional Summary, Core Competencies/Skills, Professional Experience (infer from projects/services if needed), and Education/Certificates.
+- Do NOT make up fake companies or dates if they aren't provided; generalize them as "Freelance / Independent Projects".
+- Make the tone professional and impactful.
+
+Here is the scraped portfolio content:
+${scrapedContext}
+      `;
+
+      const completion = await groq.chat.completions.create({
+        model: activeModel,
+        messages: [
+          { role: 'system', content: 'You are an expert ATS resume writer. Output only the markdown resume.' },
+          { role: 'user', content: prompt }
+        ],
+        temperature: 0.4,
+        max_tokens: 2500,
+      });
+
+      const generatedResume = completion.choices[0]?.message?.content || '';
+
+      if (!generatedResume) throw new Error('AI returned empty response.');
+
+      // 4. Display Results
+      resultTextarea.value = generatedResume.trim();
+      resultContainer.classList.remove('hidden');
+      showToast('Success', 'ATS Resume generated successfully!', 'success');
+
+    } catch (err) {
+      console.error('ATS Generator Error:', err);
+      showToast('Generation Failed', err.message, 'error');
+    } finally {
+      generateBtn.innerHTML = originalBtnText;
+      generateBtn.disabled = false;
+    }
+  });
+
+  // Copy Button
+  copyBtn.addEventListener('click', () => {
+    navigator.clipboard.writeText(resultTextarea.value).then(() => {
+      showToast('Copied', 'Resume copied to clipboard!', 'success');
+    });
+  });
+
+  // Download Button
+  downloadBtn.addEventListener('click', () => {
+    const text = resultTextarea.value;
+    const blob = new Blob([text], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    const nicheText = nicheInput.value.replace(/[^a-z0-9]/gi, '_').toLowerCase();
+    a.href = url;
+    a.download = `Vincent_Dialing_ATS_Resume_${nicheText || 'Generated'}.txt`;
+    a.click();
+    URL.revokeObjectURL(url);
+  });
 }

@@ -507,6 +507,33 @@ CREATE POLICY "Allow anon delete" ON brands FOR DELETE USING (true);
               <button id="save-resume-btn" class="btn btn-primary">Upload & Publish</button>
             </div>
           </div>
+
+          <div class="admin-card" style="margin-top: 2rem;">
+            <h3>AI ATS Resume Generator</h3>
+            <p style="color:var(--text-muted); font-size: 0.85rem; margin-bottom: 1.5rem;">
+              Our AI will scrape your live portfolio and generate a tailored, ATS-friendly resume based on your content and your target niche.
+            </p>
+            <div class="form-group">
+              <label>What niche or role are you applying for?</label>
+              <input type="text" id="ats-niche-input" class="form-control" placeholder="e.g., Senior UI/UX Designer, Brand Strategist, etc.">
+            </div>
+            
+            <div style="margin-top: 1.5rem; display: flex; gap: 1rem;">
+              <button id="generate-ats-btn" class="btn btn-primary" style="display: flex; gap: 0.5rem; align-items: center;">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg>
+                Generate Resume via AI
+              </button>
+            </div>
+
+            <div id="ats-result-container" class="hidden" style="margin-top: 2rem;">
+              <label>Generated Resume (Markdown)</label>
+              <textarea id="ats-result-textarea" class="form-control" style="height: 300px; font-family: monospace; white-space: pre-wrap; font-size: 0.9rem;" readonly></textarea>
+              <div style="margin-top: 1rem; display: flex; gap: 1rem;">
+                <button id="ats-copy-btn" class="btn btn-secondary">Copy Text</button>
+                <button id="ats-download-btn" class="btn btn-outline">Download .txt</button>
+              </div>
+            </div>
+          </div>
         </section>
       </div>
     </main>

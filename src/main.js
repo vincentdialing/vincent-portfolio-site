@@ -1795,7 +1795,21 @@ function initResumeModal() {
     const resumeUrl = `${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/portfolio/resume.pdf?v=${Date.now()}`;
     const previewUrl = `https://docs.google.com/viewer?url=${encodeURIComponent(resumeUrl)}&embedded=true`;
     
-    if (resumeIframe) resumeIframe.src = previewUrl;
+    const spinner = document.getElementById('resume-loading-spinner');
+    
+    if (resumeIframe) {
+      if (spinner) spinner.style.display = 'flex';
+      resumeIframe.style.opacity = '0';
+      
+      // When iframe finishes loading, hide spinner and fade in iframe
+      resumeIframe.onload = () => {
+        if (spinner) spinner.style.display = 'none';
+        resumeIframe.style.opacity = '1';
+      };
+      
+      resumeIframe.src = previewUrl;
+    }
+    
     if (resumeDownloadBtn) resumeDownloadBtn.href = resumeUrl;
     
     resumeModal.classList.add('is-open');

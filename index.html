@@ -972,8 +972,12 @@
         </button>
         <div class="certificate-modal-body" style="flex: 1; display: flex; flex-direction: column; padding: 2rem;">
           <h3 id="resume-modal-title" style="margin-bottom: 1rem;">My Resume</h3>
-          <div style="flex: 1; border-radius: 8px; overflow: hidden; background: #fff; margin-bottom: 1.5rem;">
-            <iframe id="resume-modal-iframe" src="" style="width: 100%; height: 100%; border: none;"></iframe>
+          <div style="flex: 1; border-radius: 8px; overflow: hidden; background: #fff; margin-bottom: 1.5rem; position: relative;">
+            <div id="resume-loading-spinner" style="position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; background: rgba(255,255,255,0.9); z-index: 10;">
+              <div style="width: 40px; height: 40px; border: 4px solid var(--border-color); border-top-color: var(--accent-color); border-radius: 50%; animation: spinner-spin 1s linear infinite;"></div>
+              <p style="margin-top: 1rem; color: #555; font-size: 0.9rem;">Loading Resume...</p>
+            </div>
+            <iframe id="resume-modal-iframe" src="" style="width: 100%; height: 100%; border: none; opacity: 0; transition: opacity 0.3s ease;"></iframe>
           </div>
           <a id="resume-modal-download-btn" href="#" download="Vincent_Dialing_Resume.pdf" class="btn btn-primary" style="align-self: center; display: inline-flex; align-items: center; gap: 0.5rem; text-decoration: none;">
             <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">

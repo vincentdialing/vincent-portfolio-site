@@ -92,11 +92,11 @@ def create_resume():
 
     # Professional Summary
     elements.append(Paragraph("PROFESSIONAL SUMMARY", heading_style))
-    elements.append(Paragraph("Results-driven Graphic Designer and UI/UX Specialist with expertise in organic Social Media Marketing (SMM), funnel optimization, and brand identity design. Proven ability to craft high-converting landing pages, seamless digital experiences, and sharp visual assets for businesses looking to elevate their online presence.", body_style))
+    elements.append(Paragraph("Results-driven Graphic Designer and UI/UX Specialist with expertise in Organic and Paid Ads (SMM), funnel optimization, and brand identity design. Proven ability to craft high-converting landing pages, seamless digital experiences, and sharp visual assets for businesses looking to elevate their online presence.", body_style))
 
     # Skills
     elements.append(Paragraph("CORE COMPETENCIES", heading_style))
-    skills = "• Graphic Design & Brand Identity   • UI/UX Design & Prototyping   • Landing Page & Funnel Design<br/>• Organic Social Media Marketing   • Video Editing   • Frontend Web Development"
+    skills = "• Graphic Design & Brand Identity   • UI/UX Design & Prototyping   • Landing Page & Funnel Design<br/>• Organic and Paid Ads   • Video Editing   • Frontend Web Development"
     elements.append(Paragraph(skills, body_style))
 
     # Experience
@@ -107,7 +107,7 @@ def create_resume():
     
     elements.append(Paragraph("<bullet>&bull;</bullet>Engineered conversion-focused landing pages and funnel experiences to ensure visual clarity and smooth user flows, increasing client inquiries and lead generation.", bullet_style))
     elements.append(Paragraph("<bullet>&bull;</bullet>Designed intuitive UI/UX for web and mobile platforms, aligning functionality with modern aesthetic standards.", bullet_style))
-    elements.append(Paragraph("<bullet>&bull;</bullet>Executed organic social media marketing strategies, including content creation and video editing, to build cohesive and impactful digital brand presences.", bullet_style))
+    elements.append(Paragraph("<bullet>&bull;</bullet>Executed organic and paid ads strategies, including content creation and video editing, to build cohesive and impactful digital brand presences.", bullet_style))
     elements.append(Paragraph("<bullet>&bull;</bullet>Produced comprehensive branding assets, visual directions, and cohesive campaign materials across digital touchpoints.", bullet_style))
 
     # Education
